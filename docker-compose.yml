@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: conduit-postgres
+    environment:
+      POSTGRES_DB: conduit
+      POSTGRES_USER: conduit
+      POSTGRES_PASSWORD: conduit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: conduit-redis
+    ports:
+      # Host port lệch khỏi 6379: Windows/Hyper-V hay loại trừ động dải cổng
+      # quanh 6379 (netsh interface ipv4 show excludedportrange), gây lỗi
+      # "ports are not available" khi bind đúng 6379. Container vẫn nghe ở
+      # 6379 bên trong network của docker-compose, ứng dụng nội bộ (litellm,
+      # bifrost, portkey) cứ dùng "redis:6379" như bình thường.
+      - "16379:6379"
+
+  litellm:
+    image: ghcr.io/berriai/litellm:v1.83.14-stable
+    container_name: conduit-litellm
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    volumes:
+      - ./proxy-configs/litellm/config.yaml:/app/config.yaml:ro
+
+  bifrost:
+    image: maximhq/bifrost:latest
+    container_name: conduit-bifrost
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      # /app/data la noi Bifrost ghi config.db/logs.db (SQLite config_store) -
+      # phai la volume ghi duoc, KHONG bind-mount read-only file tinh vao day
+      # (se loi "not writable"). proxy-configs/bifrost/config.json chi la tai
+      # lieu tham khao cho provider/model setup, import qua API/UI cua Bifrost
+      # sau khi container da chay (http://localhost:8080).
+      - bifrost-data:/app/data
+
+  portkey:
+    image: portkeyai/gateway:latest
+    container_name: conduit-portkey
+    restart: always
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+
+volumes:
+  postgres-data:
+  bifrost-data:

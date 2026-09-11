@@ -1,0 +1,36 @@
+{
+  "_comment": "Tai lieu tham khao provider/model setup cho Bifrost. KHONG duoc mount thang vao container (bifrost/data trong docker-compose.yml la volume rieng, Bifrost tu quan ly config qua SQLite config_store) - import noi dung nay qua API/UI cua Bifrost (http://localhost:8080) sau khi container da chay.",
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        {
+          "name": "openai-key-1",
+          "value": "env.OPENAI_API_KEY",
+          "models": ["gpt-4o-mini", "gpt-4o"],
+          "weight": 1.0
+        }
+      ]
+    },
+    "anthropic": {
+      "keys": [
+        {
+          "name": "anthropic-key-1",
+          "value": "env.ANTHROPIC_API_KEY",
+          "models": ["claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022"],
+          "weight": 1.0
+        }
+      ]
+    },
+    "gemini": {
+      "keys": [
+        {
+          "name": "gemini-key-1",
+          "value": "env.GEMINI_API_KEY",
+          "models": ["gemini-1.5-flash"],
+          "weight": 1.0
+        }
+      ]
+    }
+  }
+}

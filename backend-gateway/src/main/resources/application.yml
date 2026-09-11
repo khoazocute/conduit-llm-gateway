@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: backend-gateway
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/conduit
+    username: conduit
+    password: conduit
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      # Host port của redis trong docker-compose là 16379 (không phải 6379
+      # mặc định) — xem chú thích trong docker-compose.yml.
+      port: 16379
+
+server:
+  port: 8081

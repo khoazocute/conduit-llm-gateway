@@ -1,0 +1,33 @@
+{
+  "_comment": "Portkey OSS gateway không nhận config lúc khởi động container — config này là một 'Config object' của Portkey, gửi kèm mỗi request qua header x-portkey-config (hoặc field 'config' trong body). Đây chỉ là khung tối thiểu liệt kê 5 model/2 tầng chi phí theo CLAUDE.md mục 2, CHƯA phải rule routing thật (điều kiện conditional routing sẽ viết ở tuần 7-8/9-10 khi chạy thực nghiệm).",
+  "strategy": {
+    "mode": "single"
+  },
+  "targets": [
+    {
+      "provider": "openai",
+      "api_key": "$OPENAI_API_KEY",
+      "override_params": { "model": "gpt-4o-mini" }
+    },
+    {
+      "provider": "google",
+      "api_key": "$GEMINI_API_KEY",
+      "override_params": { "model": "gemini-1.5-flash" }
+    },
+    {
+      "provider": "anthropic",
+      "api_key": "$ANTHROPIC_API_KEY",
+      "override_params": { "model": "claude-3-5-haiku-20241022" }
+    },
+    {
+      "provider": "openai",
+      "api_key": "$OPENAI_API_KEY",
+      "override_params": { "model": "gpt-4o" }
+    },
+    {
+      "provider": "anthropic",
+      "api_key": "$ANTHROPIC_API_KEY",
+      "override_params": { "model": "claude-3-5-sonnet-20241022" }
+    }
+  ]
+}

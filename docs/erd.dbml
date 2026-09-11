@@ -1,0 +1,334 @@
+// ============================================
+// LLM Gateway Portal - Database Schema (DBML)
+// Pham vi: MVP Must-have + Should-have (RAG danh dau rieng)
+// Huong: danh gia 3 routing proxy co san (LiteLLM/Bifrost/Portkey)
+// Paste toan bo noi dung nay vao https://dbdiagram.io
+// ============================================
+
+Enum user_role {
+  admin
+  creator
+  user
+}
+
+Enum user_status {
+  active
+  banned
+}
+
+Enum agent_type {
+  text
+}
+
+Enum agent_status {
+  draft
+  pending
+  approved
+  rejected
+  published
+  unpublished
+}
+
+Enum kb_status {
+  processing
+  ready
+  failed
+}
+
+Enum message_role {
+  user
+  assistant
+}
+
+Enum payment_method {
+  vnpay
+  mock
+}
+
+Enum payment_status {
+  pending
+  paid
+  failed
+  refunded
+}
+
+Enum webhook_result {
+  accepted
+  duplicate
+  invalid_signature
+}
+
+Enum credit_tx_type {
+  purchase_grant
+  usage_deduct
+  topup
+  refund_deduct
+}
+
+Enum api_key_status {
+  active
+  rate_limited
+  disabled
+}
+
+Enum llm_provider {
+  openai
+  anthropic
+  google
+}
+
+Enum usage_status {
+  success
+  fallback
+  error
+}
+
+// ============================================
+// 1. USERS & AUTH
+// ============================================
+
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  email varchar [not null, unique]
+  password_hash varchar
+  full_name varchar
+  avatar_url varchar
+  role user_role [not null, default: 'user']
+  status user_status [not null, default: 'active']
+  email_verified boolean [default: false]
+  oauth_provider varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 2. AGENT & KHO TRI THUC (RAG)
+// knowledge_bases va kb_chunks la SHOULD-HAVE (RAG mo rong),
+// khong bat buoc cho vong nghiep vu MVP loi
+// ============================================
+
+Table agents {
+  id uuid [pk, default: `gen_random_uuid()`]
+  creator_id uuid [not null, ref: > users.id]
+  title varchar [not null]
+  introduction text
+  agent_type agent_type [not null, default: 'text']
+  price_vnd int [not null, default: 0]
+  default_credit_granted int [not null, default: 0]
+  status agent_status [not null, default: 'draft']
+  reject_reason varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table knowledge_bases {
+  id uuid [pk, default: `gen_random_uuid()`]
+  agent_id uuid [not null, ref: > agents.id]
+  file_name varchar [not null]
+  file_url varchar [not null]
+  status kb_status [not null, default: 'processing']
+  created_at timestamp [default: `now()`]
+
+  Note: 'Should-have - RAG mo rong, khong bat buoc cho MVP loi. Agent Must-have tra loi truc tiep qua LLM, khong can knowledge base.'
+}
+
+Table kb_chunks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  knowledge_base_id uuid [not null, ref: > knowledge_bases.id]
+  agent_id uuid [not null, ref: > agents.id, note: 'denormalized - loc theo agent khi truy hoi (RAG Metadata Filtering)']
+  chunk_text text [not null]
+  chunk_index int
+  embedding vector(1536) [not null, note: 'text-embedding-3-small']
+  source_file varchar
+  created_at timestamp [default: `now()`]
+
+  Note: 'Should-have - RAG mo rong. Trien khai sau khi cac hang muc Must-have (gom danh gia proxy) da on dinh.'
+}
+
+// ============================================
+// 3. VI CREDIT & GIAO DICH
+// ============================================
+
+Table credit_wallets {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, unique, ref: > users.id]
+  balance bigint [not null, default: 0]
+  updated_at timestamp [default: `now()`]
+}
+
+Table credit_transactions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  wallet_id uuid [not null, ref: > credit_wallets.id]
+  type credit_tx_type [not null]
+  amount bigint [not null, note: 'duong = cong, am = tru']
+  related_message_id uuid [ref: > messages.id]
+  related_purchase_id uuid [ref: > agent_purchases.id]
+  description varchar
+  created_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 4. MUA AGENT & THANH TOAN (VNPay / Mock)
+// ============================================
+
+Table agent_purchases {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  agent_id uuid [not null, ref: > agents.id]
+  amount_vnd int [not null]
+  default_credit_granted int [not null]
+  payment_method payment_method [not null, default: 'vnpay']
+  payment_status payment_status [not null, default: 'pending']
+  transaction_ref varchar [unique, not null, note: 'ma giao dich duy nhat - dung cho idempotency']
+  paid_at timestamp
+  created_at timestamp [default: `now()`]
+}
+
+Table payment_webhook_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  transaction_ref varchar [not null]
+  result webhook_result [not null]
+  raw_payload text [note: 'noi dung request goc tu VNPay/Mock - phuc vu truy vet']
+  received_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 5. CHAT / CONVERSATION
+// ============================================
+
+Table conversations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  agent_id uuid [not null, ref: > agents.id]
+  title varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table messages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  conversation_id uuid [not null, ref: > conversations.id]
+  role message_role [not null]
+  content text
+  credit_charged int [default: 0]
+  model_used varchar
+  latency_ms int
+  created_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 6. API KEY & PROVIDER (Admin quan ly)
+// ============================================
+
+Table api_keys {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider llm_provider [not null]
+  key_encrypted text [not null, note: 'AES-GCM, encryption key luu o env - khong luu trong DB']
+  status api_key_status [not null, default: 'active']
+  priority int [default: 0]
+  last_used_at timestamp
+  created_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 7. LOGGING & MONITORING
+// ============================================
+
+Table usage_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  message_id uuid [not null, ref: > messages.id]
+  api_key_id uuid [ref: > api_keys.id]
+  provider llm_provider
+  model varchar
+  token_input int
+  token_output int
+  cost_upstream decimal
+  revenue_credit decimal
+  latency_ms int
+  status usage_status [not null, default: 'success']
+  created_at timestamp [default: `now()`]
+}
+
+// ============================================
+// 8. DINH GIA & DANH GIA ROUTING PROXY (Module Dinh tuyen)
+// Danh gia 3 proxy co san (LiteLLM/Bifrost/Portkey) -
+// day la dong gop ky thuat chinh cua khoa luan
+// ============================================
+
+Enum unit_type {
+  token_input
+  token_output
+  image_generation
+}
+
+Enum routing_proxy {
+  litellm
+  bifrost
+  portkey
+}
+
+Table model_pricing {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider llm_provider [not null]
+  model varchar [not null]
+  unit_type unit_type [not null]
+  price_usd_per_unit decimal [not null]
+  credit_markup_multiplier decimal [not null, default: 1.5]
+  effective_from timestamp [not null]
+  created_at timestamp [default: `now()`]
+}
+
+Table routing_decisions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  message_id uuid [not null, ref: > messages.id]
+  proxy_name routing_proxy [not null, note: 'proxy nao xu ly request nay: litellm/bifrost/portkey']
+  selected_model varchar [not null, note: 'model ma proxy tu chon trong pool ung vien chung']
+  predicted_cost decimal [not null]
+  token_input int
+  token_output int
+  response_quality_score decimal [note: 'diem rubric hoac dung/sai, tuy loai prompt']
+  latency_ms int [note: 'tong thoi gian tu luc goi proxy den khi nhan du response']
+  created_at timestamp [default: `now()`]
+}
+
+// ============================================
+// TABLE GROUPS (cosmetic - phan nhom hien thi tren dbdiagram.io)
+// ============================================
+
+TableGroup "1. Users & Auth" {
+  users
+}
+
+TableGroup "2. Agent & Knowledge Base (RAG - Should-have)" {
+  agents
+  knowledge_bases
+  kb_chunks
+}
+
+TableGroup "3. Credit Wallet & Transactions" {
+  credit_wallets
+  credit_transactions
+}
+
+TableGroup "4. Purchase & Payment" {
+  agent_purchases
+  payment_webhook_logs
+}
+
+TableGroup "5. Chat / Conversation" {
+  conversations
+  messages
+}
+
+TableGroup "6. API Key & Provider" {
+  api_keys
+}
+
+TableGroup "7. Logging & Monitoring" {
+  usage_logs
+}
+
+TableGroup "8. Routing Proxy Evaluation (Dong gop chinh)" {
+  model_pricing
+  routing_decisions
+}

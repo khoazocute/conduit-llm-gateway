@@ -1,0 +1,40 @@
+# LiteLLM proxy config — 5-model pool, 2 cost tiers (CLAUDE.md mục 2).
+# Chưa cấu hình routing strategy thật (cost/latency/usage-based) — đó là việc
+# của tuần 7-8/9-10, khi chạy thực nghiệm đánh giá 3 proxy.
+
+model_list:
+  # Tầng rẻ
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-1.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  # Tầng trung
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Tầng đắt
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+router_settings:
+  # TODO (tuần 7-8): chọn routing_strategy thật (cost-based-routing /
+  # latency-based-routing / usage-based-routing-v2) khi chạy thực nghiệm.
+  routing_strategy: simple-shuffle

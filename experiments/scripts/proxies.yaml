@@ -1,0 +1,18 @@
+# Endpoint của 3 proxy đánh giá (CLAUDE.md mục 2). Tách khỏi run_experiment.py
+# để đổi môi trường (local -> deploy) không phải sửa code.
+
+proxies:
+  litellm:
+    base_url: http://localhost:4000
+    # Sent as: Authorization: Bearer $LITELLM_MASTER_KEY
+    api_key_env: LITELLM_MASTER_KEY
+
+  bifrost:
+    base_url: http://localhost:8080
+    api_key_env: null
+
+  portkey:
+    base_url: http://localhost:8787
+    # Portkey cần thêm header x-portkey-config trỏ tới proxy-configs/portkey/config.json
+    api_key_env: null
+    config_file: ../../proxy-configs/portkey/config.json
