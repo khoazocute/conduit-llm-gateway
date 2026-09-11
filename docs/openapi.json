@@ -9,16 +9,16 @@
     { "url": "http://localhost:8081/api", "description": "backend-gateway local" }
   ],
   "tags": [
-    { "name": "Auth", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
-    { "name": "Users", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
-    { "name": "Agents", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
-    { "name": "Admin - Agents", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
-    { "name": "Admin - Users", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
-    { "name": "Wallet", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
-    { "name": "Purchases & Payment", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
-    { "name": "Conversations & Chat", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
-    { "name": "Admin - API Keys", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
-    { "name": "Admin - Model Pricing", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Auth", "description": "Owner: Hung (Auth+Agent)" },
+    { "name": "Users", "description": "Owner: Hung (Auth+Agent)" },
+    { "name": "Agents", "description": "Owner: Hung (Auth+Agent)" },
+    { "name": "Admin - Agents", "description": "Owner: Hung (Auth+Agent)" },
+    { "name": "Admin - Users", "description": "Owner: Hung (Auth+Agent)" },
+    { "name": "Wallet", "description": "Owner: Khoa (Credit+Chat+Payment)" },
+    { "name": "Purchases & Payment", "description": "Owner: Khoa (Credit+Chat+Payment)" },
+    { "name": "Conversations & Chat", "description": "Owner: Khoa (Credit+Chat+Payment)" },
+    { "name": "Admin - API Keys", "description": "Owner: Khoa (Credit+Chat+Payment)" },
+    { "name": "Admin - Model Pricing", "description": "Owner: Khoa (Credit+Chat+Payment)" },
     { "name": "Knowledge Base (Should-have)", "description": "RAG mo rong, trien khai sau Must-have" }
   ],
   "components": {

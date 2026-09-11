@@ -36,10 +36,26 @@ docker compose up -d
 
 `docs/openapi.json` (OpenAPI 3.0.3) — thống nhất trước endpoint/request/response
 giữa 2 người trước khi code backend + frontend, dựng từ `docs/erd.dbml`. Paste vào
-[editor.swagger.io](https://editor.swagger.io) để xem dạng UI dễ đọc hơn. Mỗi tag
-có ghi chú "Owner gợi ý" theo cách chia việc hiện tại (1 người phụ trách Auth+Agent,
-1 người phụ trách Credit+Chat+Payment). Cho phép sai số ±3 endpoint khi code thực tế
-— nếu đổi field đã thống nhất thì báo lại cho người còn lại.
+[editor.swagger.io](https://editor.swagger.io) để xem dạng UI dễ đọc hơn. Chia việc
+theo vertical (mỗi người làm cả backend lẫn frontend cho phần của mình, không chia
+theo mảng thuần):
+
+- **Hùng — Auth + Agent**: entity `users`/`agents`, JWT, CRUD agent + luồng duyệt,
+  admin quản lý user/agent. Trang login/register, sàn agent, trang creator, trang
+  admin duyệt agent. Tag: `Auth`, `Users`, `Agents`, `Admin - Agents`, `Admin - Users`.
+- **Khoa — Credit + Chat + Payment**: entity `credit_wallets`/`credit_transactions`/
+  `agent_purchases`/`payment_webhook_logs`/`conversations`/`messages`/`api_keys`/
+  `model_pricing`, Provider Adapter (OpenAI/Anthropic), webhook mock idempotent, chat
+  streaming SSE. Ví credit, luồng mua agent, màn chat, admin API key/bảng giá. Tag:
+  `Wallet`, `Purchases & Payment`, `Conversations & Chat`, `Admin - API Keys`,
+  `Admin - Model Pricing`.
+
+Việc chung làm sau khi 2 vertical ổn định: `call_proxy()` thật trong
+`experiments/scripts/run_experiment.py` + 30 prompt/rubric chấm mù trong
+`experiments/prompts/`.
+
+Cho phép sai số ±3 endpoint khi code thực tế — nếu đổi field đã thống nhất thì báo
+lại cho người còn lại.
 
 ## Chạy từng service
 
