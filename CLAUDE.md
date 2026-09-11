@@ -52,7 +52,8 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
 | Thành phần | Công nghệ |
 |---|---|
 | Frontend Portal | Next.js + React + TailwindCSS |
-| Backend Gateway | Spring Boot 3, Spring AI, Spring Security (JWT), Spring WebFlux (streaming SSE) |
+| Backend Gateway | Spring Boot 3 (`3.5.6` cụ thể — `start.spring.io` đã ngừng hỗ trợ sinh project Boot 3.x, `backend-gateway/pom.xml` viết tay), Spring AI, Spring Security (JWT), Spring WebFlux (streaming SSE) |
+| DB Migration | Flyway (`backend-gateway/src/main/resources/db/migration/`) — schema tạo qua migration, KHÔNG dùng `ddl-auto: update`/`create` |
 | AI Service (Should-have — RAG) | Python + FastAPI |
 | Database | PostgreSQL + pgvector |
 | Cache | Redis (JWT session, rate limit counters) |
@@ -67,6 +68,8 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
 ---
 
 ## 4. Data model — quy ước đặt tên (đọc kỹ, đây là chỗ hay lẫn)
+
+**ERD chính thức:** `docs/erd.dbml` (bản gốc từ proposal). **API contract chính thức:** `docs/openapi.json` (OpenAPI 3.0.3, thống nhất giữa 2 người trước khi code — sai số cho phép ±3 endpoint). Bảng liệt kê dưới đây chỉ tóm tắt nhanh, `erd.dbml` mới là nguồn đúng khi có sai khác. JPA entity + repository cho toàn bộ bảng Must-have đã có sẵn ở `backend-gateway/src/main/java/com/conduit/backendgateway/domain/` — đừng viết lại, chỉ thêm service/controller lên trên.
 
 - Đơn vị nội bộ luôn gọi là **`credit`**, KHÔNG bao giờ dùng `token` cho tên bảng/biến/API field. Lý do: tránh nhầm với token nghĩa kỹ thuật (token của LLM). Bảng: `credit_wallets`, `credit_transactions` — không phải `token_wallets`.
 - Ba tầng hạch toán, phải giữ tách biệt trong code:
@@ -142,14 +145,19 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 
 ## 8. Kế hoạch 16 tuần (mốc quan trọng nhất: Tuần 9–10 là thực nghiệm proxy — không được trễ)
 
+**Phân công đã đổi so với bản gốc bên dưới:** thay vì chia theo mảng (1 người toàn bộ backend, 1 người toàn bộ frontend — sợ backend quá nặng cho 1 người), chia theo **vertical dọc theo tính năng**, mỗi người tự làm cả backend lẫn frontend cho phần của mình:
+- **Hùng — Auth + Agent:** entity `users`/`agents`, JWT, CRUD agent + luồng duyệt draft→pending→published/rejected, admin quản lý user/agent; frontend: login/register, sàn agent, trang creator, trang admin duyệt agent. Tag OpenAPI: `Auth`, `Users`, `Agents`, `Admin - Agents`, `Admin - Users`.
+- **Khoa — Credit + Chat + Payment:** entity `credit_wallets`/`credit_transactions`/`agent_purchases`/`payment_webhook_logs`/`conversations`/`messages`/`api_keys`/`model_pricing`, Provider Adapter (OpenAI/Anthropic), credit wallet (optimistic lock), webhook mock; frontend: ví credit, luồng mua agent, chat streaming SSE, admin API key/bảng giá. Tag OpenAPI: `Wallet`, `Purchases & Payment`, `Conversations & Chat`, `Admin - API Keys`, `Admin - Model Pricing`.
+
+Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 5 container (Postgres+pgvector, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend.
+
 | Tuần | Việc | Phụ trách |
 |---|---|---|
-| 1 | ERD + OpenAPI | Hùng |
-| 2–3 | Backend Gateway core (Spring Boot, JWT, CRUD) | Hùng |
-| 4–5 | Đa provider (OpenAI, Anthropic) + credit wallet | Hùng |
-| 3–6 | Frontend Portal (Next.js, sàn agent, chat streaming) | Khoa |
-| 6–7 | Chuẩn bị thực nghiệm: chốt 30 prompt, viết rubric, bảng chấm mù | Khoa |
-| 7–8 | Setup hạ tầng 3 proxy (deploy, cấu hình pool 5 model, logging vào `routing_decisions`) | Hùng |
+| 1 | ERD (`docs/erd.dbml`) + OpenAPI contract (`docs/openapi.json`) | Hùng & Khoa (joint) |
+| 2–5 | Vertical Auth+Agent (backend + frontend) | Hùng |
+| 2–5 | Vertical Credit+Chat+Payment (backend + frontend) | Khoa |
+| 6–7 | Chuẩn bị thực nghiệm: chốt 30 prompt, viết rubric, bảng chấm mù | Hùng & Khoa |
+| 7–8 | Setup hạ tầng 3 proxy (deploy, cấu hình pool 5 model, logging vào `routing_decisions`) | Hùng (infra Docker đã xong, routing strategy thật + logging còn phụ thuộc backend) |
 | **9–10** | **Chạy thực nghiệm: mỗi người 15 prompt × 3 proxy × 3 lần trên phần của mình. Tổng hợp, áp dụng quy tắc quyết định, chọn proxy chính thức.** | **Hùng & Khoa (JOINT)** |
 | 11 | Mock Payment Gateway, webhook, dashboard ví credit | Hùng & Khoa |
 | 12 | Admin panel (API key, markup, duyệt agent) | Hùng & Khoa |
