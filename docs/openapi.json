@@ -320,7 +320,10 @@
         "description": "1 event SSE (Content-Type: text/event-stream), 'event: chunk' lap lai roi ket bang 'event: done'.",
         "properties": {
           "delta": { "type": "string", "nullable": true, "description": "co o event 'chunk'" },
-          "message": { "$ref": "#/components/schemas/Message", "description": "co o event 'done', message hoan chinh da luu" }
+          "message": {
+            "description": "co o event 'done', message hoan chinh da luu",
+            "allOf": [{ "$ref": "#/components/schemas/Message" }]
+          }
         }
       },
 
