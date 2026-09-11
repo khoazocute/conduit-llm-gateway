@@ -1,0 +1,914 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Conduit — LLM Gateway Portal API",
+    "version": "0.1.0",
+    "description": "API contract cho backend-gateway (Spring Boot), dựng từ docs/erd.dbml. Phạm vi Must-have là chính; endpoint đánh dấu 'Should-have' (RAG, VNPay) định nghĩa trước cho khớp kiến trúc nhưng chưa bắt buộc triển khai ngay (CLAUDE.md mục 6). Sai số cho phép khi triển khai thực tế: +-3 endpoint so với bản này (thêm/bớt nhỏ khi code, không đổi field đã thống nhất mà không báo lại)."
+  },
+  "servers": [
+    { "url": "http://localhost:8081/api", "description": "backend-gateway local" }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
+    { "name": "Users", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
+    { "name": "Agents", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
+    { "name": "Admin - Agents", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
+    { "name": "Admin - Users", "description": "Owner goi y: nguoi phu trach Auth+Agent" },
+    { "name": "Wallet", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Purchases & Payment", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Conversations & Chat", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Admin - API Keys", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Admin - Model Pricing", "description": "Owner goi y: nguoi phu trach Credit+Chat+Payment" },
+    { "name": "Knowledge Base (Should-have)", "description": "RAG mo rong, trien khai sau Must-have" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": { "type": "string", "example": "VALIDATION_ERROR" },
+          "message": { "type": "string" },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "example": 0 },
+          "size": { "type": "integer", "example": 20 },
+          "total_elements": { "type": "integer", "example": 137 },
+          "total_pages": { "type": "integer", "example": 7 }
+        }
+      },
+
+      "UserRole": { "type": "string", "enum": ["admin", "creator", "user"] },
+      "UserStatus": { "type": "string", "enum": ["active", "banned"] },
+
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "full_name": { "type": "string", "nullable": true },
+          "avatar_url": { "type": "string", "nullable": true },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
+          "email_verified": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password", "full_name"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 },
+          "full_name": { "type": "string" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "required": ["refresh_token"],
+        "properties": {
+          "refresh_token": { "type": "string", "description": "Chi dung khi refresh token KHONG duoc gui qua HttpOnly cookie (vd: mobile client). Web client uu tien cookie, khong can field nay." }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": { "type": "string" },
+          "expires_in": { "type": "integer", "example": 1800, "description": "giay, 15-30 phut theo CLAUDE.md muc 7" },
+          "user": { "$ref": "#/components/schemas/User" }
+        },
+        "description": "refresh_token duoc set qua Set-Cookie HttpOnly, khong tra ve trong body."
+      },
+
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "full_name": { "type": "string" },
+          "avatar_url": { "type": "string" }
+        }
+      },
+
+      "AgentType": { "type": "string", "enum": ["text"] },
+      "AgentStatus": { "type": "string", "enum": ["draft", "pending", "approved", "rejected", "published", "unpublished"] },
+
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "creator_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "introduction": { "type": "string", "nullable": true },
+          "agent_type": { "$ref": "#/components/schemas/AgentType" },
+          "price_vnd": { "type": "integer", "minimum": 0 },
+          "default_credit_granted": { "type": "integer", "minimum": 0 },
+          "status": { "$ref": "#/components/schemas/AgentStatus" },
+          "reject_reason": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateAgentRequest": {
+        "type": "object",
+        "required": ["title", "price_vnd", "default_credit_granted"],
+        "properties": {
+          "title": { "type": "string" },
+          "introduction": { "type": "string" },
+          "agent_type": { "$ref": "#/components/schemas/AgentType" },
+          "price_vnd": { "type": "integer", "minimum": 0 },
+          "default_credit_granted": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "UpdateAgentRequest": {
+        "type": "object",
+        "description": "Chi cho phep sua khi agent dang o status draft hoac rejected (ABAC: kiem tra creator_id khop voi user hien tai).",
+        "properties": {
+          "title": { "type": "string" },
+          "introduction": { "type": "string" },
+          "price_vnd": { "type": "integer", "minimum": 0 },
+          "default_credit_granted": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "RejectAgentRequest": {
+        "type": "object",
+        "required": ["reject_reason"],
+        "properties": {
+          "reject_reason": { "type": "string" }
+        }
+      },
+      "AgentListResponse": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Agent" } },
+          "page": { "$ref": "#/components/schemas/PageMeta" }
+        }
+      },
+
+      "UpdateUserStatusRequest": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "$ref": "#/components/schemas/UserStatus" }
+        }
+      },
+
+      "CreditWallet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "balance": { "type": "integer", "description": "don vi: credit noi bo, khong phai token" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreditTxType": { "type": "string", "enum": ["purchase_grant", "usage_deduct", "topup", "refund_deduct"] },
+      "CreditTransaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "wallet_id": { "type": "string", "format": "uuid" },
+          "type": { "$ref": "#/components/schemas/CreditTxType" },
+          "amount": { "type": "integer", "description": "duong = cong, am = tru" },
+          "related_message_id": { "type": "string", "format": "uuid", "nullable": true },
+          "related_purchase_id": { "type": "string", "format": "uuid", "nullable": true },
+          "description": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreditTransactionListResponse": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/CreditTransaction" } },
+          "page": { "$ref": "#/components/schemas/PageMeta" }
+        }
+      },
+
+      "PaymentMethod": { "type": "string", "enum": ["vnpay", "mock"] },
+      "PaymentStatus": { "type": "string", "enum": ["pending", "paid", "failed", "refunded"] },
+
+      "CreatePurchaseRequest": {
+        "type": "object",
+        "required": ["payment_method"],
+        "properties": {
+          "payment_method": { "$ref": "#/components/schemas/PaymentMethod" }
+        }
+      },
+      "AgentPurchase": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "agent_id": { "type": "string", "format": "uuid" },
+          "amount_vnd": { "type": "integer" },
+          "default_credit_granted": { "type": "integer" },
+          "payment_method": { "$ref": "#/components/schemas/PaymentMethod" },
+          "payment_status": { "$ref": "#/components/schemas/PaymentStatus" },
+          "transaction_ref": { "type": "string", "description": "unique, dung cho idempotency" },
+          "paid_at": { "type": "string", "format": "date-time", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreatePurchaseResponse": {
+        "type": "object",
+        "properties": {
+          "purchase": { "$ref": "#/components/schemas/AgentPurchase" },
+          "redirect_url": { "type": "string", "nullable": true, "description": "URL redirect toi VNPay sandbox; null khi payment_method=mock (client tu goi webhook mock de mo phong)." }
+        }
+      },
+
+      "WebhookResult": { "type": "string", "enum": ["accepted", "duplicate", "invalid_signature"] },
+      "MockWebhookRequest": {
+        "type": "object",
+        "required": ["transaction_ref", "result"],
+        "properties": {
+          "transaction_ref": { "type": "string" },
+          "result": { "type": "string", "enum": ["success", "failed"] }
+        }
+      },
+      "VnpayWebhookRequest": {
+        "type": "object",
+        "description": "Should-have. Field theo dung format callback that cua VNPay sandbox (vnp_TxnRef, vnp_ResponseCode, vnp_SecureHash, ...) - se chuan hoa lai khi trien khai that.",
+        "properties": {
+          "vnp_TxnRef": { "type": "string" },
+          "vnp_ResponseCode": { "type": "string" },
+          "vnp_Amount": { "type": "string" },
+          "vnp_SecureHash": { "type": "string" }
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "properties": {
+          "result": { "$ref": "#/components/schemas/WebhookResult" }
+        }
+      },
+
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "agent_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateConversationRequest": {
+        "type": "object",
+        "required": ["agent_id"],
+        "properties": {
+          "agent_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ConversationListResponse": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Conversation" } },
+          "page": { "$ref": "#/components/schemas/PageMeta" }
+        }
+      },
+
+      "MessageRole": { "type": "string", "enum": ["user", "assistant"] },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "conversation_id": { "type": "string", "format": "uuid" },
+          "role": { "$ref": "#/components/schemas/MessageRole" },
+          "content": { "type": "string" },
+          "credit_charged": { "type": "integer", "nullable": true, "description": "null neu luot goi loi/retry khong tinh phi (CLAUDE.md muc 5)" },
+          "model_used": { "type": "string", "nullable": true },
+          "latency_ms": { "type": "integer", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MessageListResponse": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "page": { "$ref": "#/components/schemas/PageMeta" }
+        }
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": { "type": "string" }
+        }
+      },
+      "MessageStreamChunk": {
+        "type": "object",
+        "description": "1 event SSE (Content-Type: text/event-stream), 'event: chunk' lap lai roi ket bang 'event: done'.",
+        "properties": {
+          "delta": { "type": "string", "nullable": true, "description": "co o event 'chunk'" },
+          "message": { "$ref": "#/components/schemas/Message", "description": "co o event 'done', message hoan chinh da luu" }
+        }
+      },
+
+      "LlmProvider": { "type": "string", "enum": ["openai", "anthropic", "google"] },
+      "ApiKeyStatus": { "type": "string", "enum": ["active", "rate_limited", "disabled"] },
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "provider": { "$ref": "#/components/schemas/LlmProvider" },
+          "status": { "$ref": "#/components/schemas/ApiKeyStatus" },
+          "priority": { "type": "integer" },
+          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "description": "key_encrypted KHONG bao gio tra ve qua API (CLAUDE.md muc 7)."
+      },
+      "CreateApiKeyRequest": {
+        "type": "object",
+        "required": ["provider", "raw_key"],
+        "properties": {
+          "provider": { "$ref": "#/components/schemas/LlmProvider" },
+          "raw_key": { "type": "string", "description": "key that, server ma hoa AES-GCM truoc khi luu, khong bao gio log ra" },
+          "priority": { "type": "integer", "default": 0 }
+        }
+      },
+      "UpdateApiKeyRequest": {
+        "type": "object",
+        "properties": {
+          "status": { "$ref": "#/components/schemas/ApiKeyStatus" },
+          "priority": { "type": "integer" }
+        }
+      },
+
+      "UnitType": { "type": "string", "enum": ["token_input", "token_output", "image_generation"] },
+      "ModelPricing": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "provider": { "$ref": "#/components/schemas/LlmProvider" },
+          "model": { "type": "string" },
+          "unit_type": { "$ref": "#/components/schemas/UnitType" },
+          "price_usd_per_unit": { "type": "number", "format": "double" },
+          "credit_markup_multiplier": { "type": "number", "format": "double", "default": 1.5 },
+          "effective_from": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateModelPricingRequest": {
+        "type": "object",
+        "required": ["provider", "model", "unit_type", "price_usd_per_unit", "effective_from"],
+        "properties": {
+          "provider": { "$ref": "#/components/schemas/LlmProvider" },
+          "model": { "type": "string" },
+          "unit_type": { "$ref": "#/components/schemas/UnitType" },
+          "price_usd_per_unit": { "type": "number", "format": "double" },
+          "credit_markup_multiplier": { "type": "number", "format": "double", "default": 1.5 },
+          "effective_from": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateModelPricingRequest": {
+        "type": "object",
+        "description": "Tao ban ghi moi voi effective_from moi thay vi sua gia cu (giu lich su tang gia) - endpoint nay chi cho phep sua truoc effective_from (chua ap dung).",
+        "properties": {
+          "price_usd_per_unit": { "type": "number", "format": "double" },
+          "credit_markup_multiplier": { "type": "number", "format": "double" },
+          "effective_from": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "KbStatus": { "type": "string", "enum": ["processing", "ready", "failed"] },
+      "KnowledgeBase": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "agent_id": { "type": "string", "format": "uuid" },
+          "file_name": { "type": "string" },
+          "file_url": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/KbStatus" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Request khong hop le", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Thieu hoac sai JWT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "Khong du quyen (role hoac khong phai chu so huu - ABAC)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Khong tim thay", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "Xung dot trang thai (vd: khong du credit, trang thai khong hop le de chuyen doi)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Dang ky tai khoan (role mac dinh: user)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } } },
+        "responses": {
+          "201": { "description": "Tao thanh cong, tu dong tao credit_wallets voi balance=0", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Dang nhap, tra access token + set refresh token qua HttpOnly cookie",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Cap access token moi tu refresh token (cookie hoac body)",
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Thu hoi refresh token, xoa cookie",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+
+    "/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Thong tin user dang dang nhap",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Cap nhat ho so ban than",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/agents": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "Tim kiem/liet ke agent da published (sang agent, khong can dang nhap)",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "tu khoa tim theo title" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AgentListResponse" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Creator tao agent moi (status=draft)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAgentRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Chi role creator/admin duoc tao agent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/agents/mine": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "Agent cua creator dang dang nhap (moi status, ke ca draft/rejected)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/AgentStatus" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AgentListResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/agents/{agentId}": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "Chi tiet 1 agent",
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Agents"],
+        "summary": "Creator sua agent cua chinh minh (ABAC: creator_id phai khop)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateAgentRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Agent khong o trang thai draft/rejected nen khong sua duoc", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/agents/{agentId}/submit": {
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Creator gui agent (draft/rejected -> pending) de admin duyet",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/agents/{agentId}/unpublish": {
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Creator go published agent khoi san (published -> unpublished)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/agents/pending": {
+      "get": {
+        "tags": ["Admin - Agents"],
+        "summary": "Danh sach agent cho duyet (status=pending)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AgentListResponse" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/agents/{agentId}/approve": {
+      "post": {
+        "tags": ["Admin - Agents"],
+        "summary": "Duyet agent (pending -> published)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/agents/{agentId}/reject": {
+      "post": {
+        "tags": ["Admin - Agents"],
+        "summary": "Tu choi agent (pending -> rejected), bat buoc ghi ly do",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RejectAgentRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Agent" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin - Users"],
+        "summary": "Danh sach user (quan tri)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/UserStatus" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }, "page": { "$ref": "#/components/schemas/PageMeta" } } } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/users/{userId}/status": {
+      "patch": {
+        "tags": ["Admin - Users"],
+        "summary": "Ban/unban user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateUserStatusRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+
+    "/wallet": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "So du vi credit cua user dang dang nhap",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreditWallet" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/wallet/transactions": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "Lich su giao dich credit (nap/tru/hoan)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "type", "in": "query", "schema": { "$ref": "#/components/schemas/CreditTxType" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreditTransactionListResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/agents/{agentId}/purchases": {
+      "post": {
+        "tags": ["Purchases & Payment"],
+        "summary": "Khoi tao mua agent (tao agent_purchases voi transaction_ref moi, payment_status=pending)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePurchaseRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePurchaseResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": { "description": "Da mua agent nay roi", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/purchases/{transactionRef}": {
+      "get": {
+        "tags": ["Purchases & Payment"],
+        "summary": "Trang thai 1 giao dich mua agent (client poll sau khi redirect ve tu payment)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "transactionRef", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AgentPurchase" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/payments/webhook/mock": {
+      "post": {
+        "tags": ["Purchases & Payment"],
+        "summary": "Webhook Mock Payment Gateway (Must-have). Idempotent theo transaction_ref, cong credit dung 1 lan du goi lai nhieu lan.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MockWebhookRequest" } } } },
+        "responses": {
+          "200": { "description": "OK (bao gom ca truong hop duplicate - van tra 200 nhung result=duplicate, khong cong credit lan 2)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookResponse" } } } },
+          "400": { "description": "Chu ky khong hop le / payload sai - van ghi vao payment_webhook_logs", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/payments/webhook/vnpay": {
+      "post": {
+        "tags": ["Purchases & Payment"],
+        "summary": "Webhook VNPay sandbox (Should-have). Xac thuc vnp_SecureHash truoc khi xu ly.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VnpayWebhookRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookResponse" } } } },
+          "400": { "description": "vnp_SecureHash khong hop le", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+
+    "/conversations": {
+      "post": {
+        "tags": ["Conversations & Chat"],
+        "summary": "Bat dau conversation moi voi 1 agent (yeu cau da mua agent hoac agent mien phi)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateConversationRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Conversation" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Chua mua agent nay", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "tags": ["Conversations & Chat"],
+        "summary": "Danh sach conversation cua user dang dang nhap",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConversationListResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/conversations/{conversationId}": {
+      "get": {
+        "tags": ["Conversations & Chat"],
+        "summary": "Chi tiet 1 conversation (ABAC: chi chu so huu duoc xem)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "conversationId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Conversation" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/conversations/{conversationId}/messages": {
+      "get": {
+        "tags": ["Conversations & Chat"],
+        "summary": "Lich su tin nhan trong conversation",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "conversationId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageListResponse" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Conversations & Chat"],
+        "summary": "Gui tin nhan, nhan response tu LLM qua proxy (SSE streaming). Backend tu resend toan bo mang messages cho proxy (LLM API stateless - CLAUDE.md muc 5). Credit chi tru khi co usage that tu provider tra ve.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "conversationId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } } } },
+        "responses": {
+          "200": {
+            "description": "text/event-stream: chuoi event 'chunk' (delta text) roi 1 event 'done' (Message hoan chinh). Khong chuyen doi provider giua chung 1 stream (CLAUDE.md muc 5) - loi giua stream = ket thuc phien la failed/partial.",
+            "content": { "text/event-stream": { "schema": { "$ref": "#/components/schemas/MessageStreamChunk" } } }
+          },
+          "402": { "description": "Khong du credit", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/api-keys": {
+      "get": {
+        "tags": ["Admin - API Keys"],
+        "summary": "Danh sach API key thuong nguon (key_encrypted khong tra ve)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ApiKey" } } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Admin - API Keys"],
+        "summary": "Them API key moi (server ma hoa AES-GCM truoc khi luu)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateApiKeyRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiKey" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/api-keys/{apiKeyId}": {
+      "patch": {
+        "tags": ["Admin - API Keys"],
+        "summary": "Doi status/priority cua API key",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "apiKeyId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateApiKeyRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiKey" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Admin - API Keys"],
+        "summary": "Xoa API key",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "apiKeyId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+
+    "/admin/model-pricing": {
+      "get": {
+        "tags": ["Admin - Model Pricing"],
+        "summary": "Danh sach bang ty gia quy doi usage -> credit",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "provider", "in": "query", "schema": { "$ref": "#/components/schemas/LlmProvider" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ModelPricing" } } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Admin - Model Pricing"],
+        "summary": "Them muc gia moi (credit = ceil(token_upstream x credit_markup_multiplier), mac dinh 1.5 - CLAUDE.md muc 4)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateModelPricingRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelPricing" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/model-pricing/{pricingId}": {
+      "patch": {
+        "tags": ["Admin - Model Pricing"],
+        "summary": "Sua muc gia (chi khi effective_from chua toi, dung tao ban ghi moi de doi gia dang ap dung)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "pricingId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateModelPricingRequest" } } } },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelPricing" } } } },
+          "403": { "description": "Chi role admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "effective_from da qua, khong sua duoc - phai tao ban ghi moi", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+
+    "/agents/{agentId}/knowledge-base": {
+      "get": {
+        "tags": ["Knowledge Base (Should-have)"],
+        "summary": "Danh sach file kien thuc cua agent (RAG)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/KnowledgeBase" } } } } },
+          "403": { "description": "ABAC: chi creator so huu agent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Knowledge Base (Should-have)"],
+        "summary": "Upload file kien thuc (multipart/form-data), trigger chunking+embedding bat dong bo (status: processing -> ready/failed)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "agentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } } } }
+        },
+        "responses": {
+          "202": { "description": "Accepted - dang xu ly bat dong bo", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeBase" } } } },
+          "403": { "description": "ABAC: chi creator so huu agent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/knowledge-base/{kbId}": {
+      "delete": {
+        "tags": ["Knowledge Base (Should-have)"],
+        "summary": "Xoa 1 file kien thuc (xoa ca kb_chunks lien quan)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "kbId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "403": { "description": "ABAC: chi creator so huu agent (tenant isolation - CLAUDE.md muc 7)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  }
+}

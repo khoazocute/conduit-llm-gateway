@@ -14,7 +14,7 @@ ai-service/        FastAPI (Python) — RAG, Should-have
 frontend/          Next.js + TypeScript + Tailwind — Portal
 proxy-configs/     Config cho 3 proxy đánh giá (litellm/bifrost/portkey)
 experiments/       Thực nghiệm đánh giá proxy (prompts, scripts, results, analysis)
-docs/              ERD, tài liệu proposal
+docs/              ERD (erd.dbml), API contract (openapi.json), tài liệu proposal
 scripts/           Tiện ích chung (migration, seed data...)
 ```
 
@@ -31,6 +31,15 @@ docker compose up -d
 - LiteLLM: `localhost:4000`
 - Bifrost: `localhost:8080`
 - Portkey: `localhost:8787`
+
+## API contract
+
+`docs/openapi.json` (OpenAPI 3.0.3) — thống nhất trước endpoint/request/response
+giữa 2 người trước khi code backend + frontend, dựng từ `docs/erd.dbml`. Paste vào
+[editor.swagger.io](https://editor.swagger.io) để xem dạng UI dễ đọc hơn. Mỗi tag
+có ghi chú "Owner gợi ý" theo cách chia việc hiện tại (1 người phụ trách Auth+Agent,
+1 người phụ trách Credit+Chat+Payment). Cho phép sai số ±3 endpoint khi code thực tế
+— nếu đổi field đã thống nhất thì báo lại cho người còn lại.
 
 ## Chạy từng service
 
