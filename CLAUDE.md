@@ -152,6 +152,15 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 
 Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 6 container (Postgres+pgvector, pgAdmin, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend. Hướng dẫn setup từng bước (bao gồm cách xem bảng qua pgAdmin) nằm ở README.md, không lặp lại ở đây.
 
+**Việc kế tiếp — Hùng, vertical Auth+Agent (checklist, làm theo thứ tự):**
+1. Thêm thư viện JWT (`jjwt`) vào `backend-gateway/pom.xml`.
+2. `SecurityConfig` (SecurityFilterChain): public `GET /agents`, `GET /agents/{id}`, `/auth/**`; còn lại yêu cầu JWT. `PasswordEncoder` bean (BCrypt).
+3. `JwtService`: generate/validate access token (15–30 phút) + refresh token; filter đọc token từ header hoặc HttpOnly cookie.
+4. Auth API (`/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`) — DTO khớp đúng schema trong `docs/openapi.json`. Register phải tạo cả `User` lẫn `CreditWallet` (balance=0) — dùng thẳng `CreditWalletRepository` đã có sẵn, repo không bị khoá theo vertical, chỉ business logic mới chia.
+5. Agent API (`/agents`, `/agents/mine`, `/agents/{id}`, `/agents/{id}/submit`, `/agents/{id}/unpublish`) — ABAC: check `creator_id` khớp user hiện tại khi sửa/submit.
+6. Admin API (`/admin/agents/pending`, `/admin/agents/{id}/approve|reject`, `/admin/users`, `/admin/users/{id}/status`) — check role `admin`.
+7. Test bằng Postman: import thẳng `docs/openapi.json` (File → Import) để Postman tự sinh collection, khỏi tạo tay từng request. Thứ tự test: register → login (lấy access token) → dùng token gọi `/agents` (POST) → `/agents/{id}/submit` → dùng account admin approve.
+
 | Tuần | Việc | Phụ trách |
 |---|---|---|
 | 1 | ERD (`docs/erd.dbml`) + OpenAPI contract (`docs/openapi.json`) | Hùng & Khoa (joint) |
