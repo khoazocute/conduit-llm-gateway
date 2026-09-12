@@ -11,6 +11,23 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: conduit-pgadmin
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@conduit.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False" # bo qua man dang nhap lai moi lan mo tab moi, chi dung local dev
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      # servers.json chi pre-fill thong tin ket noi (host/port/db/user), pgAdmin
+      # van hoi mat khau Postgres lan dau ket noi ("conduit", xem service postgres o tren).
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+
   redis:
     image: redis:7-alpine
     container_name: conduit-redis
@@ -60,3 +77,4 @@ services:
 volumes:
   postgres-data:
   bifrost-data:
+  pgadmin-data:

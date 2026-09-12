@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Conduit (docker-compose)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "conduit",
+      "Username": "conduit",
+      "SSLMode": "prefer"
+    }
+  }
+}

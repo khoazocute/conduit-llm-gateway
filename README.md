@@ -31,6 +31,10 @@ docker compose up -d
 - LiteLLM: `localhost:4000`
 - Bifrost: `localhost:8080`
 - Portkey: `localhost:8787`
+- pgAdmin (UI xem Postgres qua trình duyệt, kiểu MySQL Workbench): `localhost:5050`
+  — đăng nhập `admin@conduit.dev` / `admin`, server "Conduit (docker-compose)" đã
+  pre-fill sẵn host/port/db/user, chỉ cần nhập password Postgres (`conduit`) khi
+  pgAdmin hỏi lúc kết nối lần đầu.
 
 ## API contract
 
