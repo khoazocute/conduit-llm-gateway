@@ -56,6 +56,7 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
 | DB Migration | Flyway (`backend-gateway/src/main/resources/db/migration/`) — schema tạo qua migration, KHÔNG dùng `ddl-auto: update`/`create` |
 | AI Service (Should-have — RAG) | Python + FastAPI |
 | Database | PostgreSQL + pgvector |
+| DB UI (dev) | pgAdmin (docker-compose service `pgadmin`, `localhost:5050`) — dùng để xem bảng/query nhanh, không phải thành phần deploy production |
 | Cache | Redis (JWT session, rate limit counters) |
 | Object Storage | S3-compatible |
 | CI/CD | GitHub Actions |
@@ -149,7 +150,7 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - **Hùng — Auth + Agent:** entity `users`/`agents`, JWT, CRUD agent + luồng duyệt draft→pending→published/rejected, admin quản lý user/agent; frontend: login/register, sàn agent, trang creator, trang admin duyệt agent. Tag OpenAPI: `Auth`, `Users`, `Agents`, `Admin - Agents`, `Admin - Users`.
 - **Khoa — Credit + Chat + Payment:** entity `credit_wallets`/`credit_transactions`/`agent_purchases`/`payment_webhook_logs`/`conversations`/`messages`/`api_keys`/`model_pricing`, Provider Adapter (OpenAI/Anthropic), credit wallet (optimistic lock), webhook mock; frontend: ví credit, luồng mua agent, chat streaming SSE, admin API key/bảng giá. Tag OpenAPI: `Wallet`, `Purchases & Payment`, `Conversations & Chat`, `Admin - API Keys`, `Admin - Model Pricing`.
 
-Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 5 container (Postgres+pgvector, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend.
+Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 6 container (Postgres+pgvector, pgAdmin, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend. Hướng dẫn setup từng bước (bao gồm cách xem bảng qua pgAdmin) nằm ở README.md, không lặp lại ở đây.
 
 | Tuần | Việc | Phụ trách |
 |---|---|---|
