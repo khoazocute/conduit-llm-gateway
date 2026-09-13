@@ -14,4 +14,6 @@ public interface AgentRepository extends JpaRepository<Agent, UUID> {
     Page<Agent> findByStatus(AgentStatus status, Pageable pageable);
 
     Page<Agent> findByStatusAndTitleContainingIgnoreCase(AgentStatus status, String title, Pageable pageable);
+
+    Page<Agent> findByCreatorIdAndStatus(UUID creatorId, AgentStatus status, Pageable pageable);
 }

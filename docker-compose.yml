@@ -34,10 +34,12 @@ services:
     ports:
       # Host port lệch khỏi 6379: Windows/Hyper-V hay loại trừ động dải cổng
       # quanh 6379 (netsh interface ipv4 show excludedportrange), gây lỗi
-      # "ports are not available" khi bind đúng 6379. Container vẫn nghe ở
-      # 6379 bên trong network của docker-compose, ứng dụng nội bộ (litellm,
-      # bifrost, portkey) cứ dùng "redis:6379" như bình thường.
-      - "16379:6379"
+      # "ports are not available" khi bind đúng 6379. Dải loại trừ này thay
+      # đổi theo thời gian (đã từng chặn cả 16379) — nếu 26379 lại dính,
+      # đổi sang 1 port khác và cập nhật application.yml theo.
+      # Container vẫn nghe ở 6379 bên trong network của docker-compose,
+      # ứng dụng nội bộ (litellm, bifrost, portkey) cứ dùng "redis:6379" như bình thường.
+      - "26379:6379"
 
   litellm:
     image: ghcr.io/berriai/litellm:v1.83.14-stable

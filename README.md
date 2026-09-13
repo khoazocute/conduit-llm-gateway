@@ -67,7 +67,7 @@ scripts/           Tiện ích chung (migration, seed data...)
 ## Port tra cứu nhanh (đã bật bằng `docker compose up -d` ở phần Setup)
 
 - Postgres (pgvector): `localhost:5432`, db `conduit`, user/pass `conduit`
-- Redis: `localhost:16379` (không phải 6379 mặc định — Windows/Hyper-V hay loại
+- Redis: `localhost:26379` (không phải 6379 mặc định — Windows/Hyper-V hay loại
   trừ động dải cổng quanh 6379, xem chú thích trong `docker-compose.yml`)
 - LiteLLM: `localhost:4000`
 - Bifrost: `localhost:8080`

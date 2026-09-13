@@ -16,9 +16,17 @@ spring:
   data:
     redis:
       host: localhost
-      # Host port của redis trong docker-compose là 16379 (không phải 6379
+      # Host port của redis trong docker-compose là 26379 (không phải 6379
       # mặc định) — xem chú thích trong docker-compose.yml.
-      port: 16379
+      port: 26379
 
 server:
   port: 8081
+  servlet:
+    context-path: /api
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me-please-32-bytes-minimum-secret-key}
+    access-token-expiration-minutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:20}
+    refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:7}
