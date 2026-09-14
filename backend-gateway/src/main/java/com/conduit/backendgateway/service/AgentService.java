@@ -82,7 +82,7 @@ public class AgentService {
     public AgentResponse submit(UUID agentId, UUID currentUserId) {
         Agent agent = findAgentOrThrow(agentId);
         requireOwnership(agent, currentUserId);
-        requireEditableStatus(agent);
+        requireSubmittableStatus(agent);
 
         agent.setStatus(AgentStatus.pending);
         agent.setRejectReason(null);
@@ -116,6 +116,17 @@ public class AgentService {
         if (agent.getStatus() != AgentStatus.draft && agent.getStatus() != AgentStatus.rejected) {
             throw new InvalidAgentStatusTransitionException(
                     "Agent must be in draft or rejected status for this action");
+        }
+    }
+
+    // Submitting also accepts `unpublished` so a creator can send a previously
+    // published (then unpublished) agent back through admin review, instead of
+    // it being stuck forever with no path back to `published`.
+    private void requireSubmittableStatus(Agent agent) {
+        AgentStatus status = agent.getStatus();
+        if (status != AgentStatus.draft && status != AgentStatus.rejected && status != AgentStatus.unpublished) {
+            throw new InvalidAgentStatusTransitionException(
+                    "Agent must be in draft, rejected, or unpublished status to submit for review");
         }
     }
 }
