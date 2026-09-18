@@ -160,3 +160,6 @@ venv/
 *.iml
 .vscode/
 
+# Local docker-compose overrides (machine-specific port remaps etc.)
+docker-compose.override.yml
+

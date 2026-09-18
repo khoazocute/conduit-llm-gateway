@@ -1,6 +1,6 @@
 import type { ApiError } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081/api";
 
 export class ApiClientError extends Error {
   status: number;
@@ -20,6 +20,7 @@ interface ApiFetchOptions {
   /** Only auth endpoints (login/register/refresh/logout) need the refresh_token cookie. */
   withCredentials?: boolean;
   searchParams?: Record<string, string | number | undefined>;
+  extraHeaders?: Record<string, string>;
 }
 
 function buildUrl(path: string, searchParams?: ApiFetchOptions["searchParams"]) {
@@ -35,9 +36,9 @@ function buildUrl(path: string, searchParams?: ApiFetchOptions["searchParams"]) 
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", token, body, withCredentials, searchParams } = options;
+  const { method = "GET", token, body, withCredentials, searchParams, extraHeaders } = options;
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...extraHeaders };
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";
   }

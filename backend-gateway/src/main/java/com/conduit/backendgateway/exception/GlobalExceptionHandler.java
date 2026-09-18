@@ -45,6 +45,30 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("forbidden", ex.getMessage()));
     }
 
+    @ExceptionHandler(InsufficientCreditException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientCredit(InsufficientCreditException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("insufficient_credit", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AgentNotPurchasableException.class)
+    public ResponseEntity<ErrorResponse> handleAgentNotPurchasable(AgentNotPurchasableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("agent_not_purchasable", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidWebhookSignatureException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidWebhookSignature(InvalidWebhookSignatureException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("invalid_webhook_signature", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPricingTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPricingTransition(InvalidPricingTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("invalid_pricing_transition", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidAgentStatusTransitionException.class)
     public ResponseEntity<ErrorResponse> handleInvalidAgentStatusTransition(InvalidAgentStatusTransitionException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

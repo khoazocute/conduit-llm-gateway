@@ -30,3 +30,18 @@ app:
     secret: ${JWT_SECRET:dev-only-change-me-please-32-bytes-minimum-secret-key}
     access-token-expiration-minutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:20}
     refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:7}
+  webhook:
+    mock-secret: ${MOCK_WEBHOOK_SECRET:dev-only-mock-webhook-secret}
+  security:
+    api-key-encryption-secret: ${API_KEY_ENCRYPTION_SECRET:dev-only-api-key-encryption-secret}
+  chat:
+    # Proxy "active" hien la cau hinh tinh, khong phai routing thong minh -
+    # quyet dinh that thuoc Tuan 9-10 (CLAUDE.md muc 2/8).
+    active-proxy: litellm
+    default-model: gemini-flash
+    proxy-base-urls:
+      litellm: http://localhost:4000/v1
+      bifrost: http://localhost:8080/v1
+      portkey: http://localhost:8787/v1
+    proxy-api-keys:
+      litellm: ${LITELLM_MASTER_KEY:sk-1234}
