@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AgentAvatar } from "@/components/agent-avatar";
 import { AgentStatusBadge } from "@/components/agent-status-badge";
+import { PurchaseAgentButton } from "@/components/purchase-agent-button";
 import { ApiClientError, apiFetch } from "@/lib/api/client";
 import type { Agent } from "@/lib/api/types";
 
@@ -55,6 +57,13 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
           <span className="faint mono" style={{ fontSize: "var(--t-2)" }}>
             Grants {agent.default_credit_granted} credit on purchase
           </span>
+        </div>
+        <div className="divider" />
+        <div className="row" style={{ gap: 10 }}>
+          <PurchaseAgentButton agentId={agent.id} priceVnd={agent.price_vnd} />
+          <Link href={`/agents/${agent.id}/chat`} className="btn btn-ghost">
+            Chat
+          </Link>
         </div>
       </div>
     </div>

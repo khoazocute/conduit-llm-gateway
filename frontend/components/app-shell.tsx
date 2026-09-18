@@ -76,6 +76,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="sidebar-section">Browse</div>
         <NavItem href="/" label="Marketplace" />
 
+        {status === "authenticated" && (
+          <>
+            <div className="sidebar-section">Account</div>
+            <NavItem href="/wallet" label="Wallet" />
+          </>
+        )}
+
         {canManageAgents && (
           <>
             <div className="sidebar-section">Creator</div>
@@ -88,6 +95,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="sidebar-section">Admin</div>
             <NavItem href="/admin/agents" label="Approve agents" />
             <NavItem href="/admin/users" label="Users" />
+            <NavItem href="/admin/api-keys" label="API keys" />
+            <NavItem href="/admin/model-pricing" label="Model pricing" />
           </>
         )}
 
