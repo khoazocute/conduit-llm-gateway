@@ -171,7 +171,7 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
 - Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
 
-**Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận.
+**Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận. **Không thêm dòng `Co-Authored-By: Claude` (hay bất kỳ attribution/"Generated with Claude Code" nào) vào commit message hoặc mô tả PR** — quy tắc của Hùng, ưu tiên hơn gợi ý mặc định của công cụ.
 
 | Tuần | Việc | Phụ trách |
 |---|---|---|
