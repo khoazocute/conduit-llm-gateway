@@ -64,6 +64,8 @@ export default function AdminModelPricingPage() {
     }
   }
 
+  // Recomputed on every render on purpose: the "scheduled" label must track the current time.
+  // eslint-disable-next-line react-hooks/purity
   const isFuture = (iso: string) => new Date(iso).getTime() > Date.now();
 
   return (

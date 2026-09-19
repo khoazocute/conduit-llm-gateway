@@ -33,7 +33,7 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
   - Tầng rẻ: GPT-4o-mini, Gemini Flash
   - Tầng trung: Claude Haiku
   - Tầng đắt: GPT-4o, Claude Sonnet
-- **Bộ 30 prompt cố định**, phân tầng 4 loại: 12 closed-QA (có đáp án đúng/sai — kiến thức, toán, logic), 6 code, 12 mở (email, tóm tắt, sáng tạo).
+- **Bộ 30 prompt cố định**, phân tầng 4 loại: 12 closed-QA (có đáp án đúng/sai — kiến thức, toán, logic), 6 code, 12 mở (email, tóm tắt, sáng tạo). **Đã chốt, xem `docs/eval-prompts.md`** (đủ nội dung prompt + đáp án đúng cho closed-QA) — không sửa nội dung file này nữa khi đã bắt đầu chạy thực nghiệm tuần 9–10.
 - **Mỗi prompt chạy 3 lần trên mỗi proxy** → 30 × 3 proxy × 3 lần = 270 lượt gọi API thật. Mục đích: đo tỷ lệ nhất quán (consistency rate) của quyết định routing, không chỉ đo giá trị trung bình.
 - **Chấm chất lượng:**
   - Closed-QA: đúng/sai khách quan, tự động hóa được (so đáp án).
@@ -152,21 +152,33 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 
 Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 6 container (Postgres+pgvector, pgAdmin, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend. Hướng dẫn setup từng bước (bao gồm cách xem bảng qua pgAdmin) nằm ở README.md, không lặp lại ở đây.
 
-**Việc kế tiếp — Hùng, vertical Auth+Agent (checklist, làm theo thứ tự):**
-1. Thêm thư viện JWT (`jjwt`) vào `backend-gateway/pom.xml`.
-2. `SecurityConfig` (SecurityFilterChain): public `GET /agents`, `GET /agents/{id}`, `/auth/**`; còn lại yêu cầu JWT. `PasswordEncoder` bean (BCrypt).
-3. `JwtService`: generate/validate access token (15–30 phút) + refresh token; filter đọc token từ header hoặc HttpOnly cookie.
-4. Auth API (`/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`) — DTO khớp đúng schema trong `docs/openapi.json`. Register phải tạo cả `User` lẫn `CreditWallet` (balance=0) — dùng thẳng `CreditWalletRepository` đã có sẵn, repo không bị khoá theo vertical, chỉ business logic mới chia.
-5. Agent API (`/agents`, `/agents/mine`, `/agents/{id}`, `/agents/{id}/submit`, `/agents/{id}/unpublish`) — ABAC: check `creator_id` khớp user hiện tại khi sửa/submit.
-6. Admin API (`/admin/agents/pending`, `/admin/agents/{id}/approve|reject`, `/admin/users`, `/admin/users/{id}/status`) — check role `admin`.
-7. Test bằng Postman: import thẳng `docs/openapi.json` (File → Import) để Postman tự sinh collection, khỏi tạo tay từng request. Thứ tự test: register → login (lấy access token) → dùng token gọi `/agents` (POST) → `/agents/{id}/submit` → dùng account admin approve.
+**Vertical Auth+Agent (Hùng) — ĐÃ XONG cả backend lẫn frontend, đã push `main` (commit `52b42ff`):**
+- Backend: JWT (access + refresh token revocable qua Redis, 1 session/user), `SecurityConfig`/`JwtService`/`JwtAuthenticationFilter`, Auth API, Agent API (ABAC + state machine `draft→pending→published/rejected→unpublished`, **`unpublished` submit lại được về `pending`** — fix gap ban đầu), Admin API. Test tự động: `backend-gateway/scripts/e2e_test.sh` (40 check, chạy pass) + `JwtServiceTest` unit test.
+- Frontend: Next.js 16 (route group `(app)`/`(auth)`), login/register, marketplace, creator dashboard, admin (duyệt agent/user). Style dùng chung: theme dev-console dark, class CSS thuần (không dùng thư viện component nào — tránh lỗi `render`-prop từng gặp với shadcn/Base UI) — **xem `docs/design-system.md` trước khi làm UI mới, kể cả vertical Khoa**, nguồn thật nằm ở `frontend/app/globals.css`.
+- Lưu ý hạ tầng: port host của Redis trong `docker-compose.yml` là `26379` (không phải 6379 mặc định, Windows/Hyper-V hay đổi dải cổng bị loại trừ theo thời gian — nếu lại đụng port, đổi sang port khác và cập nhật `application.yml` theo).
+- Gap còn biết nhưng chưa xử lý: chưa có API cho user tự nâng cấp role → creator (phải sửa tay qua SQL/pgAdmin lúc test) — cân nhắc hỏi GVHD trước khi thêm field `role` vào `PATCH /admin/users/{id}/status` hay tạo cơ chế riêng.
+
+**Vertical Credit+Chat+Payment (Khoa) — ĐÃ MERGE vào `main` (PR #1, `e8d2bfd`), Hùng đã pull về và test workflow xuyên 2 vertical (2026-09-19):**
+- Có: ví credit + ledger, mua agent qua Mock Payment (webhook HMAC `X-Webhook-Signature`, idempotent), chat SSE qua proxy (`ChatService`/`HttpProxyChatClient`, proxy đang chọn tĩnh `app.chat.active-proxy: litellm` — routing thật là việc tuần 9–10), `AesGcmCipher` cho API key, admin API key + model pricing; frontend: `/wallet`, `/agents/[id]/chat`, `/admin/api-keys`, `/admin/model-pricing`, nút mua agent.
+- Test workflow: `backend-gateway/scripts/e2e_workflow_test.sh` (34 check: creator tạo agent → admin duyệt → user mua → webhook sai/thiếu chữ ký bị 400 → webhook đúng cộng credit → **callback trùng không cộng lần 2** → mở chat → provider lỗi báo qua SSE và **không trừ credit**). Kèm `scripts/e2e_test.sh` (40 check, Auth+Agent) — cả hai phải pass trước khi merge.
+- **Chưa test được chat thành công thật:** `.env` chỉ có API key placeholder (`sk-...changeme`) nên upstream trả "API key not valid" — nhánh lỗi đã test, nhánh thành công (có usage → trừ credit → ghi `usage_logs`/`routing_decisions`) cần key thật, chưa chạy.
+- 2 lỗi đã sửa khi test (thuộc tầng Auth của Hùng, ảnh hưởng SSE của Khoa): (1) `JwtAuthenticationFilter` phải chạy cả trên ASYNC dispatch (`shouldNotFilterAsyncDispatch()=false`) — nếu không, khi `SseEmitter` kết thúc, stream bị cắt/401; (2) `SecurityConfig` cho phép ERROR dispatch (`dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()`) — nếu không, lỗi validation trên endpoint `text/event-stream` (vd. `content` rỗng) bị che thành 401 thay vì 400.
+
+**Bẫy môi trường khi chạy local (đã gặp thật):**
+- Spring Boot **không đọc file `.env`**. Backend chỉ thấy biến môi trường của shell chạy nó. Nếu không export `LITELLM_MASTER_KEY` (giá trị trong `.env`) trước khi `./mvnw spring-boot:run`, backend dùng default `sk-1234` ≠ key của container LiteLLM → chat lỗi `No connected db`. Chạy: `LITELLM_MASTER_KEY=<giá trị trong .env> ./mvnw spring-boot:run`.
+- Trên Windows/git-bash, gửi body chứa tiếng Việt bằng `curl -d "..."` làm hỏng encoding → gửi qua file: `curl --data-binary @file.json -H "Content-Type: application/json; charset=utf-8"`.
+- Docker Desktop phải chạy trước `docker compose up -d` (lỗi `dockerDesktopLinuxEngine` = chưa bật).
+- Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
+- Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
+
+**Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận.
 
 | Tuần | Việc | Phụ trách |
 |---|---|---|
-| 1 | ERD (`docs/erd.dbml`) + OpenAPI contract (`docs/openapi.json`) | Hùng & Khoa (joint) |
-| 2–5 | Vertical Auth+Agent (backend + frontend) | Hùng |
-| 2–5 | Vertical Credit+Chat+Payment (backend + frontend) | Khoa |
-| 6–7 | Chuẩn bị thực nghiệm: chốt 30 prompt, viết rubric, bảng chấm mù | Hùng & Khoa |
+| 1 | ERD (`docs/erd.dbml`) + OpenAPI contract (`docs/openapi.json`) | Hùng & Khoa (joint) — ✅ xong |
+| 2–5 | Vertical Auth+Agent (backend + frontend) | Hùng — ✅ xong, đã push `main` |
+| 2–5 | Vertical Credit+Chat+Payment (backend + frontend) | Khoa — ✅ đã merge `main`, workflow xuyên 2 vertical đã test (chat thành công thật còn chờ API key thật) |
+| 6–7 | Chuẩn bị thực nghiệm: chốt 30 prompt, viết rubric, bảng chấm mù | Hùng & Khoa — 30 prompt ✅ đã chốt (`docs/eval-prompts.md`); rubric chấm mù & bảng chấm chi tiết còn cần dựng |
 | 7–8 | Setup hạ tầng 3 proxy (deploy, cấu hình pool 5 model, logging vào `routing_decisions`) | Hùng (infra Docker đã xong, routing strategy thật + logging còn phụ thuộc backend) |
 | **9–10** | **Chạy thực nghiệm: mỗi người 15 prompt × 3 proxy × 3 lần trên phần của mình. Tổng hợp, áp dụng quy tắc quyết định, chọn proxy chính thức.** | **Hùng & Khoa (JOINT)** |
 | 11 | Mock Payment Gateway, webhook, dashboard ví credit | Hùng & Khoa |

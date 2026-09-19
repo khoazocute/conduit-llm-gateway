@@ -21,6 +21,8 @@ export default function WalletPage() {
 
   useEffect(() => {
     if (!accessToken) return;
+    // Fetch-on-mount: synchronizing local state with the server.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.all([
       apiFetch<CreditWallet>("/wallet", { token: accessToken }),

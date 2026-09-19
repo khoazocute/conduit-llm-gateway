@@ -3,6 +3,7 @@ package com.conduit.backendgateway.security;
 import com.conduit.backendgateway.dto.common.ErrorResponse;
 import com.conduit.backendgateway.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +50,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Container error dispatch (/error) must not be re-authorized: otherwise any error raised
+                        // before/while handling a request (e.g. a 400 validation failure on the text/event-stream
+                        // chat endpoint, whose produces= blocks a JSON error body) is masked as a misleading 401.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/agents", "/agents/{agentId}").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/payments/webhook/mock", "/payments/webhook/vnpay")
