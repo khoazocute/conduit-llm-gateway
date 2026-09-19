@@ -73,6 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token: accessToken,
         withCredentials: true,
       });
+    } catch {
+      // Never surface a logout failure: the local session must be dropped regardless (the server
+      // revokes the refresh token and clears its cookie when reachable).
     } finally {
       setUser(null);
       setAccessToken(null);

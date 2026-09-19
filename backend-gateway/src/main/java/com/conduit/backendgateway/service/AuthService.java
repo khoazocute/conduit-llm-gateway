@@ -99,8 +99,25 @@ public class AuthService {
         return issueTokens(user);
     }
 
-    public void logout(UUID userId) {
-        refreshTokenStore.revoke(userId);
+    /**
+     * Idempotent: must work even when the short-lived access token has already expired (userId == null),
+     * otherwise the refresh session would survive logout. The session is then identified by the refresh token.
+     */
+    public void logout(UUID userId, String rawRefreshToken) {
+        UUID target = userId;
+        if (target == null && rawRefreshToken != null && !rawRefreshToken.isBlank()) {
+            try {
+                Jws<Claims> claims = jwtService.parseAndValidate(rawRefreshToken);
+                if (jwtService.isRefreshToken(claims)) {
+                    target = jwtService.extractUserId(claims);
+                }
+            } catch (InvalidOrExpiredTokenException ignored) {
+                // An already-invalid refresh token has nothing left to revoke.
+            }
+        }
+        if (target != null) {
+            refreshTokenStore.revoke(target);
+        }
     }
 
     private AuthResult issueTokens(User user) {

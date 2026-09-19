@@ -247,6 +247,22 @@ RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR" -X POST "$BASE/auth/refresh"
 split_body_code "$RESP"
 check "POST /auth/refresh after logout (revoked) -> 401" "401" "$CODE" "$BODY"
 
+# --- 26b. Logout must work with an EXPIRED/absent access token (regression: was a 500 via null principal,
+#          leaving the refresh cookie alive so the session silently came back on the next page load) ---
+COOKIE_JAR2=$(mktemp)
+curl -s -c "$COOKIE_JAR2" -o /dev/null -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+  -d "{\"email\":\"$USER_EMAIL\",\"password\":\"$PASSWORD\"}"
+RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR2" -c "$COOKIE_JAR2" -X POST "$BASE/auth/logout")
+split_body_code "$RESP"
+check "logout with NO access token (expired) -> 204, not 500" "204" "$CODE" "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR2" -X POST "$BASE/auth/refresh")
+split_body_code "$RESP"
+check "session is dead after token-less logout (refresh -> 401)" "401" "$CODE" "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/logout" -H "Authorization: Bearer not.a.jwt")
+split_body_code "$RESP"
+check "logout with garbage token and no cookie is idempotent -> 204" "204" "$CODE" "$BODY"
+rm -f "$COOKIE_JAR2"
+
 # --- 27a. Unmapped route within a public (permitAll) prefix -> 404 (not 500) ---
 RESP=$(curl -s -w "\n%{http_code}" "$BASE/auth/no-such-endpoint")
 split_body_code "$RESP"

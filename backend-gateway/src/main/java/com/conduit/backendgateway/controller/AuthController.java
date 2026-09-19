@@ -67,8 +67,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserPrincipal principal) {
-        authService.logout(principal.getId());
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @CookieValue(value = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+        // /auth/** is permitAll, so principal is null when the access token expired — still log the user out.
+        authService.logout(principal != null ? principal.getId() : null, refreshToken);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, buildExpiredRefreshCookie().toString())
                 .build();
