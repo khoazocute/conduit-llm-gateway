@@ -19,7 +19,7 @@ const TABS: Array<{ value: string; label: string; status?: AgentStatus }> = [
 ];
 
 export default function DashboardPage() {
-  const { accessToken, user } = useAuth();
+  const { accessToken } = useAuth();
   const [tab, setTab] = useState("all");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,13 +70,6 @@ export default function DashboardPage() {
     }
   }
 
-  function handleNewAgentClick(e: React.MouseEvent) {
-    if (user?.role !== "creator" && user?.role !== "admin") {
-      e.preventDefault();
-      toast.error("Your account needs the creator role to publish agents. Ask an admin to upgrade it.");
-    }
-  }
-
   return (
     <div className="page">
       <div className="page-header">
@@ -86,7 +79,7 @@ export default function DashboardPage() {
           </div>
           <h1 className="page-title">My agents</h1>
         </div>
-        <Link href="/dashboard/agents/new" className="btn btn-primary" onClick={handleNewAgentClick}>
+        <Link href="/dashboard/agents/new" className="btn btn-primary">
           + New agent
         </Link>
       </div>

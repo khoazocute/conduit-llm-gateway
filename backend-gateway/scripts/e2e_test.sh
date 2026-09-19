@@ -215,6 +215,19 @@ split_body_code "$RESP"
 check "admin GET /admin/users -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$USER_EMAIL" && check "admin user list includes our test user" "true" "true" "" || check "admin user list includes our test user" "true" "false" "$BODY"
 
+# --- 22b. Admin users: search, pagination, self-ban guard ---
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/users?q=$USER_EMAIL" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+check "admin search q=<email> -> 200" 200 "$CODE" "$BODY"
+echo "$BODY" | grep -q "$USER_EMAIL" && check "search finds the user by email" yes yes "" || check "search finds the user by email" yes no "$BODY"
+echo "$BODY" | grep -q '"total_elements":1' && check "search narrows the result set to 1 match" yes yes "" || check "search narrows the result set to 1 match" yes no "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/users?page=0&size=1" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q '"size":1' && check "pagination honours size" yes yes "" || check "pagination honours size" yes no "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE/admin/users/$ADMIN_ID/status" -H "Authorization: Bearer $ADMIN_ACCESS" -H "Content-Type: application/json" -d '{"status":"banned"}')
+split_body_code "$RESP"
+check "admin cannot ban their own account -> 403" 403 "$CODE" "$BODY"
+
 # --- 23. Register a third "other" user for ban test ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -H "Content-Type: application/json" \

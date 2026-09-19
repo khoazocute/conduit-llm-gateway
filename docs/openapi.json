@@ -616,10 +616,11 @@
     "/admin/users": {
       "get": {
         "tags": ["Admin - Users"],
-        "summary": "Danh sach user (quan tri)",
+        "summary": "Danh sach user (quan tri), moi nhat truoc",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/UserStatus" } },
+          { "name": "q", "in": "query", "description": "Tim theo email hoac ho ten (khong phan biet hoa thuong)", "schema": { "type": "string" } },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
           { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
         ],
@@ -682,6 +683,21 @@
           "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePurchaseResponse" } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "409": { "description": "Da mua agent nay roi", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/purchases": {
+      "get": {
+        "tags": ["Purchases & Payment"],
+        "summary": "Thu vien cua toi: cac agent user da mua (payment_status = paid), moi nhat truoc",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "type": "object", "properties": { "agent": { "$ref": "#/components/schemas/Agent" }, "purchase": { "$ref": "#/components/schemas/AgentPurchase" } } } }, "page": { "$ref": "#/components/schemas/PageMeta" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },

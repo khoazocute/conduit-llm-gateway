@@ -79,6 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {status === "authenticated" && (
           <>
             <div className="sidebar-section">Account</div>
+            <NavItem href="/library" label="My library" />
             <NavItem href="/wallet" label="Wallet" />
           </>
         )}

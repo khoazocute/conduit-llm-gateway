@@ -113,6 +113,15 @@ check "webhook with valid signature -> 200" 200 "$(echo "$OK" | tail -n1)" "$(ec
 
 req GET "$BASE/purchases/$TX_REF" "$BUYER_TOKEN" ""
 check "purchase is now paid" paid "$(json_str "$BODY" payment_status)" "$BODY"
+
+# --- Buyer library: only PAID purchases count as owned agents ---
+req GET "$BASE/purchases" "$BUYER_TOKEN" ""
+check "library -> 200" 200 "$CODE" "$BODY"
+echo "$BODY" | grep -q "$AGENT_ID" && check "library lists the paid agent" yes yes "" || check "library lists the paid agent" yes no "$BODY"
+req GET "$BASE/purchases" "$OTHER_TOKEN" ""
+echo "$BODY" | grep -q "$AGENT_ID" && check "another user library does NOT list it" no yes "$BODY" || check "another user library does NOT list it" no no ""
+LIB_NOAUTH=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/purchases")
+check "library requires auth -> 401" 401 "$LIB_NOAUTH" ""
 req GET "$BASE/wallet" "$BUYER_TOKEN" ""
 check "balance = default_credit_granted after paid" "$CREDIT_GRANTED" "$(json_num "$BODY" balance)" "$BODY"
 

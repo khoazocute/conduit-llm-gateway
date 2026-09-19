@@ -8,7 +8,11 @@ import com.conduit.backendgateway.domain.enums.CreditTxType;
 import com.conduit.backendgateway.domain.enums.PaymentMethod;
 import com.conduit.backendgateway.domain.enums.PaymentStatus;
 import com.conduit.backendgateway.domain.enums.WebhookResult;
+import com.conduit.backendgateway.dto.agent.AgentResponse;
+import com.conduit.backendgateway.dto.common.PageMetaDto;
 import com.conduit.backendgateway.dto.purchase.AgentPurchaseResponse;
+import com.conduit.backendgateway.dto.purchase.PurchasedAgentListResponse;
+import com.conduit.backendgateway.dto.purchase.PurchasedAgentResponse;
 import com.conduit.backendgateway.dto.purchase.CreatePurchaseResponse;
 import com.conduit.backendgateway.dto.purchase.WebhookResponseDto;
 import com.conduit.backendgateway.exception.AgentNotPurchasableException;
@@ -19,10 +23,15 @@ import com.conduit.backendgateway.repository.AgentPurchaseRepository;
 import com.conduit.backendgateway.repository.AgentRepository;
 import com.conduit.backendgateway.repository.PaymentWebhookLogRepository;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.HexFormat;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +95,21 @@ public class PurchaseService {
         }
 
         return new CreatePurchaseResponse(AgentPurchaseResponse.from(purchase), null);
+    }
+
+    /** The buyer's library: agents they actually paid for (pending/failed orders are not "owned"). */
+    public PurchasedAgentListResponse listPurchasedAgents(UUID userId, Pageable pageable) {
+        Page<AgentPurchase> page = agentPurchaseRepository
+                .findByUserIdAndPaymentStatusOrderByCreatedAtDesc(userId, PaymentStatus.paid, pageable);
+        Map<UUID, Agent> agents = new HashMap<>();
+        agentRepository.findAllById(page.getContent().stream().map(AgentPurchase::getAgentId).toList())
+                .forEach(a -> agents.put(a.getId(), a));
+        List<PurchasedAgentResponse> items = page.getContent().stream()
+                .filter(p -> agents.containsKey(p.getAgentId()))
+                .map(p -> new PurchasedAgentResponse(
+                        AgentResponse.from(agents.get(p.getAgentId())), AgentPurchaseResponse.from(p)))
+                .toList();
+        return new PurchasedAgentListResponse(items, PageMetaDto.from(page));
     }
 
     public AgentPurchaseResponse getPurchase(String transactionRef, UUID currentUserId) {
