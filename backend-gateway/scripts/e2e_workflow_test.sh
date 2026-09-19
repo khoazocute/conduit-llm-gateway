@@ -22,7 +22,9 @@ BUYER_EMAIL="wf.buyer.${RUN_ID}@conduit.dev"
 OTHER_EMAIL="wf.other.${RUN_ID}@conduit.dev"
 
 PRICE_VND=50000
-CREDIT_GRANTED=100
+# credit ~ 1 per token x1.5 markup (CLAUDE.md muc 4) and Gemini Flash spends reasoning tokens even on short answers,
+# so the grant must be realistic — 100 credit is (correctly) rejected as "Insufficient credit balance" by a real chat.
+CREDIT_GRANTED=50000
 
 check() {
   local name="$1" expected="$2" actual="$3" body="$4"
@@ -168,11 +170,23 @@ check "chat responds HTTP 200 text/event-stream" "200 text/event-stream" "$(echo
 check "SSE stream terminates cleanly (curl exit 0, not cut off)" 0 "$SSE_EXIT" "$SSE"
 echo "$SSE" | grep -q "^event:" && check "stream contains SSE events" yes yes "" || check "stream contains SSE events" yes no "$SSE"
 
-if echo "$SSE" | grep -q "^event:error"; then
+db() { docker exec conduit-postgres psql -U conduit -d conduit -t -A -c "$1" | tr -d '[:space:]'; }
+
+if echo "$SSE" | grep -q "^event:done"; then
+  # Successful chat: real provider usage -> credit deducted, fully logged, ledger consistent.
+  CHARGED=$(db "select credit_charged from messages where conversation_id='$CONV_ID' and role='assistant' order by created_at desc limit 1;")
+  check "successful chat streamed a 'done' event" yes yes ""
+  [ "$BAL_AFTER_CHAT" -lt "$BAL_BEFORE_CHAT" ] && check "successful chat deducted credit" yes yes "" || check "successful chat deducted credit" yes no "before=$BAL_BEFORE_CHAT after=$BAL_AFTER_CHAT"
+  check "balance drop == messages.credit_charged" "$((BAL_BEFORE_CHAT - BAL_AFTER_CHAT))" "$CHARGED" ""
+  check "usage_logs row: status=success with real token counts" 1 "$(db "select count(*) from usage_logs ul join messages m on m.id=ul.message_id where m.conversation_id='$CONV_ID' and ul.status='success' and ul.token_input>0 and ul.token_output>0;")" ""
+  check "routing_decisions row recorded (proxy_name=litellm)" 1 "$(db "select count(*) from routing_decisions rd join messages m on m.id=rd.message_id where m.conversation_id='$CONV_ID' and rd.proxy_name='litellm';")" ""
+  check "credit_transactions usage_deduct amount == credit_charged" "$CHARGED" "$(db "select abs(amount) from credit_transactions where type='usage_deduct' and related_message_id=(select id from messages where conversation_id='$CONV_ID' and role='assistant' order by created_at desc limit 1);")" ""
+elif echo "$SSE" | grep -q "Chat provider error"; then
+  # No usable provider key: the failure must surface as an SSE error and must NOT be billed.
   check "provider failure surfaces as an SSE error event" yes yes ""
   check "failed chat does NOT charge credit (billing only on real usage)" "$BAL_BEFORE_CHAT" "$BAL_AFTER_CHAT" "$SSE"
-elif echo "$SSE" | grep -q "^event:done"; then
-  [ "$BAL_AFTER_CHAT" -lt "$BAL_BEFORE_CHAT" ] && check "successful chat deducted credit" yes yes "" || check "successful chat deducted credit" yes no "before=$BAL_BEFORE_CHAT after=$BAL_AFTER_CHAT"
+else
+  check "chat outcome is a success or a provider error" yes no "$(echo "$SSE" | head -c 200)"
 fi
 
 req GET "$BASE/conversations/$CONV_ID/messages" "$BUYER_TOKEN" ""
