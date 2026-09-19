@@ -31,6 +31,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
+    // An SseEmitter (chat streaming) finishes via an ASYNC dispatch that re-enters the security chain.
+    // AuthorizationFilter applies to every dispatcher type in Spring Security 6, so this filter must run
+    // on the async dispatch too — otherwise the context is empty, access is denied after the SSE headers
+    // are already committed, and the stream is cut off (or a 401 body replaces the event stream).
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

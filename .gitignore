@@ -163,3 +163,6 @@ venv/
 # Local docker-compose overrides (machine-specific port remaps etc.)
 docker-compose.override.yml
 
+
+# Planning/tracking notes kept on this machine only (roadmap, weekly tasks, status, Notion tracker)
+docs-local/

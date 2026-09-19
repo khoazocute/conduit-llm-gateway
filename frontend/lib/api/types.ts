@@ -165,3 +165,13 @@ export interface ModelPricing {
   effective_from: string;
   created_at: string;
 }
+
+export interface PurchasedAgent {
+  agent: Agent;
+  purchase: AgentPurchase;
+}
+
+export interface PurchasedAgentListResponse {
+  items: PurchasedAgent[];
+  page: PageMeta;
+}

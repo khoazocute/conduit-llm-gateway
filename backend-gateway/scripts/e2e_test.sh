@@ -215,6 +215,19 @@ split_body_code "$RESP"
 check "admin GET /admin/users -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$USER_EMAIL" && check "admin user list includes our test user" "true" "true" "" || check "admin user list includes our test user" "true" "false" "$BODY"
 
+# --- 22b. Admin users: search, pagination, self-ban guard ---
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/users?q=$USER_EMAIL" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+check "admin search q=<email> -> 200" 200 "$CODE" "$BODY"
+echo "$BODY" | grep -q "$USER_EMAIL" && check "search finds the user by email" yes yes "" || check "search finds the user by email" yes no "$BODY"
+echo "$BODY" | grep -q '"total_elements":1' && check "search narrows the result set to 1 match" yes yes "" || check "search narrows the result set to 1 match" yes no "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/users?page=0&size=1" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q '"size":1' && check "pagination honours size" yes yes "" || check "pagination honours size" yes no "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE/admin/users/$ADMIN_ID/status" -H "Authorization: Bearer $ADMIN_ACCESS" -H "Content-Type: application/json" -d '{"status":"banned"}')
+split_body_code "$RESP"
+check "admin cannot ban their own account -> 403" 403 "$CODE" "$BODY"
+
 # --- 23. Register a third "other" user for ban test ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -H "Content-Type: application/json" \
@@ -246,6 +259,22 @@ check "POST /auth/logout -> 204" "204" "$CODE" "$BODY"
 RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR" -X POST "$BASE/auth/refresh")
 split_body_code "$RESP"
 check "POST /auth/refresh after logout (revoked) -> 401" "401" "$CODE" "$BODY"
+
+# --- 26b. Logout must work with an EXPIRED/absent access token (regression: was a 500 via null principal,
+#          leaving the refresh cookie alive so the session silently came back on the next page load) ---
+COOKIE_JAR2=$(mktemp)
+curl -s -c "$COOKIE_JAR2" -o /dev/null -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+  -d "{\"email\":\"$USER_EMAIL\",\"password\":\"$PASSWORD\"}"
+RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR2" -c "$COOKIE_JAR2" -X POST "$BASE/auth/logout")
+split_body_code "$RESP"
+check "logout with NO access token (expired) -> 204, not 500" "204" "$CODE" "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -b "$COOKIE_JAR2" -X POST "$BASE/auth/refresh")
+split_body_code "$RESP"
+check "session is dead after token-less logout (refresh -> 401)" "401" "$CODE" "$BODY"
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/logout" -H "Authorization: Bearer not.a.jwt")
+split_body_code "$RESP"
+check "logout with garbage token and no cookie is idempotent -> 204" "204" "$CODE" "$BODY"
+rm -f "$COOKIE_JAR2"
 
 # --- 27a. Unmapped route within a public (permitAll) prefix -> 404 (not 500) ---
 RESP=$(curl -s -w "\n%{http_code}" "$BASE/auth/no-such-endpoint")

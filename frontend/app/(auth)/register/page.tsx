@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { ApiClientError } from "@/lib/api/client";
+import { homePathForRole } from "@/lib/roles";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -22,8 +23,8 @@ export default function RegisterPage() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-      await register(email, password, fullName);
-      router.push("/dashboard");
+      const user = await register(email, password, fullName);
+      router.push(homePathForRole(user.role));
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError(err.apiError.message);

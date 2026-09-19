@@ -10,8 +10,8 @@ interface AuthContextValue {
   status: AuthStatus;
   user: User | null;
   accessToken: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (email: string, password: string, fullName: string) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: { email, password },
       });
       applyAuthResponse(data);
+      return data.user;
     },
     [applyAuthResponse],
   );
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: { email, password, full_name: fullName },
       });
       applyAuthResponse(data);
+      return data.user;
     },
     [applyAuthResponse],
   );
@@ -73,6 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token: accessToken,
         withCredentials: true,
       });
+    } catch {
+      // Never surface a logout failure: the local session must be dropped regardless (the server
+      // revokes the refresh token and clears its cookie when reachable).
     } finally {
       setUser(null);
       setAccessToken(null);

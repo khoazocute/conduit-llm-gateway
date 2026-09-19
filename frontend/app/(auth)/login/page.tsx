@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { ApiClientError } from "@/lib/api/client";
+import { homePathForRole } from "@/lib/roles";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -19,8 +20,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const user = await login(email, password);
+      router.push(homePathForRole(user.role));
     } catch (err) {
       setError(err instanceof ApiClientError ? err.apiError.message : "Something went wrong.");
     } finally {

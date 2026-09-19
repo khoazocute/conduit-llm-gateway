@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AgentForm, type AgentFormValues } from "@/components/agent-form";
 import { useAuth } from "@/context/auth-context";
 import { ApiClientError, apiFetch } from "@/lib/api/client";
@@ -15,12 +16,13 @@ export default function NewAgentPage() {
   async function handleSubmit(values: AgentFormValues) {
     setError(null);
     try {
-      const agent = await apiFetch<Agent>("/agents", {
+      await apiFetch<Agent>("/agents", {
         method: "POST",
         token: accessToken,
         body: values,
       });
-      router.push(`/dashboard/agents/${agent.id}/edit`);
+      toast.success("Agent created as a draft. Press Submit in the list to send it for review.");
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof ApiClientError ? err.apiError.message : "Failed to create agent.");
     }
