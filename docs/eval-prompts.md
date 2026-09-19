@@ -92,4 +92,4 @@ Chấm theo rubric 3 tiêu chí chung (on-task / độ dài phù hợp / không 
 - Mỗi proxy (litellm/bifrost/portkey) chạy đủ 30 prompt × 3 lần = 90 lượt/proxy, tổng 270 lượt.
 - Ghi mọi lượt gọi vào `routing_decisions` (id, message_id, proxy_name, selected_model, predicted_cost, token_input, token_output, response_quality_score, latency_ms) — không bỏ qua dù đang test nhanh.
 - Chấm mù: khi đưa cho người chấm (kể cả chính Hùng/Khoa), ẩn cột `proxy_name`, chỉ hiện nội dung trả lời.
-- 30% mẫu (≈9 lượt output, chọn ngẫu nhiên rải đều 3 proxy) cần 2 người chấm độc lập để tính % agreement, báo cáo trong khóa luận.
+- 30% mẫu cần 2 người chấm độc lập để tính % agreement, báo cáo trong khóa luận. Đơn vị "mẫu" (theo lượt output hay theo prompt) chốt ở quyết định D6 (bảng quyết định trong `docs-local/roadmap.md`, chỉ có trên máy Hùng). Tham khảo: nếu theo output thì có (12 mở + 6 code) × 3 proxy × 3 lần = 162 output cần chấm tay, 30% ≈ 49 output (con số "≈9" ghi trước đây là sai).

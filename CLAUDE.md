@@ -174,6 +174,8 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
 - Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
 
+**Lộ trình còn lại (chốt 2026-09-20):** Hùng và Khoa **cùng làm phần đánh giá proxy**, mỗi hạng mục có 1 người viết + 1 người phản biện (đổi vai giữa các hạng mục); chấm mù cần cả hai người (mẫu chấm kép). Chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem thư mục **`docs-local/`** (chỉ có trên máy Hùng, đã gitignore — không có trong repo): `roadmap.md` (phase, bảng quyết định D1–D8, rủi ro, câu hỏi GVHD), `tasks-YYYY-MM-DD.md` (việc từng tuần; tuần đầu `tasks-2026-09-21.md`), `project-status.md` (hiện trạng chi tiết), `notion-tracker.md` (danh sách task để nạp vào Notion). Nếu không thấy thư mục này thì các phase/quyết định ở đoạn này là nguồn còn lại; muốn chia sẻ với Khoa thì gửi file hoặc đưa lên Notion. Việc quyết định hiện chưa chốt: ai trả tiền API key, đường ghi log thí nghiệm (`routing_decisions.message_id` là `NOT NULL` → mỗi lượt cần 1 dòng `messages`), cách chấm prompt code, giá Gemini (dùng giá niêm yết), đơn vị "30% mẫu".
+
 **Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận. **Không thêm dòng `Co-Authored-By: Claude` (hay bất kỳ attribution/"Generated with Claude Code" nào) vào commit message hoặc mô tả PR** — quy tắc của Hùng, ưu tiên hơn gợi ý mặc định của công cụ.
 
 | Tuần | Việc | Phụ trách |
