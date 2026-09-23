@@ -28,7 +28,7 @@ model_list:
   # Tầng trung
   - model_name: conduit-pool
     litellm_params:
-      model: anthropic/claude-3-5-haiku-20241022   # VERIFY tên còn dùng được
+      model: anthropic/claude-haiku-4-5-20251001
       api_key: os.environ/ANTHROPIC_API_KEY
     model_info:
       id: claude-haiku
@@ -43,7 +43,7 @@ model_list:
 
   - model_name: conduit-pool
     litellm_params:
-      model: anthropic/claude-3-5-sonnet-20241022  # VERIFY tên còn dùng được
+      model: anthropic/claude-sonnet-5
       api_key: os.environ/ANTHROPIC_API_KEY
     model_info:
       id: claude-sonnet
