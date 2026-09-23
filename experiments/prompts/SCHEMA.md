@@ -3,10 +3,16 @@
 30 prompt, phân theo 3 nhóm (CLAUDE.md mục 2): `closed_qa` (12, gồm kiến thức +
 toán + logic), `code` (6), `open_ended` (12).
 
-`closed_qa` và `code` có đáp án đúng/sai khách quan → cần trường đáp án để chấm
-tự động. `open_ended` chấm rubric 3 tiêu chí thủ công (chấm mù) → không có đáp án.
+Chỉ `closed_qa` có đáp án đúng/sai khách quan → cần trường đáp án để chấm tự động.
+`code` và `open_ended` chấm rubric 3 tiêu chí thủ công (chấm mù) → không có đáp án.
+(`code` chấm rubric là phương án D4 đang đề xuất, chờ chốt; nếu D4 đổi sang chạy test
+thì thêm `expected_answer`/`match_type` cho `code`, validator đã chấp nhận.)
 
-## `closed_qa` / `code`
+Luật khớp cài ở `experiments/analysis/grading.py`; kiểm tra file bằng
+`python experiments/prompts/validate_prompts.py`, test luật bằng
+`python -m unittest discover -s experiments/tests -v`.
+
+## `closed_qa`
 
 | Trường | Kiểu | Ý nghĩa |
 |---|---|---|

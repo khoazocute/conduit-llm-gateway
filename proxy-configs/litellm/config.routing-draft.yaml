@@ -1,0 +1,70 @@
+# NHÁP (H4, tuần 2026-09-21) — chưa dùng, chưa chạy thử. Config đang chạy vẫn là config.yaml.
+# Mục đích: cả 5 model chung 1 alias "conduit-pool" để LiteLLM tự chọn model theo strategy.
+# Xem docs/litellm-routing-notes.md (LiteLLM làm được / không làm được gì).
+#
+# Cách dùng khi thử: đổi `routing_strategy` bên dưới (1 lần chạy = 1 strategy), khởi động lại
+# container litellm, runner gọi model="conduit-pool".
+#
+# Chưa xác nhận (đánh dấu VERIFY, làm ở H3 smoke test):
+#  - tên model Claude: 3.5 Haiku/Sonnet có thể đã bị Anthropic gỡ → thử claude-haiku-4-5-20251001, v.v.
+#  - cú pháp `fallbacks` (docs router: khai ở router_settings, dạng list of dict).
+
+model_list:
+  # Tầng rẻ
+  - model_name: conduit-pool
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      id: gpt-4o-mini            # id cố định để đọc lại trong log/response header
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      id: gemini-flash
+
+  # Tầng trung
+  - model_name: conduit-pool
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022   # VERIFY tên còn dùng được
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      id: claude-haiku
+
+  # Tầng đắt
+  - model_name: conduit-pool
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      id: gpt-4o
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022  # VERIFY tên còn dùng được
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      id: claude-sonnet
+
+  # Giữ 5 alias riêng lẻ (như config.yaml) nếu cần gọi thẳng 1 model để smoke test / so sánh:
+  # lặp lại 5 entry với model_name: gpt-4o-mini | gemini-flash | claude-haiku | gpt-4o | claude-sonnet
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+router_settings:
+  # Chọn 1 trong: cost-based-routing | latency-based-routing | simple-shuffle | least-busy
+  routing_strategy: cost-based-routing
+  # Với latency-based-routing thêm:
+  # routing_strategy_args:
+  #   ttl: 10                    # cửa sổ tính latency trung bình (giây)
+  #   lowest_latency_buffer: 0   # 0 = luôn chọn nhanh nhất (đúng "quyết định" cần đo)
+  #
+  # Độ bền — GIỮ GIỐNG NHAU giữa 3 proxy khi so sánh để không thiên lệch:
+  num_retries: 2
+  timeout: 60
+  # allowed_fails: 3
+  # cooldown_time: 30
+  # fallbacks: [{"conduit-pool": ["gpt-4o-mini"]}]   # VERIFY cú pháp; chỉ bật nếu 3 proxy đều có failover
