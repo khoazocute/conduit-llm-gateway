@@ -1,0 +1,18 @@
+output_id,prompt_id,answer_text,on_task,length_ok,error_free,total,grader
+o-0001,E02,"Kính gửi Anh/Chị,
+
+Tôi rất tiếc khi biết đơn hàng của Anh/Chị bị giao trễ 3 ngày so với dự kiến. Đây là thiếu sót từ phía chúng tôi và tôi xin gửi lời xin lỗi chân thành.
+
+Chúng tôi đã kiểm tra và xác nhận đơn hàng đang trên đường giao, dự kiến đến tay Anh/Chị trong vòng 24 giờ tới. Để bù đắp cho sự bất tiện này, chúng tôi xin gửi tặng Anh/Chị một mã giảm giá 15% cho đơn hàng tiếp theo.
+
+Rất mong Anh/Chị thông cảm. Nếu cần hỗ trợ thêm, xin liên hệ lại với chúng tôi.
+
+Trân trọng.",1,1,1,3.0,khoa
+o-0002,S01,"Biến đổi khí hậu đang khiến nhiệt độ toàn cầu tăng do phát thải khí nhà kính từ công nghiệp, giao thông và nông nghiệp. Hệ quả là thời tiết cực đoan (bão, hạn hán, lũ lụt) xảy ra thường xuyên hơn, đe dọa an ninh lương thực ở các nước ven biển đang phát triển như Việt Nam. Nếu không cắt giảm phát thải quyết liệt trong thập kỷ tới, mục tiêu của Thỏa thuận Paris sẽ khó đạt được.",1,1,1,3.0,khoa
+o-0003,C03,"Lỗi: thiếu dấu xuống dòng (hoặc dấu chấm phẩy) giữa phần định nghĩa hàm và lệnh gọi hàm - Python đọc `return a + b print(add(2,3))` như một dòng, gây SyntaxError.
+
+Code đã sửa:
+def add(a, b):
+    return a + b
+
+print(add(2, 3))",1,1,0.5,2.5,khoa
