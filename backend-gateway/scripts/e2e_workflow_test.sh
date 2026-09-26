@@ -188,7 +188,9 @@ if echo "$SSE" | grep -q "^event:done"; then
   [ "$BAL_AFTER_CHAT" -lt "$BAL_BEFORE_CHAT" ] && check "successful chat deducted credit" yes yes "" || check "successful chat deducted credit" yes no "before=$BAL_BEFORE_CHAT after=$BAL_AFTER_CHAT"
   check "balance drop == messages.credit_charged" "$((BAL_BEFORE_CHAT - BAL_AFTER_CHAT))" "$CHARGED" ""
   check "usage_logs row: status=success with real token counts" 1 "$(db "select count(*) from usage_logs ul join messages m on m.id=ul.message_id where m.conversation_id='$CONV_ID' and ul.status='success' and ul.token_input>0 and ul.token_output>0;")" ""
-  check "routing_decisions row recorded (proxy_name=litellm)" 1 "$(db "select count(*) from routing_decisions rd join messages m on m.id=rd.message_id where m.conversation_id='$CONV_ID' and rd.proxy_name='litellm';")" ""
+  ACTIVE_PROXY="${CHAT_ACTIVE_PROXY:-litellm}"
+  check "routing_decisions row recorded (proxy_name=$ACTIVE_PROXY)" 1 "$(db "select count(*) from routing_decisions rd join messages m on m.id=rd.message_id where m.conversation_id='$CONV_ID' and rd.proxy_name='$ACTIVE_PROXY';")" ""
+  check "usage_logs.cost_upstream > 0 (model matched model_pricing)" 1 "$(db "select count(*) from usage_logs ul join messages m on m.id=ul.message_id where m.conversation_id='$CONV_ID' and ul.status='success' and ul.cost_upstream>0;")" ""
   check "credit_transactions usage_deduct amount == credit_charged" "$CHARGED" "$(db "select abs(amount) from credit_transactions where type='usage_deduct' and related_message_id=(select id from messages where conversation_id='$CONV_ID' and role='assistant' order by created_at desc limit 1);")" ""
 elif echo "$SSE" | grep -q "Chat provider error"; then
   # No usable provider key: the failure must surface as an SSE error and must NOT be billed.
