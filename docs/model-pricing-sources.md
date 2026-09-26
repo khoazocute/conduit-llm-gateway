@@ -1,69 +1,80 @@
-# Nguồn giá `model_pricing` (K2)
+# Báo cáo giá `model_pricing` (K2)
 
-**Ngày lấy giá:** 2026-09-23. Giá đổi thường xuyên (đặc biệt Anthropic/Google) — nếu chạy thực
-nghiệm Tuần 9-10 cách xa ngày này, **kiểm tra lại giá trước khi khoá thực nghiệm**.
+**Ngày lấy giá:** 2026-09-26 (tra lại toàn bộ trên trang giá chính thức, thay bản 2026-09-23).
+Giá đổi thường xuyên — kiểm tra lại trước khi khoá thực nghiệm Tuần 9-10.
 
-## ⚠️ Phát hiện quan trọng — dùng alias, KHÔNG dùng tên model đầy đủ
+**Trạng thái:** DB có đúng 10 dòng (5 model × `token_input`/`token_output`), khớp model thật đang
+chạy. Cả 5 model đã trả lời thật qua Bifrost ngày 2026-09-26 (xem `docs/bifrost-routing-notes.md`
+mục 5).
 
-Test thật (`e2e_workflow_test.sh`) cho response `model_used: "gemini-flash"` — LiteLLM echo lại
-đúng **alias `model_name`** khai báo trong `proxy-configs/litellm/config.yaml`, không phải tên
-model thật của provider (VD không phải `gemini-flash-latest` hay `claude-3-5-haiku-20241022`).
-`ChatService` tra `model_pricing` bằng đúng chuỗi này (`unitPrice`/`unitMarkup` so khớp
-`p.getModel().equals(model)`) — nên **cột `model` trong `model_pricing` phải nhập đúng alias**,
-không phải tên đầy đủ, nếu không giá sẽ không khớp (rơi vào fallback `cost_upstream=0`, xem
-`log.md` mục về giới hạn đã biết trước đây).
+---
 
-| Alias trong `config.yaml` | Model thật đứng sau (để tra giá) | Provider (enum hệ thống) |
-|---|---|---|
-| `gpt-4o-mini` | gpt-4o-mini | openai |
-| `gpt-4o` | gpt-4o | openai |
-| `claude-haiku` | claude-3-5-haiku-20241022 | anthropic |
-| `claude-sonnet` | claude-3-5-sonnet-20241022 | anthropic |
-| `gemini-flash` | gemini-flash-latest (Google tự trỏ bản mới nhất) | google |
+## 1. Bảng giá — nguồn và giá trị đã nhập
 
-## Bảng giá (tra ngày 2026-09-23, đơn vị gốc: USD / 1 triệu token)
+| Alias (`model_pricing.model`) | Model thật / provider | Input (USD/MTok → USD/token) | Output (USD/MTok → USD/token) | Nguồn |
+|---|---|---|---|---|
+| `gpt-4o-mini` | gpt-4o-mini / openai | $0.15 → 0.00000015 | $0.60 → 0.0000006 | [OpenAI pricing](https://developers.openai.com/api/docs/pricing) |
+| `gpt-4o` | gpt-4o / openai | $2.50 → 0.0000025 | $10.00 → 0.00001 | [OpenAI pricing](https://developers.openai.com/api/docs/pricing) |
+| `claude-haiku` | claude-haiku-4-5-20251001 / anthropic | $1 → 0.000001 | $5 → 0.000005 | [Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing) — dòng "Claude Haiku 4.5" |
+| `claude-sonnet` | claude-sonnet-5 / anthropic | $2 → 0.000002 | $10 → 0.00001 | [Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing) — dòng "Claude Sonnet 5" |
+| `gemini-flash` | gemini-flash-latest → **gemini-3.8-flash** / google | $0.75 → 0.00000075 | $3.75 → 0.00000375 | [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) — dòng "Gemini 3.8 Flash" |
 
-| Alias | Input ($/MTok) | Output ($/MTok) | Nguồn |
-|---|---|---|---|
-| `gpt-4o-mini` | $0.15 | $0.60 | [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) |
-| `gpt-4o` | $2.50 | $10.00 | [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) |
-| `claude-haiku` | $0.80 | $4.00 | [Claude Platform Docs — Pricing](https://platform.claude.com/docs/en/about-claude/pricing) — dòng "Claude Haiku 3.5" |
-| `claude-sonnet` | $3.00 | $15.00 | ⚠️ **KHÔNG còn trên trang giá hiện tại** — model đã bị gỡ khỏi bảng (không như Haiku 3.5 vẫn còn ghi "retired, except Bedrock/GCP"). Giá tham khảo từ dữ liệu lịch sử lúc ra mắt ([Anthropic: Introducing Claude 3.5 Sonnet](https://www.anthropic.com/news/claude-3-5-sonnet)) — **cần Hùng xác nhận lại, có thể model này không còn gọi được qua API first-party nữa** |
-| `gemini-flash` | $0.30 | $2.50 | [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) — dòng "Gemini 2.5 Flash" (gần nhất với "gemini-flash-latest" hiện dùng; Google có 3 tier Flash khác nhau giá chênh lệch lớn — xem ghi chú D5 bên dưới) |
+`credit_markup_multiplier` = 1.5 cho cả 10 dòng (mặc định hệ thống, CLAUDE.md mục 4).
 
-## Đổi sang giá 1 token (nhập vào form `/admin/model-pricing`)
+**Bắt buộc dùng alias, không dùng tên model đầy đủ:** `ChatService` tra giá bằng đúng chuỗi
+`model_used` mà LiteLLM trả về, và LiteLLM trả về **alias** khai báo trong
+`proxy-configs/litellm/config.yaml` (VD `gemini-flash`), không phải tên model thật. Nhập tên đầy
+đủ → giá không khớp → rơi vào fallback `cost_upstream = 0`.
 
-| Alias | unit_type | price_usd_per_unit (giá 1 token) |
-|---|---|---|
-| `gpt-4o-mini` | token_input | 0.00000015 |
-| `gpt-4o-mini` | token_output | 0.0000006 |
-| `gpt-4o` | token_input | 0.0000025 |
-| `gpt-4o` | token_output | 0.00001 |
-| `claude-haiku` | token_input | 0.0000008 |
-| `claude-haiku` | token_output | 0.000004 |
-| `claude-sonnet` | token_input | 0.000003 |
-| `claude-sonnet` | token_output | 0.000015 |
-| `gemini-flash` | token_input | 0.0000003 |
-| `gemini-flash` | token_output | 0.0000025 |
+---
 
-`credit_markup_multiplier` = 1.5 cho cả 10 dòng (mặc định hệ thống, CLAUDE.md mục 4 — chưa có
-quyết định D nào yêu cầu đổi khác cho model cụ thể).
+## 2. ⚠️ Giá này KHÔNG phải giá tính tiền user — chỉ để ghi log nghiên cứu
 
-## ⚠️ Cần D5 xác nhận (không đọc được `roadmap.md`)
+`price_usd_per_unit` **không ảnh hưởng** số credit trừ ví. Theo `ChatService.java:139-150`:
 
-Google hiện có **3 tier "Flash" giá chênh lệch tới 5 lần**:
-- Gemini 2.5 Flash: $0.30 / $2.50 (đã dùng ở trên)
-- Gemini 3.5 Flash: $1.50 / $9.00
-- Gemini 3.8 Flash: $0.75 / $3.75 (giá ưu đãi tới 31/12/2026, sau đó $1.50/$7.50)
+```java
+costUpstream += inputPrice  × tokenInput       // price_usd_per_unit → usage_logs.cost_upstream,
+                                               // routing_decisions.predicted_cost
+credit       += ceil(tokenInput × inputMarkup)  // credit_markup_multiplier → credit trừ ví,
+                                               // KHÔNG nhân với giá USD
+```
 
-Đã chọn **2.5 Flash** vì gần nhất với dòng "Gemini Flash" gốc trong CLAUDE.md (tầng rẻ) và alias
-`gemini-flash-latest` hiện dùng nhiều khả năng trỏ tới đây. **Nếu D5 chốt khác, chỉ cần sửa lại
-2 dòng `gemini-flash` trong bảng trên, không ảnh hưởng 8 dòng còn lại.**
+Vì `credit_markup_multiplier` bằng nhau (1.5) ở cả 10 dòng, 100 token qua `gpt-4o` và qua
+`gpt-4o-mini` trừ ví **y hệt nhau**, dù giá USD chênh ~17 lần. Bảng giá ở mục 1 chỉ quyết định
+`cost_upstream` — dữ liệu dùng để so proxy nào rẻ hơn ở Phase D/E.
 
-## ⚠️ Rủi ro cần báo Hùng: pool 5 model có thể đã lỗi thời
+**Khi Hùng review:** đang kiểm tra độ chính xác của dữ liệu nghiên cứu, không phải "user trả đúng
+tiền chưa".
 
-`claude-3-5-sonnet-20241022` (dùng trong `proxy-configs/litellm/config.yaml` và
-`proxy-configs/bifrost/config.json`) **không còn xuất hiện trong bảng giá chính thức hiện tại
-của Anthropic** — khác với Haiku 3.5 vẫn còn (đánh dấu "retired, except Bedrock/GCP"). Cần test
-thật xem model này còn gọi được qua API first-party không trước khi chạy thực nghiệm Tuần 9-10 —
-nếu không gọi được, phải đổi pool sang `claude-sonnet-4-5` hoặc bản mới hơn còn hỗ trợ.
+---
+
+## 3. Lưu ý riêng từng model
+
+**`gemini-flash` — giá ưu đãi có hạn, và token "suy nghĩ" bị tính tiền**
+- Model thật xác định từ response (`"model":"gemini-3.8-flash"`), không phải giả định từ tên alias.
+  Bản 2026-09-23 nhập nhầm theo Gemini 2.5 Flash ($0.30/$2.50).
+- $0.75/$3.75 là **giá ưu đãi tới 31/12/2026**; từ 01/01/2027 tăng gấp đôi lên **$1.50/$7.50**.
+  Phase E (Tuần 9-10) nằm trong thời hạn ưu đãi — nếu chạy lại sau 01/01/2027 phải sửa 2 dòng này.
+- Giá output **đã gồm thinking tokens**. Thực tế đo được: câu hỏi "1+1 bằng mấy?" trả lời "2"
+  nhưng tốn 166 completion token, trong đó 165 là reasoning → chi phí thật của Gemini cao hơn nhiều
+  so với độ dài câu trả lời. Cần ghi vào phần phân tích chi phí của báo cáo.
+- D5 (giá Gemini khi dùng key miễn phí): dùng giá niêm yết ở trên, đúng quyết định tạm chốt 2026-09-23.
+
+**`claude-haiku`, `claude-sonnet` — pool đã đổi model**
+- Hùng đã đổi `claude-3-5-haiku/sonnet-20241022` (Anthropic đã retire) sang `claude-haiku-4-5-20251001`
+  / `claude-sonnet-5` (commit H3, 2026-09-24). Giá ở mục 1 đã theo model mới.
+- `claude-sonnet-5`: $2/$10 là **giá chuẩn chính thức** (ban đầu công bố là giá ưu đãi tới
+  31/08/2026, nhưng Anthropic đã huỷ đợt tăng lên $3/$15).
+- Claude 4.7 trở lên dùng tokenizer mới (~30% nhiều token hơn cho cùng văn bản); `claude-sonnet-5`
+  thuộc nhóm này, `claude-haiku-4-5` thì không — ảnh hưởng khi so số token giữa 2 model.
+
+**`gpt-4o-mini`, `gpt-4o`** — không đổi so với bản 2026-09-23.
+
+---
+
+## 4. Lịch sử sửa
+
+| Ngày | Thay đổi |
+|---|---|
+| 2026-09-23 | Nhập 10 dòng lần đầu (theo config cũ: claude-3-5-*, Gemini 2.5 Flash); dọn 8 dòng rác còn đúng 10 |
+| 2026-09-26 | Tra lại toàn bộ; sửa 6 dòng `claude-haiku`, `claude-sonnet`, `gemini-flash` theo model thật (sửa trực tiếp, không thêm dòng — thực nghiệm chưa chạy nên không cần giữ lịch sử giá cũ) |
