@@ -1,5 +1,152 @@
 {
-  "closed_qa": [],
-  "code": [],
-  "open_ended": []
+  "closed_qa": [
+    {
+      "id": "cq_01",
+      "prompt": "Thủ đô của Úc (Australia) là gì?",
+      "expected_answer": "canberra",
+      "match_type": "contains"
+    },
+    {
+      "id": "cq_02",
+      "prompt": "Nguyên tố hóa học có ký hiệu \"Na\" là gì?",
+      "expected_answer": "(?<!\\w)(natri|sodium)(?!\\w)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_03",
+      "prompt": "Tác phẩm \"Truyện Kiều\" là của tác giả nào?",
+      "expected_answer": "nguyễn du",
+      "match_type": "contains"
+    },
+    {
+      "id": "cq_04",
+      "prompt": "Hành tinh nào trong Hệ Mặt Trời gần Mặt Trời nhất?",
+      "expected_answer": "(?<!\\w)(sao thủy|sao thuỷ|mercury)(?!\\w)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_05",
+      "prompt": "Tính: 17 × 24",
+      "expected_answer": "(?<![\\d.,])408(?!\\d)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_06",
+      "prompt": "Một hình chữ nhật có chiều dài 12cm, chiều rộng 7cm. Tính diện tích.",
+      "expected_answer": "(?<![\\d.,])84(?!\\d)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_07",
+      "prompt": "Giải phương trình: 3x + 5 = 20. x = ?",
+      "expected_answer": "(?<!\\w)x\\W{0,4}=\\s*5(?![\\d.,]\\d|\\d)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_08",
+      "prompt": "Tính 15% của 240",
+      "expected_answer": "(?<![\\d.,])36(?!\\d)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_09",
+      "prompt": "Nếu tất cả mèo đều là động vật, và Tom là một con mèo, thì Tom có phải là động vật không? Trả lời Có hoặc Không.",
+      "expected_answer": "^[\\W_]*(?:trả lời\\s*[:：]?\\s*)?có(?!\\s+thể)(?!\\w)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_10",
+      "prompt": "An cao hơn Bình, Bình cao hơn Chi. Ai thấp nhất trong ba người?",
+      "expected_answer": "^[\\W_]*chi[\\W_]*$|thấp nhất[^.\\n]{0,40}?(?<!\\w)chi(?!\\w)|(?<!\\w)chi(?!\\w)[^.\\n]{0,40}?thấp nhất",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_11",
+      "prompt": "Một chiếc taxi màu xanh gây tai nạn vào ban đêm. Nhân chứng nói taxi màu xanh, nhưng 80% taxi trong thành phố màu vàng, chỉ 20% màu xanh. Hỏi: kết luận nào hợp lý hơn — (a) chắc chắn taxi gây tai nạn màu xanh, hay (b) cần cân nhắc khả năng nhân chứng nhìn nhầm vì phần lớn taxi trong thành phố là màu vàng? Chỉ trả lời (a) hoặc (b).",
+      "expected_answer": "^[\\W_]*(?:(?:đáp án|trả lời)\\s*[:：]?\\s*)?[\\W_]*b(?!\\w)",
+      "match_type": "regex"
+    },
+    {
+      "id": "cq_12",
+      "prompt": "Dãy số: 2, 4, 8, 16, ?. Số tiếp theo là gì?",
+      "expected_answer": "(?<![\\d.,])32(?!\\d)",
+      "match_type": "regex"
+    }
+  ],
+  "code": [
+    {
+      "id": "code_01",
+      "prompt": "Viết hàm Python kiểm tra một số nguyên có phải số nguyên tố hay không."
+    },
+    {
+      "id": "code_02",
+      "prompt": "Viết đoạn code JavaScript đảo ngược một chuỗi (string), không dùng hàm `reverse()` có sẵn."
+    },
+    {
+      "id": "code_03",
+      "prompt": "Đoạn code Python sau bị lỗi cú pháp: `def add(a, b): return a + b print(add(2,3))`. Nêu lỗi và viết lại code đã sửa."
+    },
+    {
+      "id": "code_04",
+      "prompt": "Viết câu lệnh SQL lấy ra 5 khách hàng có tổng đơn hàng (theo cột `amount`) cao nhất, từ bảng `orders(customer_id, amount)`."
+    },
+    {
+      "id": "code_05",
+      "prompt": "Giải thích ngắn gọn thuật toán binary search trên mảng đã sắp xếp, và viết code Python minh hoạ."
+    },
+    {
+      "id": "code_06",
+      "prompt": "Viết hàm (ngôn ngữ bất kỳ) kiểm tra một chuỗi có phải palindrome (đọc xuôi và ngược giống nhau) hay không."
+    }
+  ],
+  "open_ended": [
+    {
+      "id": "oe_01",
+      "prompt": "Viết email xin nghỉ phép 2 ngày gửi quản lý vì lý do gia đình, giọng văn lịch sự, chuyên nghiệp."
+    },
+    {
+      "id": "oe_02",
+      "prompt": "Viết email phản hồi khách hàng đang phàn nàn vì đơn hàng giao trễ 3 ngày — xin lỗi và đề xuất hướng giải quyết cụ thể."
+    },
+    {
+      "id": "oe_03",
+      "prompt": "Viết email mời một đối tác tham dự buổi demo sản phẩm mới vào thứ Năm tuần sau, lúc 14h."
+    },
+    {
+      "id": "oe_04",
+      "prompt": "Viết email từ chối một lời mời phỏng vấn vì đã nhận công việc khác, giữ thiện chí để có thể hợp tác sau này."
+    },
+    {
+      "id": "oe_05",
+      "prompt": "Tóm tắt đoạn văn sau trong đúng 3 câu:\n\"Biến đổi khí hậu đang khiến nhiệt độ trung bình toàn cầu tăng lên rõ rệt trong vài thập kỷ qua, chủ yếu do phát thải khí nhà kính từ hoạt động công nghiệp, giao thông và nông nghiệp. Hệ quả là các hiện tượng thời tiết cực đoan như bão, hạn hán và lũ lụt xảy ra thường xuyên hơn, ảnh hưởng trực tiếp đến sản xuất nông nghiệp và an ninh lương thực ở nhiều quốc gia, đặc biệt là các nước đang phát triển ven biển như Việt Nam. Nhiều chuyên gia cho rằng nếu không có hành động cắt giảm phát thải quyết liệt trong thập kỷ tới, các mục tiêu kiểm soát nhiệt độ toàn cầu theo Thỏa thuận Paris sẽ khó đạt được.\""
+    },
+    {
+      "id": "oe_06",
+      "prompt": "Tóm tắt đoạn hội thoại họp nhóm sau thành danh sách các việc cần làm (action items), ghi rõ ai phụ trách:\n\"An: Mình nghĩ tuần này mình nên hoàn thành phần thiết kế giao diện trước, chậm nhất là thứ Sáu. Bình: Ok, còn phần API thì để mình lo, chắc mất khoảng 4 ngày. Chi: Mình sẽ viết test case song song với Bình, xong thì báo lại nhóm qua Slack. An: Được, cuối tuần mình họp lại review chung nhé.\""
+    },
+    {
+      "id": "oe_07",
+      "prompt": "Tóm tắt đoạn trích khoa học sau thành 2-3 câu dễ hiểu cho người không chuyên:\n\"Học sâu (deep learning) là một nhánh của học máy sử dụng mạng nơ-ron nhân tạo nhiều lớp để tự động trích xuất đặc trưng từ dữ liệu thô, thay vì phải thiết kế đặc trưng thủ công như các phương pháp học máy truyền thống. Nhờ khả năng học biểu diễn phân cấp này, học sâu đã đạt được những đột phá lớn trong nhận diện hình ảnh, xử lý ngôn ngữ tự nhiên và nhận dạng giọng nói trong thập kỷ qua.\""
+    },
+    {
+      "id": "oe_08",
+      "prompt": "Tóm tắt đánh giá sản phẩm sau, nêu đúng 3 điểm tích cực và 3 điểm tiêu cực dưới dạng gạch đầu dòng:\n\"Mình dùng chiếc tai nghe này được 2 tuần. Âm thanh khá chi tiết, bass ổn, đeo êm tai kể cả dùng lâu. Pin trâu, sạc 1 lần dùng được gần 30 tiếng. Tuy nhiên app đi kèm hay bị lag, kết nối Bluetooth thỉnh thoảng bị ngắt giữa chừng khi đang nghe, và mic khi gọi điện nghe hơi rè. Giá thì hơi cao so với phân khúc.\""
+    },
+    {
+      "id": "oe_09",
+      "prompt": "Viết một đoạn quảng cáo ngắn (khoảng 50 từ) cho một quán cà phê mới mở tại Đà Lạt."
+    },
+    {
+      "id": "oe_10",
+      "prompt": "Sáng tác một bài thơ lục bát ngắn (4-6 câu) về mùa thu Hà Nội."
+    },
+    {
+      "id": "oe_11",
+      "prompt": "Viết đoạn mở đầu (1 đoạn văn) cho một truyện trinh thám lấy bối cảnh Sài Gòn thập niên 1960."
+    },
+    {
+      "id": "oe_12",
+      "prompt": "Đặt tên và viết 1 câu slogan cho một startup công nghệ giáo dục dành cho trẻ em Việt Nam."
+    }
+  ]
 }

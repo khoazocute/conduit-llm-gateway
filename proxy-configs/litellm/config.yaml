@@ -17,7 +17,9 @@ model_list:
   # Tầng trung
   - model_name: claude-haiku
     litellm_params:
-      model: anthropic/claude-3-5-haiku-20241022
+      # claude-3-5-haiku-20241022 đã bị Anthropic gỡ (verify 2026-09-23 qua
+      # GET /v1/models, không còn trong danh sách trả về). Đổi sang bản còn hỗ trợ.
+      model: anthropic/claude-haiku-4-5-20251001
       api_key: os.environ/ANTHROPIC_API_KEY
 
   # Tầng đắt
@@ -28,7 +30,9 @@ model_list:
 
   - model_name: claude-sonnet
     litellm_params:
-      model: anthropic/claude-3-5-sonnet-20241022
+      # claude-3-5-sonnet-20241022 đã bị gỡ, lý do như trên. Dùng bản ổn định
+      # mới nhất (không phải preview) tại thời điểm verify.
+      model: anthropic/claude-sonnet-5
       api_key: os.environ/ANTHROPIC_API_KEY
 
 general_settings:
