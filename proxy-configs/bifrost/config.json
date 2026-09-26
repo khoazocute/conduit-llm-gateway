@@ -1,5 +1,6 @@
 {
-  "_comment": "Tai lieu tham khao provider/model setup cho Bifrost. KHONG duoc mount thang vao container (bifrost/data trong docker-compose.yml la volume rieng, Bifrost tu quan ly config qua SQLite config_store) - import noi dung nay qua API/UI cua Bifrost (http://localhost:8080) sau khi container da chay.",
+  "_comment": "Tai lieu tham khao provider/model setup cho Bifrost. KHONG duoc mount thang vao container (bifrost/data trong docker-compose.yml la volume rieng, Bifrost tu quan ly config qua SQLite config_store).",
+  "_comment_2": "DA XAC NHAN THAT (K4, 2026-09-23, xem docs/bifrost-routing-notes.md): Bifrost TU DONG nhan cac bien .env dat ten dung chuan <PROVIDER>_API_KEY (OPENAI_API_KEY, ANTHROPIC_API_KEY) ngay khi container khoi dong - khong can import file nay qua API/UI nhu ghi chu cu. GEMINI_API_KEY KHONG duoc tu nhan (Bifrost chi biet openai/anthropic theo pattern co san) - Gemini van phai khai bao thu cong qua UI: http://localhost:8080 (hoac 18080 neu bi remap port) > Models > Model Providers > Add New Provider.",
   "$schema": "https://www.getbifrost.ai/schema",
   "providers": {
     "openai": {
@@ -32,5 +33,18 @@
         }
       ]
     }
+  },
+  "_routing_rule_draft_note": "Bifrost KHONG dung 'routing_strategy' o file config nhu LiteLLM. Routing that cau hinh qua UI, 2 co che kha dung o ban OSS (Enterprise-only: Adaptive Routing + Circuit Breaker, xem docs/bifrost-routing-notes.md muc 2-3):",
+  "_routing_rule_draft": {
+    "type": "Routing Rules (CEL-based)",
+    "location": "UI: Models > Routing Rules > New Rule",
+    "example_intent": "if request.model == 'gpt-4o' and budget_remaining < threshold then route to gpt-4o-mini",
+    "status": "chua tao rule that - can quyet dinh D-decision truoc khi dau tu cau hinh sau"
+  },
+  "_complexity_router_draft": {
+    "type": "Complexity Router (Beta)",
+    "location": "UI: Models > Complexity Router",
+    "mechanism": "embedding-based nearest-phrase classifier, gan request vao tier Simple/Medium/Complex tu ~150 cau mau co san, roi dinh tuyen theo tier",
+    "status": "classifier chua duoc cau hinh (can 'Configure embedding' truoc)"
   }
 }
