@@ -1,7 +1,12 @@
-# LiteLLM routing — làm được / không làm được (nháp H4, cần Khoa phản biện)
+# LiteLLM routing — làm được / không làm được (H4, đã chạy thử thật ở H1)
 
-Nguồn: https://docs.litellm.ai/docs/routing (đọc 2026-09-22). Chưa chạy thử — mục "VERIFY" cần kiểm ở H3.
-Config nháp: `proxy-configs/litellm/config.routing-draft.yaml`.
+Nguồn: https://docs.litellm.ai/docs/routing (đọc 2026-09-22). **Đã cấu hình và chạy thử thật**
+(H1, 2026-09-29): `proxy-configs/litellm/config.yaml` — alias `conduit-pool`, `cost-based-routing`.
+10/10 lượt test chọn đúng `gpt-4o-mini` (rẻ nhất) sau khi khai tường minh `input_cost_per_token`/
+`output_cost_per_token` (bảng giá nội bộ của LiteLLM không có giá đúng cho
+`gemini/gemini-flash-latest`, ban đầu chọn nhầm gemini-flash dù đắt hơn). Model thật được chọn nằm
+ở **header** `x-litellm-model-id`, không phải trong JSON body (`model` trong body luôn trả về tên
+nhóm `"conduit-pool"`).
 
 ## 1. Gom 5 model thành 1 alias
 Nhiều `model_list` entry cùng `model_name` = 1 "model group"; Router chọn 1 deployment trong nhóm theo

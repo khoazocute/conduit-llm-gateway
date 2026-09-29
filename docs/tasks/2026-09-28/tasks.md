@@ -28,8 +28,8 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - [ ] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
       đạt được (dựa trên `docs/litellm-routing-notes.md`, `bifrost-routing-notes.md`,
       `portkey-routing-notes.md`).
-- [ ] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
-      `selected_model` mỗi lượt.
+- [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
+      `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
 - [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
 - [ ] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`).
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini
@@ -65,12 +65,14 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 ## Hùng
 
-**H1. Cấu hình LiteLLM routing thật**
-- Dùng `proxy-configs/litellm/config.routing-draft.yaml` làm nền (đã nhóm 5 model vào alias
-  `conduit-pool`, đã sửa 2 model Claude). Chọn 1 routing_strategy theo D2, áp `num_retries`/timeout
-  theo D7. Merge vào `config.yaml` chính thức khi chạy ổn.
-- Xong khi: gọi alias `conduit-pool` nhiều lần, xác định được model LiteLLM tự chọn mỗi lần từ
-  response, khớp đúng chiến lược đã chọn.
+**H1. Cấu hình LiteLLM routing thật** — ✅ xong 2026-09-29
+- `proxy-configs/litellm/config.yaml`: thêm alias `conduit-pool` (5 deployment), `routing_strategy:
+  cost-based-routing` (D2), `num_retries=2`/`timeout=45` (D7). Khai tường minh `input_cost_per_token`/
+  `output_cost_per_token` cho từng deployment — LiteLLM không có giá đúng cho
+  `gemini/gemini-flash-latest` trong bảng giá nội bộ, ban đầu chọn nhầm gemini-flash dù đắt hơn.
+- Xong khi: gọi alias `conduit-pool` nhiều lần, xác định được model LiteLLM tự chọn mỗi lần —
+  **10/10 lượt chọn đúng `gpt-4o-mini`** (rẻ nhất). Model thật nằm ở header `x-litellm-model-id`,
+  không phải trong JSON body. Ghi chú đầy đủ ở `docs/litellm-routing-notes.md`.
 
 **H2. Cấu hình Portkey routing thật**
 - Theo `docs/portkey-routing-notes.md`: viết `strategy.mode: "conditional"` với ít nhất 1 rule tĩnh
