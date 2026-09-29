@@ -129,10 +129,12 @@ Trạng thái: ⬜ chưa bắt đầu · 🟨 đang làm · ✅ đạt (đã đ�
 ## 6. Câu hỏi nên hỏi GVHD
 
 1. Khóa luận có hai sinh viên: thầy đánh giá đóng góp của từng người ở phần thực nghiệm proxy như thế nào? (Chúng em định chia theo cặp viết – phản biện, mỗi người sở hữu một số hạng mục.)
-2. Mục tiêu routing chung để 3 proxy so sánh công bằng nên là gì, khi mỗi proxy có tính năng khác nhau (cost/latency/usage-based, load balancing + failover, conditional routing)?
+2. Mục tiêu routing chung để 3 proxy so sánh công bằng nên là gì, khi mỗi proxy có tính năng khác nhau (cost/latency/usage-based, load balancing + failover, conditional routing)? — *đã tự chốt tạm (D2, mục 4) để không trễ tiến độ: ưu tiên rẻ nhất + fallback, không dùng Bifrost Complexity Router; vẫn muốn thầy xác nhận hướng này hợp lý.*
 3. Dùng Gemini bản miễn phí trong thí nghiệm (có lúc quá tải, latency cao) có chấp nhận được không, hay cần nguồn trả phí để phép đo ổn định?
-4. Cách chấm prompt code: rubric hay chạy test tự động?
+4. Cách chấm prompt code: rubric hay chạy test tự động? — *đã tự chốt tạm (D4, mục 4): rubric giống prompt mở; vẫn muốn thầy xác nhận.*
 5. Có ngân sách/API credit từ khoa hay phải tự chi trả?
+6. Nguồn system prompt cho agent: hiện `agents.introduction` chỉ là mô tả cho người mua đọc, không dùng làm chỉ thị hệ thống khi chat nên agent trả lời chung chung. Nên thêm cột riêng (vd. `system_prompt`) hay tái dùng `introduction`? (Liên quan RAG: RAG context phải tách biệt khỏi persona, đánh dấu "ngữ cảnh tham khảo" theo CLAUDE.md mục 7 — nên có cột riêng sẽ sạch hơn khi ghép RAG vào sau.)
+7. Nâng cấp user → creator: hiện chưa có API, phải sửa tay qua SQL. Có nên làm thành luồng thu phí (user trả tiền → Admin duyệt → nâng role, giống luồng mua agent hiện có), hay chỉ cần Admin duyệt không thu phí là đủ phạm vi khóa luận? (Ý tưởng thu phí không nằm trong MoSCoW hiện tại — mục 6 CLAUDE.md — cần thầy xác nhận có đáng làm thêm không.)
 
 ---
 
