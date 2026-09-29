@@ -1,8 +1,16 @@
-# Portkey AI Gateway routing — làm được / không làm được (nháp H5-style, chưa chạy thử)
+# Portkey AI Gateway routing — làm được / không làm được (H2, đã chạy thử thật)
 
 Nguồn: https://portkey.ai/docs/product/ai-gateway/conditional-routing — đọc 2026-09-23.
-Chưa chạy thử — VERIFY khi cấu hình thật. Cấu hình hiện tại (`proxy-configs/portkey/config.json`) đang
-`strategy.mode: "single"` — tức **chưa bật routing thật**, chỉ trỏ 1 target cố định.
+**Đã cấu hình và chạy thử thật** (H2, 2026-09-29): `proxy-configs/portkey/config.json` —
+`strategy.mode: "conditional"`, 5 condition khớp `params.model` theo alias (mô phỏng "alias" mà
+Portkey không có sẵn — xem mục 3 cũ), `default` rơi về `gpt-4o-mini`. 3/3 lượt test đúng: alias
+khớp condition → đúng target; alias không khớp → đúng rơi về default.
+
+**Phát hiện quan trọng: Portkey OSS không tự thay `$VAR` trong `api_key` của config.** Khác
+LiteLLM (đọc `os.environ/VAR` lúc khởi động từ chính container), Portkey nhận config qua **header
+mỗi request** — gửi `"$OPENAI_API_KEY"` nguyên văn sẽ bị gửi thẳng lên provider như key thật (sai).
+**Bên gửi request phải tự thay `$VAR` bằng giá trị thật trước khi đưa vào header** — ghi chú này
+quan trọng cho `run_experiment.py` (H3/Phase D).
 
 ## 1. Cấu trúc config — khác hẳn LiteLLM/Bifrost
 Không có "model pool" theo model_name như LiteLLM, cũng không phải weighted-provider như Bifrost. Portkey

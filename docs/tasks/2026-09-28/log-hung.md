@@ -9,6 +9,7 @@ không có gì đặc biệt. Commit kèm code, không paste vào chat — Khoa 
 |---|---|---|---|
 | H4 — verify `decision_rule.py` | ✅ 4 hàm `compute_*` implement xong, 4 nhánh luật quyết định đều có test biết trước kết quả, 16/16 test pass | `experiments/analysis/decision_rule.py`, `experiments/tests/test_decision_rule.py` | Đọc code, thử nghĩ 1 nhánh chưa test (theo bảng review chéo) |
 | H1 — LiteLLM routing thật | ✅ alias `conduit-pool` + `cost-based-routing` + D7 (`num_retries=2`/`timeout=45`). 10/10 lượt chọn đúng `gpt-4o-mini` sau khi khai giá tường minh (ban đầu có lúc chọn nhầm gemini-flash — bảng giá nội bộ LiteLLM không đúng cho model này) | `proxy-configs/litellm/config.yaml`, `docs/litellm-routing-notes.md`, `experiments/results/h1-litellm-routing-2026-09-29/` | Dựng lại trên máy Khoa, thử 1 lượt (bảng review chéo) |
+| H2 — Portkey routing thật | ✅ `strategy.mode: conditional`, 5 alias khớp `params.model` → đúng target thật, default rơi về `gpt-4o-mini`. 3/3 lượt đúng | `proxy-configs/portkey/config.json`, `docs/portkey-routing-notes.md`, `experiments/results/h2-portkey-routing-2026-09-29/` | Dựng lại trên máy Khoa, thử 1 lượt |
 
 ## Phát hiện quan trọng
 
@@ -21,10 +22,18 @@ không có gì đặc biệt. Commit kèm code, không paste vào chat — Khoa 
    `input_cost_per_token`/`output_cost_per_token` (dùng đúng số ở `docs/model-pricing-sources.md`)
    mới ra quyết định đúng. Đáng lưu ý cho báo cáo: nếu không phát hiện, kết quả Phase E sẽ sai mà
    không biết vì sao.
+3. **Portkey OSS không tự thay `$VAR` trong `api_key` của config** (khác LiteLLM đọc `os.environ/VAR`
+   lúc khởi động) — Portkey nhận config qua header mỗi request, gửi `$OPENAI_API_KEY` nguyên văn sẽ
+   bị coi là key thật (401 sai key). Bên gửi request (`run_experiment.py`) phải tự thay `$VAR` bằng
+   giá trị thật trước khi đưa vào header `x-portkey-config`.
 
 ## Cần bàn / chốt cùng nhau
 
-_(trống)_
+**Tự nhận lỗi quy trình (không giấu):** lúc test Portkey (H2), 1 trong 3 lượt gọi thật lỡ chạm tầng
+đắt (Claude Sonnet 5) thay vì chọn alias tầng rẻ để test — đáng lẽ phải dừng xin xác nhận trước theo
+đúng CLAUDE.md mục 2. Chi phí không đáng kể (1 lượt, `max_tokens=8`) nhưng là sai quy trình. Ghi lại
+để rút kinh nghiệm cho cả 2 người khi verify routing các tuần sau: luôn chọn alias/tầng rẻ khi chỉ
+cần test logic mapping, không cần test đúng model đắt thật.
 
 ## Còn thiếu / chưa xác nhận được
 

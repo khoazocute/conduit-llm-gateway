@@ -31,7 +31,7 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
       `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
 - [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
-- [ ] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`).
+- [x] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`). — xong 2026-09-29 (H2).
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini
       tuần trước) — OpenAI top-up **đã xong từ trước** (1 key dùng chung cho cả Hùng và Khoa, chia
       tiền sau; Khoa đã xác nhận gọi được cả 5 model từ 26/09), không còn gì phải chờ.
@@ -74,11 +74,17 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
   **10/10 lượt chọn đúng `gpt-4o-mini`** (rẻ nhất). Model thật nằm ở header `x-litellm-model-id`,
   không phải trong JSON body. Ghi chú đầy đủ ở `docs/litellm-routing-notes.md`.
 
-**H2. Cấu hình Portkey routing thật**
-- Theo `docs/portkey-routing-notes.md`: viết `strategy.mode: "conditional"` với ít nhất 1 rule tĩnh
-  mô phỏng "chọn rẻ nhất" (vd. theo `metadata.prompt_group` runner sẽ gắn sau, hoặc đơn giản hơn:
-  `default` trỏ model rẻ nhất). Cập nhật `proxy-configs/portkey/config.json`.
-- Xong khi: gửi request kèm `x-portkey-config`, Portkey chọn đúng target theo rule.
+**H2. Cấu hình Portkey routing thật** — ✅ xong 2026-09-29
+- `strategy.mode: "conditional"`, 5 condition khớp `params.model` theo alias → đúng target/model
+  thật (mô phỏng "alias" mà Portkey không có sẵn), `default: gpt-4o-mini`. Cũng sửa luôn 3 model cũ
+  đã bị gỡ (`gemini-1.5-flash`, `claude-3-5-haiku/sonnet-20241022` → tên mới khớp LiteLLM).
+- Xong khi: 3/3 lượt test đúng — alias khớp → đúng target; alias lạ → rơi về default.
+- **Phát hiện quan trọng:** Portkey OSS không tự thay `$VAR` trong `api_key` (khác LiteLLM) — bên
+  gửi request phải tự thay bằng giá trị thật trước khi đưa vào header `x-portkey-config`. Xem
+  `docs/portkey-routing-notes.md`.
+- **Lệch chính sách chi phí (tự nhận):** 1 trong 3 lượt test lỡ gọi tầng đắt (Claude Sonnet 5) thay
+  vì tầng rẻ — không dừng xin xác nhận trước như đáng lẽ phải làm. Chi phí không đáng kể, nhưng ghi
+  lại đúng thực tế, xem `experiments/results/h2-portkey-routing-2026-09-29/README.md`.
 
 **H3. Đổi `default-model`, viết runner**
 - Đổi `app.chat.default-model` về `gpt-4o-mini` (hết bị chặn — 1 key dùng chung cho cả 2 người,
