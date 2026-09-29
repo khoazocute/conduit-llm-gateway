@@ -39,7 +39,10 @@ app:
     # quyet dinh that thuoc Tuan 9-10 (CLAUDE.md muc 2/8).
     # D3: thi nghiem chay qua app, doi proxy theo tung dot chay bang CHAT_ACTIVE_PROXY.
     active-proxy: ${CHAT_ACTIVE_PROXY:litellm}
-    default-model: gemini-flash
+    # H3: gpt-4o-mini la mac dinh chinh thuc (gemini-flash chi la tam luc test Gemini
+    # tuan truoc). Env override de thu routing that (VD conduit-pool, H1) ma khong
+    # phai sua file/commit gia tri tam.
+    default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
     proxy-base-urls:
       litellm: http://localhost:4000/v1
       bifrost: ${BIFROST_BASE_URL:http://localhost:8080/v1}

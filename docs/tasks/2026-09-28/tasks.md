@@ -35,11 +35,14 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini
       tuần trước) — OpenAI top-up **đã xong từ trước** (1 key dùng chung cho cả Hùng và Khoa, chia
       tiền sau; Khoa đã xác nhận gọi được cả 5 model từ 26/09), không còn gì phải chờ.
-- [ ] Runner (`experiments/scripts/run_experiment.py`) gọi thật qua app Conduit (D3), lặp 3
-      lần/prompt, lưu kết quả thô + ghi `messages`/`usage_logs`/`routing_decisions`.
-- [ ] `experiments/analysis/decision_rule.py` kiểm chứng bằng dữ liệu giả (biết trước kết quả từng
-      nhánh của luật) — **không cần key thật**, chạy trước khi tốn tiền cho dry-run.
-- [ ] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó**).
+- [x] Runner (`experiments/scripts/run_experiment.py`) gọi thật qua app Conduit (D3), lặp 3
+      lần/prompt, lưu kết quả thô + ghi `messages`/`usage_logs`/`routing_decisions`. — xong 2026-09-29
+      (H3), verify với `--limit 1 --runs 1`, chưa chạy dry-run 27 lượt đầy đủ.
+- [x] `experiments/analysis/decision_rule.py` kiểm chứng bằng dữ liệu giả (biết trước kết quả từng
+      nhánh của luật) — **không cần key thật**, chạy trước khi tốn tiền cho dry-run. — xong 2026-09-29
+      (H4), 16/16 test pass.
+- [ ] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó** —
+      chưa xin, chưa chạy).
 
 ## Việc chung (cả hai)
 
@@ -86,21 +89,34 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
   vì tầng rẻ — không dừng xin xác nhận trước như đáng lẽ phải làm. Chi phí không đáng kể, nhưng ghi
   lại đúng thực tế, xem `experiments/results/h2-portkey-routing-2026-09-29/README.md`.
 
-**H3. Đổi `default-model`, viết runner**
-- Đổi `app.chat.default-model` về `gpt-4o-mini` (hết bị chặn — 1 key dùng chung cho cả 2 người,
-  Khoa đã xác nhận cả 5 model gọi được từ 26/09); test 1 lượt chat thật ngắn qua app để xác nhận.
-- Viết `experiments/scripts/run_experiment.py` (Phase D, gộp vào tuần này): gọi thật qua app Conduit
-  theo D3 (không gọi thẳng proxy), dùng 1 user/agent/conversation riêng cho thí nghiệm, lặp 3
-  lần/prompt, lưu JSON thô vào `experiments/results/` + tự động ghi được `messages`/`usage_logs`/
-  `routing_decisions` (qua chính luồng chat có sẵn của Khoa).
-- Xong khi: chạy được với **1 prompt duy nhất** trên 1 proxy (chưa cần dry-run 27 lượt) và ra đúng
-  file kết quả + đủ 3 dòng `routing_decisions`.
+**H3. Đổi `default-model`, viết runner** — ✅ xong 2026-09-29
+- `application.yml`: `default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}` — mặc định đã commit là
+  `gpt-4o-mini`, override qua env khi cần test `conduit-pool`.
+- **Phát hiện + sửa code:** `HttpProxyChatClient` cần đọc header `x-litellm-model-id` để lấy đúng
+  model LiteLLM đã chọn khi dùng `conduit-pool` (JSON body chỉ trả tên nhóm, xem H1) — đã sửa
+  `resolveReturnedModel` đọc header này trước, giữ nguyên logic Bifrost (`routing_info`) của Khoa.
+- Viết lại hoàn chỉnh `experiments/scripts/run_experiment.py` theo D3 (gọi qua app Conduit thật,
+  KHÔNG gọi thẳng proxy — sửa lại TODO cũ trong file vốn ghi nhầm theo đề xuất D3 đã bị bác):
+  bootstrap 1 lần (creator+agent miễn phí+admin duyệt+buyer, lưu vào
+  `.experiment_identity.json` — gitignored), gọi `POST /conversations` → SSE → `GET .../messages`
+  lấy `model_used`/`credit_charged`/`latency_ms`, đọc thêm `usage_logs.cost_upstream` qua psql
+  (API không lộ trường này), chấm tự động closed-QA, ghi từng record ngay khi có.
+- Xong khi: chạy được với **1 prompt duy nhất** trên 1 proxy (`--limit 1 --runs 1`) và ra đúng file
+  kết quả + đủ 3 dòng `messages`/`usage_logs`/`routing_decisions` — **verify thật, có bằng chứng**:
+  `experiments/results/run_litellm_20260929T084350Z.json`, model chọn đúng `gpt-4o-mini`,
+  `closed_qa_correct: true`.
+- **Chưa làm:** dry-run 27 lượt đầy đủ (chờ xin xác nhận riêng), chạy thử qua Bifrost/Portkey (mới
+  verify qua LiteLLM).
+- **Ngoài ý muốn nhưng cần biết:** `docker exec ... psql` khi bootstrap nhận ra máy Hùng có
+  `model_pricing` = 0 dòng (K2 là việc chèn tay trên máy Khoa, không phải migration) — đã tự chèn
+  10 dòng đúng số liệu `docs/model-pricing-sources.md` để `cost_upstream` không về 0. **Khoa/ai dựng
+  máy mới đều cần tự làm bước này** (chạy admin UI hoặc INSERT tay), không tự động theo migration.
 
-**H4. Kiểm chứng `decision_rule.py`**
+**H4. Kiểm chứng `decision_rule.py`** — ✅ xong 2026-09-29
 - Dùng dữ liệu giả (viết tay hoặc random có kiểm soát) cho từng nhánh của luật quyết định (loại
   <80%, chi phí, chênh <5% → p95, hòa → consistency) — không cần key thật.
 - Xong khi: mỗi nhánh có ít nhất 1 test case biết trước kết quả, script cho ra đúng kết luận mong
-  đợi.
+  đợi. — `experiments/tests/test_decision_rule.py`, 16/16 test pass.
 
 ---
 

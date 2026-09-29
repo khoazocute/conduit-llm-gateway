@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -18,6 +19,12 @@ public class HttpProxyChatClient implements ProxyChatClient {
     // WebClient.block() waits indefinitely and the SSE response never
     // resolves client-side ("Assistant is typing..." forever, no error).
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
+
+    // LiteLLM's grouped model_name (e.g. "conduit-pool", H1 - proxy-configs/litellm/config.yaml)
+    // echoes the GROUP name back in the JSON body's "model" field, not the deployment actually
+    // chosen by routing_strategy - the real one is only in this response header, and it already
+    // matches our alias (model_info.id in config.yaml was set to equal it), no aliasOf() needed.
+    private static final String LITELLM_MODEL_ID_HEADER = "x-litellm-model-id";
 
     private final WebClient webClient;
     private final ChatProxyProperties properties;
@@ -39,14 +46,14 @@ public class HttpProxyChatClient implements ProxyChatClient {
                         .toList());
 
         long start = System.currentTimeMillis();
-        JsonNode response;
+        ResponseEntity<JsonNode> entity;
         try {
-            response = webClient.post()
+            entity = webClient.post()
                     .uri("/chat/completions")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(JsonNode.class)
+                    .toEntity(JsonNode.class)
                     .block(REQUEST_TIMEOUT);
         } catch (WebClientResponseException e) {
             throw new ProxyChatException(
@@ -59,13 +66,14 @@ public class HttpProxyChatClient implements ProxyChatClient {
         }
         int latencyMs = (int) (System.currentTimeMillis() - start);
 
+        JsonNode response = entity == null ? null : entity.getBody();
         if (response == null) {
             throw new ProxyChatException("Empty response from proxy", null);
         }
 
         JsonNode message = response.path("choices").path(0).path("message");
         String content = message.path("content").isMissingNode() ? null : message.path("content").asText();
-        String returnedModel = resolveReturnedModel(response, model);
+        String returnedModel = resolveReturnedModel(response, entity.getHeaders(), model);
         JsonNode usage = response.path("usage");
         Integer tokenInput = usage.has("prompt_tokens") ? usage.get("prompt_tokens").asInt() : null;
         Integer tokenOutput = usage.has("completion_tokens") ? usage.get("completion_tokens").asInt() : null;
@@ -75,8 +83,13 @@ public class HttpProxyChatClient implements ProxyChatClient {
 
     // Bifrost's top-level "model" is the provider's resolved id (e.g. gemini-3.8-flash), which
     // matches nothing in model_pricing; routing_info names the deployment that actually answered,
-    // including after a fallback.
-    private String resolveReturnedModel(JsonNode response, String requestedAlias) {
+    // including after a fallback. LiteLLM's grouped alias (H1) needs the header instead - see
+    // LITELLM_MODEL_ID_HEADER above.
+    private String resolveReturnedModel(JsonNode response, HttpHeaders headers, String requestedAlias) {
+        String litellmModelId = headers.getFirst(LITELLM_MODEL_ID_HEADER);
+        if (litellmModelId != null && !litellmModelId.isBlank()) {
+            return litellmModelId;
+        }
         JsonNode routing = response.path("extra_fields").path("routing_info");
         if (routing.hasNonNull("provider") && routing.hasNonNull("model")) {
             return properties.aliasOf(routing.get("provider").asText() + "/" + routing.get("model").asText());
