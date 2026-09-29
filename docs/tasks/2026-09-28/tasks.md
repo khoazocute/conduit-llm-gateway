@@ -15,8 +15,8 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 ## Đích của tuần (kiểm tra vào cuối tuần)
 
-- [ ] D2 (mục tiêu routing chung để so 3 proxy công bằng) và D7 (`max_retries`/timeout/cách tính
-      lượt lỗi) có kết luận, ghi vào `docs/roadmap.md` mục 4.
+- [x] D2 (mục tiêu routing chung để so 3 proxy công bằng) và D7 (`max_retries`/timeout/cách tính
+      lượt lỗi) có kết luận, ghi vào `docs/roadmap.md` mục 4. — chốt 2026-09-29.
 - [ ] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
       đạt được (dựa trên `docs/litellm-routing-notes.md`, `bifrost-routing-notes.md`,
       `portkey-routing-notes.md`).
@@ -29,14 +29,12 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 ## Việc chung (cả hai)
 
-**J1. Họp đầu tuần chốt D2 + D7**
-- D2: mục tiêu routing chung cho cả 3 proxy — đề xuất "ưu tiên model rẻ nhất đủ tốt, có failover
-  khi lỗi" (đã có trong `roadmap.md` mục 3.C), cần chốt cụ thể hơn: có dùng Bifrost Complexity
-  Router không (câu hỏi mở trong `bifrost-routing-notes.md` mục 5), chuỗi fallback theo thứ tự
-  nào (rẻ→trung→đắt hay khác).
-- D7: con số cụ thể `num_retries`/`timeout` áp dụng giống nhau ở cả 3 proxy (Bifrost mặc định
-  `max_retries: 0` — xem `bifrost-routing-notes.md` mục 3).
-- Xong khi: D2, D7 có cột "Kết luận" trong `roadmap.md` mục 4.
+**J1. Họp đầu tuần chốt D2 + D7** — ✅ xong 2026-09-29
+- D2: **đã chốt** — ưu tiên model rẻ nhất, có phương án dự phòng khi lỗi; LiteLLM `cost-based-routing`,
+  Bifrost/Portkey chuỗi tĩnh rẻ→trung→đắt; không dùng Bifrost Complexity Router ở vòng chính.
+- D7: **đã chốt** — `num_retries=2`, `timeout=45s` giống nhau cả 3 proxy; lượt lỗi ghi log đầy đủ,
+  không tính phí, tính là 1 lần lặp, không chạy bù.
+- Chi tiết đầy đủ: `docs/roadmap.md` mục 4.
 
 **J2. `docs/routing-policy.md`**
 - Tổng hợp từ D2 + 3 file routing-notes đã có. Bảng "proxy nào diễn đạt được gì" (đã có sẵn khung ở
