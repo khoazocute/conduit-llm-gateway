@@ -37,11 +37,21 @@ app:
   chat:
     # Proxy "active" hien la cau hinh tinh, khong phai routing thong minh -
     # quyet dinh that thuoc Tuan 9-10 (CLAUDE.md muc 2/8).
-    active-proxy: litellm
+    # D3: thi nghiem chay qua app, doi proxy theo tung dot chay bang CHAT_ACTIVE_PROXY.
+    active-proxy: ${CHAT_ACTIVE_PROXY:litellm}
     default-model: gemini-flash
     proxy-base-urls:
       litellm: http://localhost:4000/v1
-      bifrost: http://localhost:8080/v1
+      bifrost: ${BIFROST_BASE_URL:http://localhost:8080/v1}
       portkey: http://localhost:8787/v1
     proxy-api-keys:
       litellm: ${LITELLM_MASTER_KEY:sk-1234}
+    # Backend va model_pricing dung alias cua LiteLLM; Bifrost khong co alias,
+    # can ten "provider/model" that - phai khop proxy-configs/litellm/config.yaml.
+    proxy-model-names:
+      bifrost:
+        gpt-4o-mini: openai/gpt-4o-mini
+        gpt-4o: openai/gpt-4o
+        claude-haiku: anthropic/claude-haiku-4-5-20251001
+        claude-sonnet: anthropic/claude-sonnet-5
+        gemini-flash: gemini/gemini-flash-latest

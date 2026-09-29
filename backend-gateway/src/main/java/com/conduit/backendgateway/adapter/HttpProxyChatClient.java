@@ -20,8 +20,10 @@ public class HttpProxyChatClient implements ProxyChatClient {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
 
     private final WebClient webClient;
+    private final ChatProxyProperties properties;
 
     public HttpProxyChatClient(ChatProxyProperties properties) {
+        this.properties = properties;
         this.webClient = WebClient.builder()
                 .baseUrl(properties.activeBaseUrl())
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.activeApiKey())
@@ -31,7 +33,7 @@ public class HttpProxyChatClient implements ProxyChatClient {
     @Override
     public ChatCompletionResult complete(String model, List<ChatTurn> messages) {
         Map<String, Object> body = Map.of(
-                "model", model,
+                "model", properties.upstreamModel(model),
                 "messages", messages.stream()
                         .map(t -> Map.of("role", t.role(), "content", t.content()))
                         .toList());
@@ -63,11 +65,22 @@ public class HttpProxyChatClient implements ProxyChatClient {
 
         JsonNode message = response.path("choices").path(0).path("message");
         String content = message.path("content").isMissingNode() ? null : message.path("content").asText();
-        String returnedModel = response.path("model").isMissingNode() ? model : response.path("model").asText();
+        String returnedModel = resolveReturnedModel(response, model);
         JsonNode usage = response.path("usage");
         Integer tokenInput = usage.has("prompt_tokens") ? usage.get("prompt_tokens").asInt() : null;
         Integer tokenOutput = usage.has("completion_tokens") ? usage.get("completion_tokens").asInt() : null;
 
         return new ChatCompletionResult(content, returnedModel, tokenInput, tokenOutput, latencyMs);
+    }
+
+    // Bifrost's top-level "model" is the provider's resolved id (e.g. gemini-3.8-flash), which
+    // matches nothing in model_pricing; routing_info names the deployment that actually answered,
+    // including after a fallback.
+    private String resolveReturnedModel(JsonNode response, String requestedAlias) {
+        JsonNode routing = response.path("extra_fields").path("routing_info");
+        if (routing.hasNonNull("provider") && routing.hasNonNull("model")) {
+            return properties.aliasOf(routing.get("provider").asText() + "/" + routing.get("model").asText());
+        }
+        return response.hasNonNull("model") ? properties.aliasOf(response.get("model").asText()) : requestedAlias;
     }
 }

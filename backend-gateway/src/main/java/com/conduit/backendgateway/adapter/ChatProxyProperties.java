@@ -18,6 +18,7 @@ public class ChatProxyProperties {
     private String defaultModel = "gpt-4o-mini";
     private Map<String, String> proxyBaseUrls = Map.of();
     private Map<String, String> proxyApiKeys = Map.of();
+    private Map<String, Map<String, String>> proxyModelNames = Map.of();
 
     public String activeBaseUrl() {
         return proxyBaseUrls.get(activeProxy);
@@ -25,5 +26,17 @@ public class ChatProxyProperties {
 
     public String activeApiKey() {
         return proxyApiKeys.getOrDefault(activeProxy, "");
+    }
+
+    public String upstreamModel(String alias) {
+        return proxyModelNames.getOrDefault(activeProxy, Map.of()).getOrDefault(alias, alias);
+    }
+
+    public String aliasOf(String upstreamModel) {
+        return proxyModelNames.getOrDefault(activeProxy, Map.of()).entrySet().stream()
+                .filter(e -> e.getValue().equals(upstreamModel))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(upstreamModel);
     }
 }
