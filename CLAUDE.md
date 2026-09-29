@@ -184,7 +184,15 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
 - Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
 
-**Lộ trình còn lại:** Hùng và Khoa **cùng làm phần đánh giá proxy**, mỗi hạng mục có 1 người viết + 1 người phản biện (đổi vai giữa các hạng mục); chấm mù cần cả hai người (mẫu chấm kép). Chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D8, rủi ro, câu hỏi GVHD — file này đã lên repo, cả hai cùng đọc/sửa được qua PR, không còn là ghi chú riêng của Hùng nữa). Các file làm việc còn lại của Hùng (`tasks-YYYY-MM-DD.md`, `project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ có trên máy Hùng, đã gitignore) — muốn chia sẻ thì gửi file hoặc đưa lên Notion.
+**Lộ trình còn lại:** Hùng và Khoa **cùng làm phần đánh giá proxy**, mỗi hạng mục có 1 người viết + 1 người phản biện (đổi vai giữa các hạng mục); chấm mù cần cả hai người (mẫu chấm kép). Chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D8, rủi ro, câu hỏi GVHD — file này đã lên repo, cả hai cùng đọc/sửa được qua PR).
+
+**Quy ước làm việc theo tuần (đổi từ 2026-09-29 — thay hẳn cách làm cũ, không paste log vào chat nữa):**
+mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên repo (không phải `docs-local/`), gồm:
+- `tasks.md` — việc được giao trong tuần (mục tiêu, việc chung, việc từng người, review chéo, checklist) — viết ở buổi họp đầu tuần, thường do Hùng soạn vì gắn với `roadmap.md`, rồi commit để Khoa thấy khi pull, không cần gửi riêng.
+- `log-hung.md` / `log-khoa.md` — nhật ký làm việc của mỗi người, tự viết dần trong tuần rồi commit kèm code (thay cho việc dán nguyên khối Markdown vào chat) — bảng "việc/kết quả/file/người kia cần làm" + mục "phát hiện quan trọng"/"cần bàn cùng nhau".
+- Review: người phản biện đọc `tasks.md` (được giao gì) + `log-*.md` của người kia (báo cáo gì) + tự chạy lại code/test thật để đối chiếu, rồi ghi kết luận thẳng vào cuối chính file `log-*.md` đó, dưới mục `## Review — <người review> (<ngày>)` — không tạo file riêng.
+
+Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-09-28/`** để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
 
 **Bảng quyết định D1–D8 (chi tiết ở `docs/roadmap.md` mục 4), tóm tắt:**
 - **D1 (đã chốt 2026-09-21):** Hùng chịu chi phí API key, dùng tối thiểu (xem "Chính sách chi phí API key" ở mục 2).
