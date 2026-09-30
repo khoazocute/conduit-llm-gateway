@@ -25,9 +25,10 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 - [x] D2 (mục tiêu routing chung để so 3 proxy công bằng) và D7 (`max_retries`/timeout/cách tính
       lượt lỗi) có kết luận, ghi vào `docs/roadmap.md` mục 4. — chốt 2026-09-29.
-- [ ] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
+- [x] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
       đạt được (dựa trên `docs/litellm-routing-notes.md`, `bifrost-routing-notes.md`,
-      `portkey-routing-notes.md`).
+      `portkey-routing-notes.md`). — xong 2026-09-30 (Hùng viết, chờ Khoa đọc/đồng ý — J2 "Xong khi"
+      cần cả 2 người, mới có 1 người).
 - [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
       `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
 - [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
@@ -54,10 +55,12 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
   không tính phí, tính là 1 lần lặp, không chạy bù.
 - Chi tiết đầy đủ: `docs/roadmap.md` mục 4.
 
-**J2. `docs/routing-policy.md`**
+**J2. `docs/routing-policy.md`** — 🟨 bản nháp xong 2026-09-30, chờ Khoa đọc
 - Tổng hợp từ D2 + 3 file routing-notes đã có. Bảng "proxy nào diễn đạt được gì" (đã có sẵn khung ở
   `bifrost-routing-notes.md` mục 4, làm tương tự cho LiteLLM/Portkey).
 - Xong khi: file tồn tại, cả hai đọc và đồng ý; nếu cần hỏi GVHD thì hỏi trước khi chốt.
+- Khoa đọc `docs/routing-policy.md`, đặc biệt mục 5 (ảnh hưởng cách diễn giải kết quả) — nếu đồng ý
+  thì coi J2 xong, không cần sửa gì; nếu không đồng ý thì sửa trực tiếp vào file.
 
 **J3. Review chéo (giữa/cuối tuần)**
 - Theo danh sách "Review chéo" bên dưới.
