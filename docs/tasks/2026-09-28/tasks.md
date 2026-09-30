@@ -131,6 +131,21 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - Xong khi: mỗi nhánh có ít nhất 1 test case biết trước kết quả, script cho ra đúng kết luận mong
   đợi. — `experiments/tests/test_decision_rule.py`, 16/16 test pass.
 
+**H5 (chuẩn bị trước cho dry-run, làm khi chờ Khoa xong K1)** — ✅ xong 2026-09-30
+- `experiments/scripts/dry_run.sh`: gộp quy trình chạy dry-run/thực nghiệm qua N proxy (restart
+  backend đúng `CHAT_ACTIVE_PROXY` → chờ sẵn sàng → chạy `run_experiment.py` → proxy tiếp theo) —
+  vốn phải làm tay 3 lần. Test cơ chế bằng `PROMPT_LIMIT=0` (không tốn tiền) qua LiteLLM + Portkey:
+  restart đúng, bootstrap đúng, ghi kết quả đúng. Khi Khoa xong K1, chỉ cần 1 lệnh
+  `PROMPT_LIMIT=3 RUNS=3 bash experiments/scripts/dry_run.sh` là chạy đủ 27 lượt (sau khi xin xác
+  nhận, script không tự hỏi lại).
+- `experiments/scripts/build_grading_sheets.py`: xuất bảng chấm mù cho 18 câu code+mở từ kết quả
+  runner — tự loại closed-QA, tự tách lượt lỗi (0 điểm, D7, không đưa người chấm), xáo trộn ẩn danh,
+  chia mẫu chấm kép 30% (D6) giữa Hùng/Khoa. Test bằng dữ liệu giả —
+  `experiments/tests/test_build_grading_sheets.py`, 6/6 test pass, xác nhận đúng số 49/162 đã ghi
+  sẵn trong `docs/eval-prompts.md`.
+- Xong khi: cả 2 script chạy được cuối-đến-cuối bằng dữ liệu giả/lượt 0, sẵn sàng dùng ngay khi có
+  dữ liệu thật — không cần viết gì thêm lúc chạy Phase E.
+
 ---
 
 ## Khoa
