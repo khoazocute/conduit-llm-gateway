@@ -19,6 +19,8 @@ public class ChatProxyProperties {
     private Map<String, String> proxyBaseUrls = Map.of();
     private Map<String, String> proxyApiKeys = Map.of();
     private Map<String, Map<String, String>> proxyModelNames = Map.of();
+    // H2/H3: chi doc khi activeProxy=portkey - xem HttpProxyChatClient.
+    private String portkeyConfigPath = "../proxy-configs/portkey/config.json";
 
     public String activeBaseUrl() {
         return proxyBaseUrls.get(activeProxy);

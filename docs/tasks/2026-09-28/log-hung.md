@@ -12,6 +12,7 @@ không có gì đặc biệt. Commit kèm code, không paste vào chat — Khoa 
 | H2 — Portkey routing thật | ✅ `strategy.mode: conditional`, 5 alias khớp `params.model` → đúng target thật, default rơi về `gpt-4o-mini`. 3/3 lượt đúng | `proxy-configs/portkey/config.json`, `docs/portkey-routing-notes.md`, `experiments/results/h2-portkey-routing-2026-09-29/` | Dựng lại trên máy Khoa, thử 1 lượt |
 | Merge `main`→`lhung` | ⚠️ phát hiện `lhung` đang thiếu hẳn PR #5 của Khoa (K1-K4) — merge lại trước khi làm H3, không conflict | commit merge | Không cần làm gì, chỉ để biết đã xảy ra |
 | H3 — default-model + runner | ✅ `default-model` env-overridable, về `gpt-4o-mini`. Sửa `HttpProxyChatClient` đọc header `x-litellm-model-id` (bug giống Bifrost). Viết lại `run_experiment.py` theo D3 (qua app thật). Verify `--limit 1`: đủ 3 dòng DB, model đúng, chấm đúng | `application.yml`, `HttpProxyChatClient.java`, `run_experiment.py`, `experiments/results/run_litellm_20260929T084350Z.json` | Đọc code runner, thử chạy lại trên máy Khoa |
+| Nối Portkey vào app (2026-09-30) | ✅ App trước đó chưa gọi được Portkey thật (thiếu header `x-portkey-config`) — đã sửa `HttpProxyChatClient` tự đọc config + thay `$VAR` + gắn header. Sửa luôn `resolveReturnedModel` cho Portkey (routing tĩnh 1-1 → trả thẳng alias). Verify `CHAT_ACTIVE_PROXY=portkey`: chat thành công, `model_used`/`cost_upstream` đúng, 42/43 (1 fail là do script hard-code proxy litellm, không phải lỗi thật) | `HttpProxyChatClient.java`, `ChatProxyProperties.java`, `application.yml`, `docs/portkey-routing-notes.md` | Dựng lại trên máy Khoa với `CHAT_ACTIVE_PROXY=portkey`, thử 1 lượt |
 
 ## Phát hiện quan trọng
 
@@ -47,7 +48,10 @@ cần test logic mapping, không cần test đúng model đắt thật.
 
 ## Còn thiếu / chưa xác nhận được
 
-- Dry-run 27 lượt (3 prompt × 3 proxy × 3 lần) — chưa chạy, cần xin xác nhận riêng trước.
-- Runner (`run_experiment.py`) mới verify qua LiteLLM, chưa thử qua Bifrost/Portkey (cần đổi
-  `CHAT_ACTIVE_PROXY` + backend restart, chưa làm trong phiên này).
+- Dry-run 27 lượt (3 prompt × 3 proxy × 3 lần) — chưa chạy, cần xin xác nhận riêng trước. Giờ đã
+  nối dây đủ cả 3 proxy vào app (LiteLLM + Portkey xong; Bifrost sẵn có từ tuần trước, chờ Khoa
+  hoàn thiện K1 — fallback đủ 5 model + retry theo D7).
+- `run_experiment.py` mới verify qua app bằng `run_experiment.py` trực tiếp cho LiteLLM; Portkey mới
+  verify bằng `e2e_workflow_test.sh` (chưa chạy `run_experiment.py` qua Portkey, nhưng cùng 1 API
+  app nên tin được — cần 1 lượt xác nhận lại khi dry-run thật).
 - `docs/routing-policy.md` (J2) chưa viết — vẫn còn trong danh sách việc chung.

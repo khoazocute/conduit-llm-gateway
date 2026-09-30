@@ -1,6 +1,10 @@
 package com.conduit.backendgateway.adapter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -26,15 +30,60 @@ public class HttpProxyChatClient implements ProxyChatClient {
     // matches our alias (model_info.id in config.yaml was set to equal it), no aliasOf() needed.
     private static final String LITELLM_MODEL_ID_HEADER = "x-litellm-model-id";
 
+    // Portkey OSS reads its Config object from THIS request header, not from an Authorization
+    // bearer token (H2, docs/portkey-routing-notes.md) - and, unlike LiteLLM's os.environ/VAR, it
+    // does NOT interpolate "$VAR" placeholders itself, so the caller must substitute real key
+    // values before sending it (also found in H2).
+    private static final String PORTKEY_CONFIG_HEADER = "x-portkey-config";
+
     private final WebClient webClient;
     private final ChatProxyProperties properties;
 
     public HttpProxyChatClient(ChatProxyProperties properties) {
         this.properties = properties;
-        this.webClient = WebClient.builder()
+        WebClient.Builder builder = WebClient.builder()
                 .baseUrl(properties.activeBaseUrl())
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.activeApiKey())
-                .build();
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.activeApiKey());
+        if ("portkey".equals(properties.getActiveProxy())) {
+            builder.defaultHeader(PORTKEY_CONFIG_HEADER, loadPortkeyConfigHeader(properties.getPortkeyConfigPath()));
+        }
+        this.webClient = builder.build();
+    }
+
+    private static String loadPortkeyConfigHeader(String configPath) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root;
+        try {
+            root = mapper.readTree(new File(configPath));
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Cannot read Portkey config at " + configPath + " (app.chat.portkey-config-path)", e);
+        }
+        substituteEnvVars(root);
+        try {
+            return mapper.writeValueAsString(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot serialize Portkey config", e);
+        }
+    }
+
+    // Walks the whole config tree replacing any string value like "$OPENAI_API_KEY" with the
+    // real environment variable's value - generic (not hardcoded to "targets"/"api_key") so it
+    // still works if proxy-configs/portkey/config.json's shape changes later.
+    private static void substituteEnvVars(JsonNode node) {
+        if (node.isObject()) {
+            ObjectNode obj = (ObjectNode) node;
+            obj.fieldNames().forEachRemaining(field -> {
+                JsonNode child = obj.get(field);
+                if (child.isTextual() && child.asText().startsWith("$")) {
+                    obj.put(field, System.getenv().getOrDefault(child.asText().substring(1), ""));
+                } else {
+                    substituteEnvVars(child);
+                }
+            });
+        } else if (node.isArray()) {
+            node.forEach(HttpProxyChatClient::substituteEnvVars);
+        }
     }
 
     @Override
@@ -93,6 +142,13 @@ public class HttpProxyChatClient implements ProxyChatClient {
         JsonNode routing = response.path("extra_fields").path("routing_info");
         if (routing.hasNonNull("provider") && routing.hasNonNull("model")) {
             return properties.aliasOf(routing.get("provider").asText() + "/" + routing.get("model").asText());
+        }
+        if ("portkey".equals(properties.getActiveProxy())) {
+            // Portkey's conditional routing (H2) is a static 1:1 alias->target mapping - it never
+            // dynamically picks a different model the way LiteLLM/Bifrost can, so the requested
+            // alias IS the model actually used. Its top-level "model" is the provider's dated
+            // snapshot id (e.g. "gpt-4o-mini-2024-07-18"), which matches nothing in model_pricing.
+            return requestedAlias;
         }
         return response.hasNonNull("model") ? properties.aliasOf(response.get("model").asText()) : requestedAlias;
     }

@@ -49,6 +49,11 @@ app:
       portkey: http://localhost:8787/v1
     proxy-api-keys:
       litellm: ${LITELLM_MASTER_KEY:sk-1234}
+    # Portkey khong dung Bearer token - doc Config object tu file nay, tu thay
+    # $VAR bang gia tri that (Portkey OSS khong tu lam viec do, xem H2/H3).
+    # Duong dan tinh theo working dir luc chay (backend-gateway/), override neu
+    # chay tu thu muc khac.
+    portkey-config-path: ${PORTKEY_CONFIG_PATH:../proxy-configs/portkey/config.json}
     # Backend va model_pricing dung alias cua LiteLLM; Bifrost khong co alias,
     # can ten "provider/model" that - phai khop proxy-configs/litellm/config.yaml.
     proxy-model-names:

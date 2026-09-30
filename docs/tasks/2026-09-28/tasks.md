@@ -31,7 +31,8 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
       `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
 - [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
-- [x] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`). — xong 2026-09-29 (H2).
+- [x] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`). — xong 2026-09-29 (H2);
+      nối dây vào app thật (chat qua app gọi đúng Portkey) — xong 2026-09-30.
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini
       tuần trước) — OpenAI top-up **đã xong từ trước** (1 key dùng chung cho cả Hùng và Khoa, chia
       tiền sau; Khoa đã xác nhận gọi được cả 5 model từ 26/09), không còn gì phải chờ.
@@ -88,6 +89,15 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - **Lệch chính sách chi phí (tự nhận):** 1 trong 3 lượt test lỡ gọi tầng đắt (Claude Sonnet 5) thay
   vì tầng rẻ — không dừng xin xác nhận trước như đáng lẽ phải làm. Chi phí không đáng kể, nhưng ghi
   lại đúng thực tế, xem `experiments/results/h2-portkey-routing-2026-09-29/README.md`.
+- **Nối dây vào app thật (2026-09-30, để chuẩn bị dry-run 27 lượt):** hôm 29/09 mới verify gọi
+  *trực tiếp* Portkey, app chưa thực sự gọi được (`HttpProxyChatClient` chỉ gửi `Authorization`,
+  không gửi `x-portkey-config`). Đã sửa: tự đọc `proxy-configs/portkey/config.json`, tự thay `$VAR`
+  bằng giá trị thật, gắn header khi `active-proxy=portkey`. Cũng sửa `resolveReturnedModel` — Portkey
+  trả `model` là ID đầy đủ của provider (không khớp `model_pricing`), nhưng vì routing của mình tĩnh
+  1-1 nên trả thẳng alias đã gửi là đúng, không cần tra bảng như Bifrost. Verify qua
+  `e2e_workflow_test.sh` với `CHAT_ACTIVE_PROXY=portkey`: chat thành công, `model_used=gpt-4o-mini`,
+  `cost_upstream` khớp giá — 42/43 pass (1 "fail" là do chính script hard-code `proxy_name=litellm`,
+  không phải lỗi thật).
 
 **H3. Đổi `default-model`, viết runner** — ✅ xong 2026-09-29
 - `application.yml`: `default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}` — mặc định đã commit là

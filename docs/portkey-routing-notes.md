@@ -12,6 +12,21 @@ mỗi request** — gửi `"$OPENAI_API_KEY"` nguyên văn sẽ bị gửi thẳ
 **Bên gửi request phải tự thay `$VAR` bằng giá trị thật trước khi đưa vào header** — ghi chú này
 quan trọng cho `run_experiment.py` (H3/Phase D).
 
+## Đã nối dây vào app thật (2026-09-30)
+
+`HttpProxyChatClient` giờ tự đọc `proxy-configs/portkey/config.json` (đường dẫn cấu hình qua
+`app.chat.portkey-config-path`), tự thay `$VAR` bằng giá trị thật từ biến môi trường (đệ quy toàn
+bộ cây JSON, không hard-code path `targets[].api_key`), rồi gắn làm header `x-portkey-config` mặc
+định khi `active-proxy=portkey`. Verify qua `e2e_workflow_test.sh` với `CHAT_ACTIVE_PROXY=portkey`:
+chat thành công, `model_used=gpt-4o-mini`, `cost_upstream` khớp `model_pricing`.
+
+**Phát hiện thêm — cùng họ lỗi với Bifrost/LiteLLM:** JSON body của Portkey trả `model` là ID đầy
+đủ nhà cung cấp (VD `gpt-4o-mini-2024-07-18`), không khớp `model_pricing` (dùng alias `gpt-4o-mini`).
+Khác Bifrost (cần bảng ánh xạ `proxy-model-names` vì fallback có thể đổi model thật lúc chạy),
+Portkey routing của mình là ánh xạ **tĩnh 1-1** (mỗi alias → đúng 1 target cố định, không tự chọn
+động) — nên `resolveReturnedModel` chỉ cần trả thẳng lại alias đã gửi cho Portkey, không cần tra
+bảng riêng.
+
 ## 1. Cấu trúc config — khác hẳn LiteLLM/Bifrost
 Không có "model pool" theo model_name như LiteLLM, cũng không phải weighted-provider như Bifrost. Portkey
 dùng 1 object `config` gồm `strategy` (cách chọn) + `targets` (danh sách đích, mỗi đích = 1 provider/model):
