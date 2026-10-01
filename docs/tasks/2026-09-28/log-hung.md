@@ -57,3 +57,40 @@ cần test logic mapping, không cần test đúng model đắt thật.
   verify bằng `e2e_workflow_test.sh` (chưa chạy `run_experiment.py` qua Portkey, nhưng cùng 1 API
   app nên tin được — cần 1 lượt xác nhận lại khi dry-run thật).
 - `docs/routing-policy.md` (J2) chưa viết — vẫn còn trong danh sách việc chung.
+
+## Review — Khoa (2026-10-01)
+
+Đã merge `origin/lhung` vào `dangkhoa`, dựng lại cả 3 proxy trên máy Khoa và chạy thật (chỉ tầng rẻ).
+
+| Sản phẩm | Kết quả trên máy Khoa | Nhận xét |
+|---|---|---|
+| LiteLLM routing (H1) | ✅ App gửi `conduit-pool` → LiteLLM chọn `gpt-4o-mini`, đọc đúng header `x-litellm-model-id`, `cost_upstream` khớp giá, `e2e_workflow_test.sh` 43/43 | Cấu hình đúng. Xem điểm (1) bên dưới — `dry_run.sh` chưa dùng tới nó |
+| Portkey routing (H2) + nối app | ✅ `CHAT_ACTIVE_PROXY=portkey bash scripts/e2e_workflow_test.sh` → **43/43** | "42/43" trong log là do chạy script mà không đặt `CHAT_ACTIVE_PROXY` — script đã đọc biến này từ PR #5, không phải hard-code. Xem điểm (4) |
+| Runner (H3) | ✅ `run_experiment.py --limit 1 --runs 1` qua Bifrost và qua LiteLLM `conduit-pool`, đủ 3 dòng ở 3 bảng | Khoa đã thêm ghi `response_quality_score` (K3). Xem điểm (2) |
+| `decision_rule.py` (H4) | ✅ 22/22 test Python pass | **Tìm được nhánh chưa test có ảnh hưởng thật** — điểm (3) |
+
+**Cần xử lý trước dry-run 27 lượt:**
+
+1. **`dry_run.sh` không đặt `CHAT_DEFAULT_MODEL`** → cả 3 proxy đều nhận `gpt-4o-mini`, nên LiteLLM
+   **không bao giờ dùng `conduit-pool`** (routing thật của H1). Đề xuất: khi `proxy=litellm` thì
+   `export CHAT_DEFAULT_MODEL=conduit-pool`. Đã test: gửi `conduit-pool` qua app chạy đúng 43/43.
+2. **`latency_ms` của runner là thời gian đo ở runner**, gồm cả tạo conversation, `GET messages` và
+   `docker exec psql` đọc `cost_upstream` — không chỉ thời gian gọi proxy. Lượt thử: runner 2817 ms,
+   backend đo proxy 2333 ms (~480 ms nhiễu, có dao động). p95 dùng ở bước 3 của luật quyết định → nên
+   lấy `latency_ms` backend trả về trong message (runner đã đọc được, `result["latency_ms"]`). (Phần
+   Khoa thêm đã đo thời gian *trước* khi ghi điểm vào DB nên không làm nhiễu thêm.)
+3. **`compute_avg_cost` tính lượt lỗi (`cost = 0`) vào trung bình → thưởng cho proxy hay lỗi.** Thử
+   bằng dữ liệu giả (dùng `make_records` trong test): A luôn thành công, $0.0100/lượt; B đắt hơn 2%
+   ($0.0102) và lỗi 4/36 lượt → chi phí TB của B = $0.00907 < A → **luật chọn B**, dù B vừa đắt hơn
+   vừa kém ổn định (B vẫn qua bước 1 với 88.9%). Đề xuất: tính chi phí TB trên **lượt thành công**
+   (lượt lỗi vẫn bị phạt ở bước 1 và bước 4), và thêm test cho trường hợp này. Cần 2 người chốt vì
+   đụng tới cách hiểu "chi phí trung bình/prompt" trong CLAUDE.md mục 2.
+   Thêm 2 nhánh chưa test (ít nghiêm trọng hơn): hoà cả 4 bước thì `max()` lặng lẽ chọn proxy đầu
+   tiên thay vì báo hoà; lượt lỗi có `model_selected = None` bị tính như 1 "model" khác ở consistency.
+4. **Portkey chưa có fallback**, trong khi D2 yêu cầu "có phương án dự phòng khi lỗi" cho cả 3 —
+   khi `gpt-4o-mini` lỗi, Bifrost chuyển model còn Portkey trả lỗi luôn. Nếu thêm fallback thì phải
+   sửa nhánh Portkey trong `resolveReturnedModel` (đang trả thẳng alias đã gửi). Chi tiết:
+   `docs/routing-policy.md` mục 5, điểm 5.
+
+**Chi tiết nhỏ:** mục "Còn thiếu" phía trên vẫn ghi `routing-policy.md` chưa viết, trong khi bảng ghi
+đã xong bản nháp.

@@ -31,7 +31,8 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
       cần cả 2 người, mới có 1 người).
 - [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
       `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
-- [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
+- [x] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4). — xong
+      2026-10-01 (K1): đủ 5 model theo giá thật + `max_retries=2`/timeout 45s, test ép lỗi qua app.
 - [x] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`). — xong 2026-09-29 (H2);
       nối dây vào app thật (chat qua app gọi đúng Portkey) — xong 2026-09-30.
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini

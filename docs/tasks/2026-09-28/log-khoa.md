@@ -7,16 +7,42 @@ không có gì đặc biệt. Commit kèm code, không paste vào chat — Hùng
 
 | Việc | Kết quả | File/commit | Hùng cần làm |
 |---|---|---|---|
-| _(trống — điền khi có việc xong)_ | | | |
+| Merge `lhung` → `dangkhoa` | ✅ Lấy H1–H5 + J2 trước khi làm K1 (K1 sửa cùng file `HttpProxyChatClient`), không conflict | commit merge | — |
+| **K1** — Bifrost `fallbacks` theo D2 + retry theo D7 | ✅ Chuỗi đủ 5 model **theo giá thật**: `gpt-4o-mini` → `gemini-flash` → `claude-haiku` → `claude-sonnet` → `gpt-4o`; backend gửi kèm `fallbacks` mỗi request (model chính = model app gửi, 4 model còn lại theo thứ tự). Bifrost `max_retries: 2`, timeout 45s cho cả 3 provider. Unit test 4/4. Qua app: lượt thường 43/43 (`gpt-4o-mini`); **ép OpenAI lỗi 401** → Bifrost thử gpt-4o-mini → gemini-flash (retry 2, lỗi tạm) → **claude-haiku** thành công, app ghi đúng `selected_model` + giá claude-haiku, 43/43 | `application.yml`, `ChatProxyProperties.java`, `HttpProxyChatClient.java`, `ChatProxyPropertiesTest.java`, `proxy-configs/bifrost/setup.sh`, `proxy-configs/bifrost/fallback-test.sh`, `docs/bifrost-routing-notes.md` mục 8 | Review chéo: `BIFROST_URL=… bash proxy-configs/bifrost/setup.sh` (máy Hùng bỏ `BIFROST_URL`), rồi `fallback-test.sh break` → chat qua app với `CHAT_ACTIVE_PROXY=bifrost` → `fallback-test.sh restore` |
+| **K3** — `response_quality_score` | ✅ Trước đây **không nơi nào ghi cột này**. Runner giờ ghi ngay sau khi chấm closed-QA (1 đúng / 0 sai) vào `routing_decisions`, và lưu `message_id` vào file kết quả để nạp điểm chấm mù (18 câu code+mở, tổng rubric / 3) sau. Verify: 1 prompt qua Bifrost và 1 qua LiteLLM `conduit-pool` → đủ 3 dòng ở 3 bảng, mọi cột có giá trị, `response_quality_score = 1` | `experiments/scripts/run_experiment.py`, `experiments/results/run_bifrost_20261001T153150Z.json`, `run_litellm_20261001T153711Z.json` | Đọc thay đổi trong runner (file của Hùng): `record_quality_score`, `message_id`, `elapsed_ms` |
+| **K2** — C03 | ✅ Lý do cho 0.5: phương án "dấu chấm phẩy" trong câu trả lời là sai (chạy thử: `print` thành lệnh trong thân hàm, sau `return`, không bao giờ chạy). Đề xuất giữ 0.5 + quy ước cho prompt "nêu lỗi" | `docs/grading-rubric.md` mục 7 | Đồng ý hoặc phản biện, ghi kết luận cuối vào mục 7 |
+| **J2** — đọc `routing-policy.md` | 🟨 Đồng ý mục 1–4 và 3 điểm của mục 5. **Bổ sung 3 điểm** (mục 5, điểm 4–6) + cập nhật trạng thái Bifrost (mục 2, 4, 6) | `docs/routing-policy.md` | Đọc mục 5 điểm 4–6; nếu đồng ý thì J2 xong |
+| **J3** — review chéo phần của Hùng | ✅ LiteLLM, Portkey, runner, `decision_rule.py` đều dựng lại và chạy được trên máy Khoa. Tìm được 4 điểm cần xử lý trước dry-run | `docs/tasks/2026-09-28/log-hung.md` mục "Review — Khoa" | Đọc review |
+| Regression | ✅ `e2e_workflow_test.sh` 43/43 qua **cả 3 proxy**, `e2e_test.sh` 48/48, test Python 22/22, `validate_prompts.py` OK | — | — |
 
 ## Phát hiện quan trọng
 
-_(trống)_
+1. **`decision_rule.py` thưởng cho proxy hay lỗi.** Lượt lỗi có `cost = 0` được tính vào chi phí trung
+   bình. Dữ liệu giả: proxy B đắt hơn A 2%/lượt và lỗi 4/36 lượt → chi phí TB của B thấp hơn → **luật
+   chọn B**. Có thể làm sai kết luận chính của khóa luận nếu không sửa trước Phase E.
+2. **`dry_run.sh` không dùng routing thật của LiteLLM** (không đặt `CHAT_DEFAULT_MODEL=conduit-pool`)
+   → dry-run sẽ đo LiteLLM như 1 proxy chuyển tiếp thường.
+3. **Khi không lỗi, cả 3 proxy đều gọi `gpt-4o-mini`** → thí nghiệm thực chất đo overhead độ trễ và cách
+   xử lý lỗi, không đo việc chọn model (`routing-policy.md` mục 5, điểm 4).
+4. **Bifrost tự retry rồi mới fallback:** trong lượt ép lỗi, Gemini lỗi tạm thời, Bifrost retry đúng 2
+   lần rồi mới chuyển sang Claude Haiku — log Bifrost (`/api/logs`) ghi rõ `fallback_index` và
+   `number_of_retries` từng bước, dùng được làm bằng chứng cho báo cáo.
+5. **Cấu hình Bifrost không nằm trong git** (SQLite trong volume) → giờ có `setup.sh` dựng lại; giữ
+   nguyên khi tạo lại container.
 
 ## Cần bàn / chốt cùng nhau
 
-_(trống)_
+- Cách tính "chi phí trung bình/prompt" ở bước 2 của luật quyết định: trên lượt thành công, hay trên
+  mọi lượt (lượt lỗi = 0)? — phát hiện 1.
+- Portkey có cần thêm fallback để khớp D2 không (`routing-policy.md` mục 5, điểm 5).
+- Có nên hỏi GVHD về phát hiện 3 không (cả 3 proxy cùng 1 model ở lượt bình thường).
+- Timeout 2 tầng (`routing-policy.md` mục 5, điểm 6) — chỉ cần ghi vào phần giới hạn, không nhất thiết
+  sửa.
+- **Câu hỏi cho GVHD** (`roadmap.md` mục 6): _Khoa cần tự cập nhật đã hỏi/hẹn chưa._
 
 ## Còn thiếu / chưa xác nhận được
 
-_(trống)_
+- Chưa chạy dry-run 27 lượt (cần cả 2 đồng ý, và nên xử lý phát hiện 1–2 trước).
+- Chưa có bước nạp điểm chấm mù (18 câu code+mở) vào `response_quality_score` — chỉ cần khi có dữ liệu
+  chấm thật ở Phase E; runner đã lưu sẵn `message_id` để làm.
+- K4 (Complexity Router) không làm — D2 đã quyết định không dùng.
