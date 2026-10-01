@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
@@ -88,11 +89,15 @@ public class HttpProxyChatClient implements ProxyChatClient {
 
     @Override
     public ChatCompletionResult complete(String model, List<ChatTurn> messages) {
-        Map<String, Object> body = Map.of(
-                "model", properties.upstreamModel(model),
-                "messages", messages.stream()
-                        .map(t -> Map.of("role", t.role(), "content", t.content()))
-                        .toList());
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("model", properties.upstreamModel(model));
+        body.put("messages", messages.stream()
+                .map(t -> Map.of("role", t.role(), "content", t.content()))
+                .toList());
+        List<String> fallbacks = properties.fallbacksFor(model);
+        if (!fallbacks.isEmpty()) {
+            body.put("fallbacks", fallbacks);
+        }
 
         long start = System.currentTimeMillis();
         ResponseEntity<JsonNode> entity;

@@ -63,3 +63,8 @@ app:
         claude-haiku: anthropic/claude-haiku-4-5-20251001
         claude-sonnet: anthropic/claude-sonnet-5
         gemini-flash: gemini/gemini-flash-latest
+    # D2: Bifrost khong tu chon model nen dung chuoi fallback tinh, xep theo gia that
+    # re -> dat (docs/model-pricing-sources.md). Model chinh = model duoc yeu cau; cac
+    # model con lai gui kem trong "fallbacks" theo dung thu tu nay.
+    proxy-fallback-chains:
+      bifrost: [gpt-4o-mini, gemini-flash, claude-haiku, claude-sonnet, gpt-4o]

@@ -187,6 +187,30 @@ Kết quả 2026-09-26: **43/43 PASS** qua Bifrost (`routing_decisions.proxy_nam
 `cost_upstream > 0`); chạy lại với LiteLLM vẫn 43/43, `e2e_test.sh` 48/48. Lượt lỗi thật (Gemini 503
 "high demand") được ghi `status = error`, không trừ credit.
 
-**Chưa làm (Phase C):** backend chưa gửi `fallbacks`, và Bifrost đang `max_retries: 0` — nên lỗi 503 của
-Gemini làm hỏng luôn lượt chat thay vì chuyển model. Cấu hình chuỗi fallback chờ D2 + D7, rồi ghi vào
-`routing-policy.md`.
+---
+
+## 8. Cấu hình routing thật cho thí nghiệm (K1, 2026-10-01 — theo D2 + D7)
+
+| Thành phần | Ở đâu | Giá trị |
+|---|---|---|
+| Chuỗi fallback | `app.chat.proxy-fallback-chains.bifrost` (`application.yml`) — backend gửi kèm từng request | `gpt-4o-mini` → `gemini-flash` → `claude-haiku` → `claude-sonnet` → `gpt-4o` (giá thật, rẻ → đắt) |
+| Retry, timeout | Bifrost, mỗi provider (`proxy-configs/bifrost/setup.sh`) | `max_retries: 2`, `default_request_timeout_in_seconds: 45` |
+| Provider Gemini | `proxy-configs/bifrost/setup.sh` | tự tạo nếu chưa có |
+
+Model chính là model app gửi (mặc định `gpt-4o-mini`); 4 model còn lại vào `fallbacks` theo đúng thứ tự,
+không lặp lại model chính (unit test `ChatProxyPropertiesTest`).
+
+**Dựng trên máy mới** (Bifrost lưu cấu hình trong volume, không có trong git):
+```bash
+BIFROST_URL=http://localhost:18080 bash proxy-configs/bifrost/setup.sh   # máy Hùng: bỏ BIFROST_URL
+```
+Cấu hình giữ nguyên sau khi tạo lại container (`docker compose up -d --force-recreate bifrost`).
+
+**Kiểm chứng (2026-10-01):**
+- Lượt bình thường qua app: `e2e_workflow_test.sh` 43/43, `selected_model = gpt-4o-mini`.
+- **Ép lỗi** (`proxy-configs/bifrost/fallback-test.sh break` — tắt key OpenAI thật, thêm key giả →
+  401): log Bifrost cho thấy đúng thứ tự `gpt-4o-mini` (lỗi) → `gemini-flash` (retry 2 lần, lỗi tạm
+  thời) → `claude-haiku` (thành công). App ghi `selected_model = claude-haiku`,
+  `cost_upstream = 0.000310` = 25 × 0.000001 + 57 × 0.000005 (giá claude-haiku), 43/43 pass, cả chuỗi
+  12.3s. Khôi phục bằng `fallback-test.sh restore`.
+- `run_experiment.py` 1 prompt qua Bifrost: đủ 3 dòng `messages`/`usage_logs`/`routing_decisions`.
