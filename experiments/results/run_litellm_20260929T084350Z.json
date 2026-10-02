@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2026-09-29T08:43:53.176371+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "cq_01",
+    "category": "closed_qa",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 3.705e-05,
+    "credit_charged": 115,
+    "latency_ms": 2077.966799999558,
+    "response": "Thủ đô của Úc (Australia) là Canberra. Canberra nằm ở lãnh thổ thủ đô Australia (Australian Capital Territory - ACT) và được chọn làm thủ đô vào năm 1908 như một phần của thỏa thuận giữa hai thành phố lớn là Sydney và Melbourne.",
+    "closed_qa_correct": true,
+    "status": "success"
+  }
+]

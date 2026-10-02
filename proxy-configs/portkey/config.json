@@ -1,33 +1,52 @@
 {
-  "_comment": "Portkey OSS gateway không nhận config lúc khởi động container — config này là một 'Config object' của Portkey, gửi kèm mỗi request qua header x-portkey-config (hoặc field 'config' trong body). Đây chỉ là khung tối thiểu liệt kê 5 model/2 tầng chi phí theo CLAUDE.md mục 2, CHƯA phải rule routing thật (điều kiện conditional routing sẽ viết ở tuần 7-8/9-10 khi chạy thực nghiệm).",
+  "_comment": "Portkey OSS gateway không nhận config lúc khởi động container — config này là một 'Config object' của Portkey, gửi kèm mỗi request qua header x-portkey-config (hoặc field 'config' trong body).",
+  "_comment_2": "H2 (2026-09-29): conditional routing thật, thay strategy.mode=single. Portkey không có khái niệm alias như LiteLLM (portkey-routing-notes.md) -- mô phỏng bằng cách khớp params.model (chuỗi caller gửi, VD 'gemini-flash') với 1 target, mỗi target override_params sang model thật. D2: chuỗi tĩnh, không tự tính giá. default rơi về gpt-4o-mini (rẻ nhất) nếu model không khớp target nào.",
   "strategy": {
-    "mode": "single"
+    "mode": "conditional",
+    "conditions": [
+      { "query": { "params.model": { "$eq": "gpt-4o-mini" } }, "then": "gpt-4o-mini" },
+      { "query": { "params.model": { "$eq": "gemini-flash" } }, "then": "gemini-flash" },
+      { "query": { "params.model": { "$eq": "claude-haiku" } }, "then": "claude-haiku" },
+      { "query": { "params.model": { "$eq": "gpt-4o" } }, "then": "gpt-4o" },
+      { "query": { "params.model": { "$eq": "claude-sonnet" } }, "then": "claude-sonnet" }
+    ],
+    "default": "gpt-4o-mini"
   },
   "targets": [
     {
+      "name": "gpt-4o-mini",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o-mini" }
+      "override_params": { "model": "gpt-4o-mini" },
+      "retry": { "attempts": 2 }
     },
     {
+      "name": "gemini-flash",
       "provider": "google",
       "api_key": "$GEMINI_API_KEY",
-      "override_params": { "model": "gemini-1.5-flash" }
+      "override_params": { "model": "gemini-flash-latest" },
+      "retry": { "attempts": 2 }
     },
     {
+      "name": "claude-haiku",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-3-5-haiku-20241022" }
+      "override_params": { "model": "claude-haiku-4-5-20251001" },
+      "retry": { "attempts": 2 }
     },
     {
+      "name": "gpt-4o",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o" }
+      "override_params": { "model": "gpt-4o" },
+      "retry": { "attempts": 2 }
     },
     {
+      "name": "claude-sonnet",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-3-5-sonnet-20241022" }
+      "override_params": { "model": "claude-sonnet-5" },
+      "retry": { "attempts": 2 }
     }
   ]
 }

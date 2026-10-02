@@ -1,8 +1,31 @@
-# Portkey AI Gateway routing — làm được / không làm được (nháp H5-style, chưa chạy thử)
+# Portkey AI Gateway routing — làm được / không làm được (H2, đã chạy thử thật)
 
 Nguồn: https://portkey.ai/docs/product/ai-gateway/conditional-routing — đọc 2026-09-23.
-Chưa chạy thử — VERIFY khi cấu hình thật. Cấu hình hiện tại (`proxy-configs/portkey/config.json`) đang
-`strategy.mode: "single"` — tức **chưa bật routing thật**, chỉ trỏ 1 target cố định.
+**Đã cấu hình và chạy thử thật** (H2, 2026-09-29): `proxy-configs/portkey/config.json` —
+`strategy.mode: "conditional"`, 5 condition khớp `params.model` theo alias (mô phỏng "alias" mà
+Portkey không có sẵn — xem mục 3 cũ), `default` rơi về `gpt-4o-mini`. 3/3 lượt test đúng: alias
+khớp condition → đúng target; alias không khớp → đúng rơi về default.
+
+**Phát hiện quan trọng: Portkey OSS không tự thay `$VAR` trong `api_key` của config.** Khác
+LiteLLM (đọc `os.environ/VAR` lúc khởi động từ chính container), Portkey nhận config qua **header
+mỗi request** — gửi `"$OPENAI_API_KEY"` nguyên văn sẽ bị gửi thẳng lên provider như key thật (sai).
+**Bên gửi request phải tự thay `$VAR` bằng giá trị thật trước khi đưa vào header** — ghi chú này
+quan trọng cho `run_experiment.py` (H3/Phase D).
+
+## Đã nối dây vào app thật (2026-09-30)
+
+`HttpProxyChatClient` giờ tự đọc `proxy-configs/portkey/config.json` (đường dẫn cấu hình qua
+`app.chat.portkey-config-path`), tự thay `$VAR` bằng giá trị thật từ biến môi trường (đệ quy toàn
+bộ cây JSON, không hard-code path `targets[].api_key`), rồi gắn làm header `x-portkey-config` mặc
+định khi `active-proxy=portkey`. Verify qua `e2e_workflow_test.sh` với `CHAT_ACTIVE_PROXY=portkey`:
+chat thành công, `model_used=gpt-4o-mini`, `cost_upstream` khớp `model_pricing`.
+
+**Phát hiện thêm — cùng họ lỗi với Bifrost/LiteLLM:** JSON body của Portkey trả `model` là ID đầy
+đủ nhà cung cấp (VD `gpt-4o-mini-2024-07-18`), không khớp `model_pricing` (dùng alias `gpt-4o-mini`).
+Khác Bifrost (cần bảng ánh xạ `proxy-model-names` vì fallback có thể đổi model thật lúc chạy),
+Portkey routing của mình là ánh xạ **tĩnh 1-1** (mỗi alias → đúng 1 target cố định, không tự chọn
+động) — nên `resolveReturnedModel` chỉ cần trả thẳng lại alias đã gửi cho Portkey, không cần tra
+bảng riêng.
 
 ## 1. Cấu trúc config — khác hẳn LiteLLM/Bifrost
 Không có "model pool" theo model_name như LiteLLM, cũng không phải weighted-provider như Bifrost. Portkey

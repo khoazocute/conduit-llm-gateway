@@ -1,0 +1,28 @@
+{
+  "selected_proxy": "litellm",
+  "candidates_after_qa_filter": [
+    "bifrost",
+    "litellm",
+    "portkey"
+  ],
+  "pareto_data": {
+    "bifrost": {
+      "closed_qa_accuracy": 1.0,
+      "avg_cost": 4.99e-05,
+      "p95_latency_ms": 3087.211659969762,
+      "consistency_rate": 1.0
+    },
+    "litellm": {
+      "closed_qa_accuracy": 1.0,
+      "avg_cost": 4.0566666666666666e-05,
+      "p95_latency_ms": 4154.566379985772,
+      "consistency_rate": 1.0
+    },
+    "portkey": {
+      "closed_qa_accuracy": 1.0,
+      "avg_cost": 4.6166666666666666e-05,
+      "p95_latency_ms": 3187.2429800685495,
+      "consistency_rate": 1.0
+    }
+  }
+}

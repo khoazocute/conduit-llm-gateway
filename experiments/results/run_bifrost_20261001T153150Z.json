@@ -1,0 +1,17 @@
+[
+  {
+    "message_id": "336be1fc-8867-4230-894b-a4d2c36fd3bf",
+    "timestamp": "2026-10-01T15:31:53.594038+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "cq_01",
+    "category": "closed_qa",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.385e-05,
+    "credit_charged": 82,
+    "latency_ms": 2581.040699966252,
+    "response": "Thủ đô của Úc là Canberra. Canberra được thành lập làm thủ đô của Úc vào năm 1913 và là trung tâm hành chính của quốc gia này.",
+    "closed_qa_correct": true,
+    "status": "success"
+  }
+]

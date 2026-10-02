@@ -97,3 +97,22 @@ những cột này chỉ join lại **sau khi** đã có điểm, lúc phân tí
 `experiments/results/grading-sample.csv` (mục 4) — các điểm số phản ánh đúng mức phân biệt
 0/0.5/1 mô tả ở mục 1. **Cần Hùng chấm lại cùng 3 câu này** (theo J3 — review chéo Thứ 6) để so
 điểm và tinh chỉnh mô tả rubric nếu có chỗ hiểu khác nhau.
+
+---
+
+## 7. Lệch điểm khi chấm thử — C03 (`o-0003`, tiêu chí "không lỗi")
+
+**Lệch:** Khoa 0.5, Hùng 1. Hai tiêu chí còn lại 2 người chấm giống nhau.
+
+**Lý do Khoa cho 0.5** (đã kiểm chứng bằng cách chạy thật): câu trả lời nêu lỗi là *"thiếu dấu xuống
+dòng **(hoặc dấu chấm phẩy)**"*. Phương án dấu chấm phẩy là **sai** —
+`def add(a, b): return a + b; print(add(2,3))` biến `print` thành 1 lệnh trong thân hàm, nằm sau
+`return` nên **không bao giờ chạy** (chạy thử: không in ra gì). Code sửa cuối cùng thì đúng, nhưng
+phần giải thích có 1 lỗi kỹ thuật nhỏ → đúng định nghĩa 0.5 ở mục 1 ("lỗi nhỏ không ảnh hưởng tới
+việc dùng được").
+
+**Đề xuất thống nhất:** giữ **0.5**, và bổ sung quy ước: *với prompt code yêu cầu "nêu lỗi", phần giải
+thích cũng được chấm "không lỗi" — đưa ra một phương án sửa sai trong giải thích là lỗi nhỏ (0.5), dù
+code cuối cùng chạy đúng.*
+
+**Trạng thái:** chờ Hùng đồng ý (hoặc phản biện) — ghi kết luận cuối cùng vào đây.

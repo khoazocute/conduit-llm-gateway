@@ -39,13 +39,21 @@ app:
     # quyet dinh that thuoc Tuan 9-10 (CLAUDE.md muc 2/8).
     # D3: thi nghiem chay qua app, doi proxy theo tung dot chay bang CHAT_ACTIVE_PROXY.
     active-proxy: ${CHAT_ACTIVE_PROXY:litellm}
-    default-model: gemini-flash
+    # H3: gpt-4o-mini la mac dinh chinh thuc (gemini-flash chi la tam luc test Gemini
+    # tuan truoc). Env override de thu routing that (VD conduit-pool, H1) ma khong
+    # phai sua file/commit gia tri tam.
+    default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
     proxy-base-urls:
       litellm: http://localhost:4000/v1
       bifrost: ${BIFROST_BASE_URL:http://localhost:8080/v1}
       portkey: http://localhost:8787/v1
     proxy-api-keys:
       litellm: ${LITELLM_MASTER_KEY:sk-1234}
+    # Portkey khong dung Bearer token - doc Config object tu file nay, tu thay
+    # $VAR bang gia tri that (Portkey OSS khong tu lam viec do, xem H2/H3).
+    # Duong dan tinh theo working dir luc chay (backend-gateway/), override neu
+    # chay tu thu muc khac.
+    portkey-config-path: ${PORTKEY_CONFIG_PATH:../proxy-configs/portkey/config.json}
     # Backend va model_pricing dung alias cua LiteLLM; Bifrost khong co alias,
     # can ten "provider/model" that - phai khop proxy-configs/litellm/config.yaml.
     proxy-model-names:
@@ -55,3 +63,8 @@ app:
         claude-haiku: anthropic/claude-haiku-4-5-20251001
         claude-sonnet: anthropic/claude-sonnet-5
         gemini-flash: gemini/gemini-flash-latest
+    # D2: Bifrost khong tu chon model nen dung chuoi fallback tinh, xep theo gia that
+    # re -> dat (docs/model-pricing-sources.md). Model chinh = model duoc yeu cau; cac
+    # model con lai gui kem trong "fallbacks" theo dung thu tu nay.
+    proxy-fallback-chains:
+      bifrost: [gpt-4o-mini, gemini-flash, claude-haiku, claude-sonnet, gpt-4o]

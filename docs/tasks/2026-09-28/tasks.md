@@ -25,21 +25,28 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 - [x] D2 (mục tiêu routing chung để so 3 proxy công bằng) và D7 (`max_retries`/timeout/cách tính
       lượt lỗi) có kết luận, ghi vào `docs/roadmap.md` mục 4. — chốt 2026-09-29.
-- [ ] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
+- [x] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
       đạt được (dựa trên `docs/litellm-routing-notes.md`, `bifrost-routing-notes.md`,
-      `portkey-routing-notes.md`).
-- [ ] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
-      `selected_model` mỗi lượt.
-- [ ] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4).
-- [ ] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`).
+      `portkey-routing-notes.md`). — xong 2026-09-30 (Hùng viết, chờ Khoa đọc/đồng ý — J2 "Xong khi"
+      cần cả 2 người, mới có 1 người).
+- [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
+      `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
+- [x] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4). — xong
+      2026-10-01 (K1): đủ 5 model theo giá thật + `max_retries=2`/timeout 45s, test ép lỗi qua app.
+- [x] Portkey có ít nhất 1 rule thật (không còn `strategy.mode: "single"`). — xong 2026-09-29 (H2);
+      nối dây vào app thật (chat qua app gọi đúng Portkey) — xong 2026-09-30.
 - [x] `app.chat.default-model` đổi lại `gpt-4o-mini` (đang tạm để `gemini-flash` từ lúc test Gemini
       tuần trước) — OpenAI top-up **đã xong từ trước** (1 key dùng chung cho cả Hùng và Khoa, chia
       tiền sau; Khoa đã xác nhận gọi được cả 5 model từ 26/09), không còn gì phải chờ.
-- [ ] Runner (`experiments/scripts/run_experiment.py`) gọi thật qua app Conduit (D3), lặp 3
-      lần/prompt, lưu kết quả thô + ghi `messages`/`usage_logs`/`routing_decisions`.
-- [ ] `experiments/analysis/decision_rule.py` kiểm chứng bằng dữ liệu giả (biết trước kết quả từng
-      nhánh của luật) — **không cần key thật**, chạy trước khi tốn tiền cho dry-run.
-- [ ] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó**).
+- [x] Runner (`experiments/scripts/run_experiment.py`) gọi thật qua app Conduit (D3), lặp 3
+      lần/prompt, lưu kết quả thô + ghi `messages`/`usage_logs`/`routing_decisions`. — xong 2026-09-29
+      (H3), verify với `--limit 1 --runs 1`, chưa chạy dry-run 27 lượt đầy đủ.
+- [x] `experiments/analysis/decision_rule.py` kiểm chứng bằng dữ liệu giả (biết trước kết quả từng
+      nhánh của luật) — **không cần key thật**, chạy trước khi tốn tiền cho dry-run. — xong 2026-09-29
+      (H4), 16/16 test pass.
+- [x] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó**). —
+      xong 2026-10-02 (Khoa xác nhận, chạy trên máy Khoa): 27/27 thành công, 27/27 đúng; chênh lệch chi
+      phí giữa 3 proxy là nhiễu vì cùng gọi `gpt-4o-mini` — xem `log-khoa.md` phát hiện 6.
 
 ## Việc chung (cả hai)
 
@@ -50,10 +57,12 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
   không tính phí, tính là 1 lần lặp, không chạy bù.
 - Chi tiết đầy đủ: `docs/roadmap.md` mục 4.
 
-**J2. `docs/routing-policy.md`**
+**J2. `docs/routing-policy.md`** — 🟨 bản nháp xong 2026-09-30, chờ Khoa đọc
 - Tổng hợp từ D2 + 3 file routing-notes đã có. Bảng "proxy nào diễn đạt được gì" (đã có sẵn khung ở
   `bifrost-routing-notes.md` mục 4, làm tương tự cho LiteLLM/Portkey).
 - Xong khi: file tồn tại, cả hai đọc và đồng ý; nếu cần hỏi GVHD thì hỏi trước khi chốt.
+- Khoa đọc `docs/routing-policy.md`, đặc biệt mục 5 (ảnh hưởng cách diễn giải kết quả) — nếu đồng ý
+  thì coi J2 xong, không cần sửa gì; nếu không đồng ý thì sửa trực tiếp vào file.
 
 **J3. Review chéo (giữa/cuối tuần)**
 - Theo danh sách "Review chéo" bên dưới.
@@ -65,34 +74,79 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 
 ## Hùng
 
-**H1. Cấu hình LiteLLM routing thật**
-- Dùng `proxy-configs/litellm/config.routing-draft.yaml` làm nền (đã nhóm 5 model vào alias
-  `conduit-pool`, đã sửa 2 model Claude). Chọn 1 routing_strategy theo D2, áp `num_retries`/timeout
-  theo D7. Merge vào `config.yaml` chính thức khi chạy ổn.
-- Xong khi: gọi alias `conduit-pool` nhiều lần, xác định được model LiteLLM tự chọn mỗi lần từ
-  response, khớp đúng chiến lược đã chọn.
+**H1. Cấu hình LiteLLM routing thật** — ✅ xong 2026-09-29
+- `proxy-configs/litellm/config.yaml`: thêm alias `conduit-pool` (5 deployment), `routing_strategy:
+  cost-based-routing` (D2), `num_retries=2`/`timeout=45` (D7). Khai tường minh `input_cost_per_token`/
+  `output_cost_per_token` cho từng deployment — LiteLLM không có giá đúng cho
+  `gemini/gemini-flash-latest` trong bảng giá nội bộ, ban đầu chọn nhầm gemini-flash dù đắt hơn.
+- Xong khi: gọi alias `conduit-pool` nhiều lần, xác định được model LiteLLM tự chọn mỗi lần —
+  **10/10 lượt chọn đúng `gpt-4o-mini`** (rẻ nhất). Model thật nằm ở header `x-litellm-model-id`,
+  không phải trong JSON body. Ghi chú đầy đủ ở `docs/litellm-routing-notes.md`.
 
-**H2. Cấu hình Portkey routing thật**
-- Theo `docs/portkey-routing-notes.md`: viết `strategy.mode: "conditional"` với ít nhất 1 rule tĩnh
-  mô phỏng "chọn rẻ nhất" (vd. theo `metadata.prompt_group` runner sẽ gắn sau, hoặc đơn giản hơn:
-  `default` trỏ model rẻ nhất). Cập nhật `proxy-configs/portkey/config.json`.
-- Xong khi: gửi request kèm `x-portkey-config`, Portkey chọn đúng target theo rule.
+**H2. Cấu hình Portkey routing thật** — ✅ xong 2026-09-29
+- `strategy.mode: "conditional"`, 5 condition khớp `params.model` theo alias → đúng target/model
+  thật (mô phỏng "alias" mà Portkey không có sẵn), `default: gpt-4o-mini`. Cũng sửa luôn 3 model cũ
+  đã bị gỡ (`gemini-1.5-flash`, `claude-3-5-haiku/sonnet-20241022` → tên mới khớp LiteLLM).
+- Xong khi: 3/3 lượt test đúng — alias khớp → đúng target; alias lạ → rơi về default.
+- **Phát hiện quan trọng:** Portkey OSS không tự thay `$VAR` trong `api_key` (khác LiteLLM) — bên
+  gửi request phải tự thay bằng giá trị thật trước khi đưa vào header `x-portkey-config`. Xem
+  `docs/portkey-routing-notes.md`.
+- **Lệch chính sách chi phí (tự nhận):** 1 trong 3 lượt test lỡ gọi tầng đắt (Claude Sonnet 5) thay
+  vì tầng rẻ — không dừng xin xác nhận trước như đáng lẽ phải làm. Chi phí không đáng kể, nhưng ghi
+  lại đúng thực tế, xem `experiments/results/h2-portkey-routing-2026-09-29/README.md`.
+- **Nối dây vào app thật (2026-09-30, để chuẩn bị dry-run 27 lượt):** hôm 29/09 mới verify gọi
+  *trực tiếp* Portkey, app chưa thực sự gọi được (`HttpProxyChatClient` chỉ gửi `Authorization`,
+  không gửi `x-portkey-config`). Đã sửa: tự đọc `proxy-configs/portkey/config.json`, tự thay `$VAR`
+  bằng giá trị thật, gắn header khi `active-proxy=portkey`. Cũng sửa `resolveReturnedModel` — Portkey
+  trả `model` là ID đầy đủ của provider (không khớp `model_pricing`), nhưng vì routing của mình tĩnh
+  1-1 nên trả thẳng alias đã gửi là đúng, không cần tra bảng như Bifrost. Verify qua
+  `e2e_workflow_test.sh` với `CHAT_ACTIVE_PROXY=portkey`: chat thành công, `model_used=gpt-4o-mini`,
+  `cost_upstream` khớp giá — 42/43 pass (1 "fail" là do chính script hard-code `proxy_name=litellm`,
+  không phải lỗi thật).
 
-**H3. Đổi `default-model`, viết runner**
-- Đổi `app.chat.default-model` về `gpt-4o-mini` (hết bị chặn — 1 key dùng chung cho cả 2 người,
-  Khoa đã xác nhận cả 5 model gọi được từ 26/09); test 1 lượt chat thật ngắn qua app để xác nhận.
-- Viết `experiments/scripts/run_experiment.py` (Phase D, gộp vào tuần này): gọi thật qua app Conduit
-  theo D3 (không gọi thẳng proxy), dùng 1 user/agent/conversation riêng cho thí nghiệm, lặp 3
-  lần/prompt, lưu JSON thô vào `experiments/results/` + tự động ghi được `messages`/`usage_logs`/
-  `routing_decisions` (qua chính luồng chat có sẵn của Khoa).
-- Xong khi: chạy được với **1 prompt duy nhất** trên 1 proxy (chưa cần dry-run 27 lượt) và ra đúng
-  file kết quả + đủ 3 dòng `routing_decisions`.
+**H3. Đổi `default-model`, viết runner** — ✅ xong 2026-09-29
+- `application.yml`: `default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}` — mặc định đã commit là
+  `gpt-4o-mini`, override qua env khi cần test `conduit-pool`.
+- **Phát hiện + sửa code:** `HttpProxyChatClient` cần đọc header `x-litellm-model-id` để lấy đúng
+  model LiteLLM đã chọn khi dùng `conduit-pool` (JSON body chỉ trả tên nhóm, xem H1) — đã sửa
+  `resolveReturnedModel` đọc header này trước, giữ nguyên logic Bifrost (`routing_info`) của Khoa.
+- Viết lại hoàn chỉnh `experiments/scripts/run_experiment.py` theo D3 (gọi qua app Conduit thật,
+  KHÔNG gọi thẳng proxy — sửa lại TODO cũ trong file vốn ghi nhầm theo đề xuất D3 đã bị bác):
+  bootstrap 1 lần (creator+agent miễn phí+admin duyệt+buyer, lưu vào
+  `.experiment_identity.json` — gitignored), gọi `POST /conversations` → SSE → `GET .../messages`
+  lấy `model_used`/`credit_charged`/`latency_ms`, đọc thêm `usage_logs.cost_upstream` qua psql
+  (API không lộ trường này), chấm tự động closed-QA, ghi từng record ngay khi có.
+- Xong khi: chạy được với **1 prompt duy nhất** trên 1 proxy (`--limit 1 --runs 1`) và ra đúng file
+  kết quả + đủ 3 dòng `messages`/`usage_logs`/`routing_decisions` — **verify thật, có bằng chứng**:
+  `experiments/results/run_litellm_20260929T084350Z.json`, model chọn đúng `gpt-4o-mini`,
+  `closed_qa_correct: true`.
+- **Chưa làm:** dry-run 27 lượt đầy đủ (chờ xin xác nhận riêng), chạy thử qua Bifrost/Portkey (mới
+  verify qua LiteLLM).
+- **Ngoài ý muốn nhưng cần biết:** `docker exec ... psql` khi bootstrap nhận ra máy Hùng có
+  `model_pricing` = 0 dòng (K2 là việc chèn tay trên máy Khoa, không phải migration) — đã tự chèn
+  10 dòng đúng số liệu `docs/model-pricing-sources.md` để `cost_upstream` không về 0. **Khoa/ai dựng
+  máy mới đều cần tự làm bước này** (chạy admin UI hoặc INSERT tay), không tự động theo migration.
 
-**H4. Kiểm chứng `decision_rule.py`**
+**H4. Kiểm chứng `decision_rule.py`** — ✅ xong 2026-09-29
 - Dùng dữ liệu giả (viết tay hoặc random có kiểm soát) cho từng nhánh của luật quyết định (loại
   <80%, chi phí, chênh <5% → p95, hòa → consistency) — không cần key thật.
 - Xong khi: mỗi nhánh có ít nhất 1 test case biết trước kết quả, script cho ra đúng kết luận mong
-  đợi.
+  đợi. — `experiments/tests/test_decision_rule.py`, 16/16 test pass.
+
+**H5 (chuẩn bị trước cho dry-run, làm khi chờ Khoa xong K1)** — ✅ xong 2026-09-30
+- `experiments/scripts/dry_run.sh`: gộp quy trình chạy dry-run/thực nghiệm qua N proxy (restart
+  backend đúng `CHAT_ACTIVE_PROXY` → chờ sẵn sàng → chạy `run_experiment.py` → proxy tiếp theo) —
+  vốn phải làm tay 3 lần. Test cơ chế bằng `PROMPT_LIMIT=0` (không tốn tiền) qua LiteLLM + Portkey:
+  restart đúng, bootstrap đúng, ghi kết quả đúng. Khi Khoa xong K1, chỉ cần 1 lệnh
+  `PROMPT_LIMIT=3 RUNS=3 bash experiments/scripts/dry_run.sh` là chạy đủ 27 lượt (sau khi xin xác
+  nhận, script không tự hỏi lại).
+- `experiments/scripts/build_grading_sheets.py`: xuất bảng chấm mù cho 18 câu code+mở từ kết quả
+  runner — tự loại closed-QA, tự tách lượt lỗi (0 điểm, D7, không đưa người chấm), xáo trộn ẩn danh,
+  chia mẫu chấm kép 30% (D6) giữa Hùng/Khoa. Test bằng dữ liệu giả —
+  `experiments/tests/test_build_grading_sheets.py`, 6/6 test pass, xác nhận đúng số 49/162 đã ghi
+  sẵn trong `docs/eval-prompts.md`.
+- Xong khi: cả 2 script chạy được cuối-đến-cuối bằng dữ liệu giả/lượt 0, sẵn sàng dùng ngay khi có
+  dữ liệu thật — không cần viết gì thêm lúc chạy Phase E.
 
 ---
 

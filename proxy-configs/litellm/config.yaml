@@ -1,8 +1,9 @@
 # LiteLLM proxy config — 5-model pool, 2 cost tiers (CLAUDE.md mục 2).
-# Chưa cấu hình routing strategy thật (cost/latency/usage-based) — đó là việc
-# của tuần 7-8/9-10, khi chạy thực nghiệm đánh giá 3 proxy.
+# Routing thật đã cấu hình (Phase C, D2/D7 — xem docs/roadmap.md mục 4).
 
 model_list:
+  # 5 alias riêng lẻ — vẫn giữ để chat thường (app.chat.default-model) gọi thẳng
+  # 1 model cụ thể, không đi qua routing.
   # Tầng rẻ
   - model_name: gpt-4o-mini
     litellm_params:
@@ -35,10 +36,66 @@ model_list:
       model: anthropic/claude-sonnet-5
       api_key: os.environ/ANTHROPIC_API_KEY
 
+  # "conduit-pool" — cùng 5 deployment trên, gom chung 1 model_name để LiteLLM
+  # router tự chọn theo routing_strategy bên dưới (H1, thay cho config.routing-draft.yaml).
+  # input_cost_per_token/output_cost_per_token khai tường minh, lấy đúng số đã
+  # verify ở docs/model-pricing-sources.md (K2) — bảng giá nội bộ của LiteLLM
+  # không có giá chính xác cho "gemini/gemini-flash-latest" (thấy cost-based-routing
+  # chọn nhầm gemini-flash dù đắt hơn gpt-4o-mini lúc test 2026-09-29), khai tay
+  # để routing quyết định đúng theo giá thật thay vì fallback nội bộ không chuẩn.
+  - model_name: conduit-pool
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      input_cost_per_token: 0.00000015
+      output_cost_per_token: 0.0000006
+    model_info:
+      id: gpt-4o-mini
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: os.environ/GEMINI_API_KEY
+      input_cost_per_token: 0.00000075
+      output_cost_per_token: 0.00000375
+    model_info:
+      id: gemini-flash
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+      input_cost_per_token: 0.000001
+      output_cost_per_token: 0.000005
+    model_info:
+      id: claude-haiku
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+      input_cost_per_token: 0.0000025
+      output_cost_per_token: 0.00001
+    model_info:
+      id: gpt-4o
+
+  - model_name: conduit-pool
+    litellm_params:
+      model: anthropic/claude-sonnet-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.00001
+    model_info:
+      id: claude-sonnet
+
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
 
 router_settings:
-  # TODO (tuần 7-8): chọn routing_strategy thật (cost-based-routing /
-  # latency-based-routing / usage-based-routing-v2) khi chạy thực nghiệm.
-  routing_strategy: simple-shuffle
+  # D2 (docs/roadmap.md mục 4): ưu tiên model rẻ nhất đủ tốt -> cost-based-routing
+  # chỉ áp dụng cho nhóm "conduit-pool"; 5 alias riêng lẻ ở trên không bị routing
+  # chi phối (gọi thẳng đúng model được chỉ định).
+  routing_strategy: cost-based-routing
+  # D7 (docs/roadmap.md mục 4): giống hệt 3 proxy.
+  num_retries: 2
+  timeout: 45
