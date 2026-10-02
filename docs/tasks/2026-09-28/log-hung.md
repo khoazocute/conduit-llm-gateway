@@ -74,6 +74,7 @@ cần test logic mapping, không cần test đúng model đắt thật.
 1. **`dry_run.sh` không đặt `CHAT_DEFAULT_MODEL`** → cả 3 proxy đều nhận `gpt-4o-mini`, nên LiteLLM
    **không bao giờ dùng `conduit-pool`** (routing thật của H1). Đề xuất: khi `proxy=litellm` thì
    `export CHAT_DEFAULT_MODEL=conduit-pool`. Đã test: gửi `conduit-pool` qua app chạy đúng 43/43.
+   **→ Khoa đã sửa 02/10** trước khi chạy dry-run (kèm 2 lỗi môi trường, xem `log-khoa.md`).
 2. **`latency_ms` của runner là thời gian đo ở runner**, gồm cả tạo conversation, `GET messages` và
    `docker exec psql` đọc `cost_upstream` — không chỉ thời gian gọi proxy. Lượt thử: runner 2817 ms,
    backend đo proxy 2333 ms (~480 ms nhiễu, có dao động). p95 dùng ở bước 3 của luật quyết định → nên

@@ -15,8 +15,9 @@
 #
 # Yêu cầu: docker compose up -d postgres redis litellm bifrost portkey (đúng những
 # proxy có trong $PROXIES); .env có đủ key thật; chạy từ thư mục gốc repo hoặc bất kỳ
-# đâu (tự dò đường dẫn). Windows: dùng taskkill để dừng backend giữa các proxy - nếu
-# có tiến trình java.exe khác (không phải backend) đang chạy, nó cũng bị dừng theo.
+# đâu (tự dò đường dẫn). Windows: dùng taskkill dừng tiến trình giữ cổng 8081 giữa các proxy.
+# Máy remap port (docker-compose.override.yml) thì export trước khi chạy, VD máy Khoa:
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/conduit BIFROST_BASE_URL=http://localhost:18080/v1
 
 set -euo pipefail
 
@@ -33,8 +34,10 @@ echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT RUNS=$RUNS PROXIES=\"$PROXIES\" ==
 echo "Tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((PROMPT_LIMIT * RUNS * $(echo $PROXIES | wc -w)))"
 
 set -a
-# shellcheck disable=SC1091
-source "$ROOT_DIR/.env"
+# .env soạn trên Windows có CRLF - không bỏ \r thì mọi giá trị dính \r ở cuối
+# (LITELLM_MASTER_KEY sai → LiteLLM trả 401).
+# shellcheck disable=SC1090
+source <(tr -d '\r' < "$ROOT_DIR/.env")
 set +a
 
 wait_backend_ready() {
@@ -46,9 +49,15 @@ wait_backend_ready() {
   return 1
 }
 
+# Chỉ dừng tiến trình đang giữ cổng 8081 (backend), không đụng java.exe khác
+# (VD language server Java của VS Code).
 stop_backend() {
-  taskkill //F //IM java.exe //T >/dev/null 2>&1 || true
-  sleep 1
+  local pid
+  pid=$(netstat -ano | grep ':8081 ' | grep LISTENING | awk '{print $5}' | head -1 || true)
+  if [ -n "$pid" ]; then
+    taskkill //F //PID "$pid" //T >/dev/null 2>&1 || true
+    sleep 2
+  fi
 }
 
 FAILED_PROXIES=()
@@ -59,6 +68,14 @@ for proxy in $PROXIES; do
   stop_backend
 
   export CHAT_ACTIVE_PROXY="$proxy"
+  # D2: LiteLLM tự chọn model rẻ nhất trong alias conduit-pool (cost-based-routing,
+  # H1). Gọi thẳng gpt-4o-mini thì LiteLLM chỉ chuyển tiếp, không định tuyến gì.
+  # Bifrost/Portkey không có alias này - dùng mặc định gpt-4o-mini (+ fallbacks).
+  if [ "$proxy" = "litellm" ]; then
+    export CHAT_DEFAULT_MODEL=conduit-pool
+  else
+    unset CHAT_DEFAULT_MODEL
+  fi
   (
     cd "$BACKEND_DIR"
     nohup ./mvnw spring-boot:run >"$LOG_DIR/backend_${proxy}.log" 2>&1 &

@@ -116,7 +116,8 @@ tính phí), tính là 1 trong 3 lần lặp, không chạy bù.
 | Portkey | ✅ conditional, D7 | ✅ 3/3 lượt (H2) | ✅ (`e2e_workflow_test.sh`, 2026-09-30) |
 | Bifrost | ✅ `fallbacks` đủ 5 model theo giá, D7 (2026-10-01) | ✅ chuỗi + ép lỗi | ✅ `e2e_workflow_test.sh` 43/43 + `run_experiment.py` 1 prompt + 1 lượt ép lỗi (2026-10-01) |
 
-**Dry-run 27 lượt không còn bị chặn bởi Bifrost** (K1 xong 2026-10-01). Còn 2 việc nên xử lý trước khi
-chạy, chi tiết ở phần review cuối `docs/tasks/2026-09-28/log-hung.md`: (a) `dry_run.sh` chưa đặt
-`CHAT_DEFAULT_MODEL=conduit-pool` cho LiteLLM nên routing thật của LiteLLM không được dùng;
-(b) `decision_rule.py` tính lượt lỗi `cost = 0` vào chi phí trung bình → thưởng cho proxy hay lỗi.
+**Dry-run 27 lượt đã chạy 2026-10-02** (`dry_run.sh` đã sửa để LiteLLM dùng `conduit-pool`): 27/27
+thành công và đúng, cả 3 proxy đều gọi `gpt-4o-mini` — đúng như mục 5 điểm 4 dự đoán, chênh lệch chi
+phí giữa 3 proxy chỉ đến từ độ dài câu trả lời (số liệu: `docs/tasks/2026-09-28/log-khoa.md` phát
+hiện 6). Còn mở: `decision_rule.py` tính lượt lỗi `cost = 0` vào chi phí trung bình (phần review
+cuối `docs/tasks/2026-09-28/log-hung.md`, điểm 3) — dry-run không có lượt lỗi nên chưa ảnh hưởng.

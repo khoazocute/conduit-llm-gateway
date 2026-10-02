@@ -44,8 +44,9 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
 - [x] `experiments/analysis/decision_rule.py` kiểm chứng bằng dữ liệu giả (biết trước kết quả từng
       nhánh của luật) — **không cần key thật**, chạy trước khi tốn tiền cho dry-run. — xong 2026-09-29
       (H4), 16/16 test pass.
-- [ ] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó** —
-      chưa xin, chưa chạy).
+- [x] Dry-run 3 prompt × 3 proxy × 3 lần = 27 lượt (**chỉ chạy sau khi xin xác nhận riêng lúc đó**). —
+      xong 2026-10-02 (Khoa xác nhận, chạy trên máy Khoa): 27/27 thành công, 27/27 đúng; chênh lệch chi
+      phí giữa 3 proxy là nhiễu vì cùng gọi `gpt-4o-mini` — xem `log-khoa.md` phát hiện 6.
 
 ## Việc chung (cả hai)
 
