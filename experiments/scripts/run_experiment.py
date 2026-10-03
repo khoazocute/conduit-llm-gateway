@@ -230,7 +230,13 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
         status = "error"
         result = {"content": None, "model_used": None, "latency_ms": None, "cost_upstream": 0.0}
         print(f"  lỗi ở {prompt['id']} run {run_index}: {e}")
-    elapsed_ms = (time.monotonic() - started) * 1000  # đo trước khi ghi điểm vào DB (docker exec)
+    elapsed_ms = (time.monotonic() - started) * 1000  # fallback khi backend không đo được (VD lỗi trước khi có response)
+    # Dùng latency_ms backend tự đo (messages.latency_ms, chỉ tính thời gian gọi proxy) thay vì
+    # elapsed_ms của runner (cộng thêm round-trip HTTP + SSE parse + GET /messages, review Khoa
+    # 2026-10-03: runner cao hơn backend ~300-500ms, làm lệch khi so p95 latency giữa 3 proxy).
+    latency_ms = result.get("latency_ms")
+    if latency_ms is None:
+        latency_ms = elapsed_ms
 
     is_correct_answer = grade_closed_qa(prompt, result.get("content"), result.get("stream_status", ""))
     message_id = result.get("message_id")
@@ -247,7 +253,8 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
         "model_selected": result.get("model_used"),
         "cost": result.get("cost_upstream", 0.0),
         "credit_charged": result.get("credit_charged"),
-        "latency_ms": elapsed_ms,
+        "latency_ms": latency_ms,
+        "latency_ms_runner": elapsed_ms,  # giữ lại để đối chiếu/debug, không dùng cho decision_rule.py
         "response": result.get("content"),
         "closed_qa_correct": is_correct_answer,
         "status": status,

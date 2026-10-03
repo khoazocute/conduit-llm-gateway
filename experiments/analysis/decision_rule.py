@@ -74,11 +74,35 @@ def compute_closed_qa_accuracy(records: list[dict[str, Any]], proxy_name: str) -
 
 def compute_avg_cost(records: list[dict[str, Any]], proxy_name: str) -> float:
     """Chi phí trung bình/prompt của proxy_name — trung bình record['cost'] trên
-    toàn bộ lượt gọi (mọi category, 30 prompt x 3 lần) của proxy_name."""
-    costs = [r["cost"] for r in records if r["proxy_name"] == proxy_name and r.get("cost") is not None]
+    CÁC LƯỢT THÀNH CÔNG (status == "success") của proxy_name.
+
+    Lượt lỗi KHÔNG tính vào đây (dù vẫn tính vào mẫu số của compute_closed_qa_accuracy
+    và compute_consistency_rate — D7, lỗi vẫn là 1 lần lặp). Lý do: lượt lỗi ghi
+    cost=0.0 (không có usage thật để tính giá — CLAUDE.md mục 5, "billing chỉ tính
+    khi có usage thật"), nhưng $0 không có nghĩa là "rẻ" — nếu tính cả lượt lỗi vào
+    trung bình, 1 proxy hay lỗi sẽ trông rẻ hơn giả tạo (phát hiện của Khoa,
+    docs/tasks/2026-09-28/log-khoa.md, chốt 2026-10-03). Tỷ lệ lỗi được báo cáo
+    riêng qua compute_error_rate() — không gộp vào chi phí để không che giấu rủi ro
+    độ tin cậy, cũng không thưởng cho nó."""
+    costs = [
+        r["cost"] for r in records
+        if r["proxy_name"] == proxy_name and r.get("status") == "success" and r.get("cost") is not None
+    ]
     if not costs:
         return 0.0
     return sum(costs) / len(costs)
+
+
+def compute_error_rate(records: list[dict[str, Any]], proxy_name: str) -> float:
+    """Tỷ lệ lượt lỗi (status != "success") trên tổng số lượt của proxy_name, mọi
+    category. KHÔNG phải 1 bước của quy tắc quyết định (quy tắc đã khóa, CLAUDE.md
+    mục 2, không tự thêm bước) — chỉ để báo cáo minh bạch cạnh avg_cost, vì giờ
+    avg_cost chỉ tính trên lượt thành công nên không còn phản ánh độ tin cậy."""
+    proxy_records = [r for r in records if r["proxy_name"] == proxy_name]
+    if not proxy_records:
+        return 0.0
+    errors = sum(1 for r in proxy_records if r.get("status") != "success")
+    return errors / len(proxy_records)
 
 
 def compute_p95_latency(records: list[dict[str, Any]], proxy_name: str) -> float:
@@ -90,15 +114,24 @@ def compute_p95_latency(records: list[dict[str, Any]], proxy_name: str) -> float
     return _percentile(latencies, 95)
 
 
+_ERROR_SENTINEL = "__ERROR__"  # khong dung "" de tranh lan voi model_selected bi thieu du lieu that su
+
+
 def compute_consistency_rate(records: list[dict[str, Any]], proxy_name: str) -> float:
     """Tỷ lệ prompt mà model_selected giống nhau qua cả 3 lần lặp, trên tổng số
-    prompt, cho proxy_name. Prompt nào chỉ có 1 dòng (lỗi thiếu lượt) vẫn được
-    tính "nhất quán" (không có gì để so lệch), ghi rõ khi diễn giải kết quả."""
+    prompt, cho proxy_name.
+
+    Lượt lỗi (status != "success", model_selected thường là None) được tính là
+    1 "lựa chọn" riêng biệt (_ERROR_SENTINEL) — cố ý, không bỏ qua: quyết định hòa
+    thuận (Khoa, 2026-10-03). Một prompt có 2 lần ra cùng model + 1 lần lỗi vẫn là
+    KHÔNG nhất quán, vì proxy không trả về cùng 1 kết quả cả 3 lần — lỗi tự nó là
+    1 dạng mất nhất quán của quyết định routing, không phải trường hợp trung lập."""
     by_prompt: dict[str, set[str]] = {}
     for r in records:
         if r["proxy_name"] != proxy_name:
             continue
-        by_prompt.setdefault(r["prompt_id"], set()).add(r.get("model_selected") or "")
+        selection = r.get("model_selected") if r.get("status") == "success" else _ERROR_SENTINEL
+        by_prompt.setdefault(r["prompt_id"], set()).add(selection or _ERROR_SENTINEL)
     if not by_prompt:
         return 0.0
     consistent = sum(1 for models in by_prompt.values() if len(models) == 1)
@@ -139,17 +172,33 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
         tied_on_latency = [selected]
 
     # Bước 4: nếu vẫn hòa, xét consistency rate
+    tie_unresolved = False
+    tied_candidates: list[str] = []
     if selected is None:
         consistency = {name: compute_consistency_rate(records, name) for name in tied_on_latency}
-        selected = max(consistency, key=consistency.get)
+        max_consistency = max(consistency.values())
+        still_tied = [name for name, c in consistency.items() if c == max_consistency]
+        if len(still_tied) > 1:
+            # Hòa cả 4 bước - KHÔNG âm thầm chọn proxy đầu tiên trong danh sách (Khoa,
+            # 2026-10-03). Vẫn trả về 1 "selected_proxy" (thứ tự alphabet, để luôn có
+            # kết quả dùng được), nhưng đánh dấu rõ để không báo cáo như thể luật đã
+            # phân biệt được - cần bàn thêm với GVHD/Khoa nếu thực sự xảy ra ở Phase E.
+            tie_unresolved = True
+            tied_candidates = sorted(still_tied)
+            selected = tied_candidates[0]
+        else:
+            selected = still_tied[0]
 
     return {
         "selected_proxy": selected,
+        "tie_unresolved": tie_unresolved,
+        "tied_candidates": tied_candidates,
         "candidates_after_qa_filter": candidates,
         "pareto_data": {
             name: {
                 "closed_qa_accuracy": compute_closed_qa_accuracy(records, name),
                 "avg_cost": costs.get(name),
+                "error_rate": compute_error_rate(records, name),
                 "p95_latency_ms": compute_p95_latency(records, name),
                 "consistency_rate": compute_consistency_rate(records, name),
             }
