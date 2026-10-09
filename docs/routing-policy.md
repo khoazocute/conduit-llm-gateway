@@ -108,6 +108,85 @@ tính phí), tính là 1 trong 3 lần lặp, không chạy bù.
    12.3s nên chưa chạm, nhưng 1 lượt Gemini 503 từng mất 19s. Áp dụng giống nhau cho cả 3 proxy nên
    vẫn công bằng, nhưng cần ghi vào phần giới hạn.
 
+**Hùng bổ sung (2026-10-09) — phân tích soạn cho buổi họp GVHD 2026-10-03, xem
+`docs/meetings/2026-10-03.md`:**
+
+7. **Chỉ 2/5 chỉ số trong luật quyết định thật sự phân biệt được proxy.** Dry-run xác nhận điểm 4:
+   ở lượt bình thường cả 3 proxy gọi cùng `gpt-4o-mini`. Hệ quả cho từng chỉ số:
+
+   | Chỉ số | Phân biệt được proxy? | Thật ra đang đo gì |
+   |---|---|---|
+   | `closed_qa_accuracy` | Không | **Model** — cùng model thì cùng độ chính xác |
+   | `avg_cost` | Không | **Model** — cùng giá; chênh lệch chỉ là nhiễu độ dài câu trả lời (29–106 token ra) |
+   | Điểm rubric (162 output) | Không | **Model** — cùng lý do |
+   | `p95_latency_ms` | **Có** | **Proxy** — overhead mỗi proxy khác nhau thật (LiteLLM ~3681 ms vs ~2800 ms) |
+   | `error_rate` | **Có** | **Proxy** — khác biệt lớn nhất khi có lỗi xảy ra |
+
+   Nghĩa là bước 1 và bước 2 của luật quyết định (`closed_qa_accuracy` ≥ 80%, rồi `avg_cost` thấp
+   nhất) hiện **không** chọn theo năng lực proxy. Nếu Phase E giữ nguyên điều kiện này, bước 2 sẽ
+   chọn theo nhiễu và bước 3 (p95, ngưỡng hòa 5%) mới là bước quyết định thật.
+
+8. **4 trục đánh giá, và chỉ 2 trục cần tới 270 lượt.** Tách rõ để báo cáo không nhập nhằng giữa
+   "đo bằng số" và "kết luận bằng quan sát":
+
+   | Trục | Đo bằng gì | Cần 270 lượt? |
+   |---|---|---|
+   | 1. **Năng lực biểu đạt** — proxy tự diễn đạt được chính sách tới đâu, hay phải ta khai tay | Quan sát khi cấu hình (mục 2 + 3 của tài liệu này) | Không — đã xong ở Phase C |
+   | 2. **Overhead độ trễ** | `p95_latency_ms` | **Có** |
+   | 3. **Hành vi khi lỗi** | `error_rate` + kịch bản ép lỗi | **Có** |
+   | 4. **Chi phí vận hành** — cấu hình/theo dõi/sửa lỗi dễ hay khó | Kinh nghiệm triển khai thật | Không |
+
+   Trục 1 và 4 là nơi 3 proxy khác nhau rõ nhất, nhưng **không** nằm trong luật quyết định (luật
+   chỉ nhận chỉ số tự động hoá được). Phải nêu cả 4 trục trong báo cáo, đừng để người đọc hiểu
+   rằng kết luận chỉ dựa trên 270 lượt.
+
+9. **Kịch bản ép lỗi: thiết kế thế nào mới đo được điều muốn đo.**
+
+   a. **Lượt ép lỗi mà proxy tự chuyển model và trả lời được thì vẫn là `status=success`.**
+      `error_rate` đo *"người dùng có nhận được câu trả lời không"*, không đo *"có model nào bị lỗi
+      không"* — nếu không thì proxy làm tốt việc dự phòng lại bị trừ điểm vì đã làm đúng việc của
+      nó. Khớp D7: chỉ lượt lỗi **sau khi hết retry và hết chuỗi** mới tính là lỗi.
+
+   b. **Ghi đúng sự thật về lượt ép lỗi Bifrost 2026-10-01** (sửa một cách hiểu sai đã từng xuất
+      hiện khi trao đổi): chuỗi của Bifrost **đủ 5 model đúng thứ tự giá**
+      (`application.yml` → `app.chat.proxy-fallback-chains.bifrost`), Gemini **đã** được đăng ký
+      (`proxy-configs/bifrost/setup.sh` tự tạo provider) và **đã được thử đúng thứ tự** — nó lỗi
+      tạm thời sau 2 lần retry nên Bifrost mới đi tiếp sang `claude-haiku`. **Không** phải vì chuỗi
+      thiếu Gemini hay cấu hình sai thứ tự. Nguồn: `docs/tasks/2026-09-28/log-khoa.md` (K1, phát
+      hiện 4) + `docs/bifrost-routing-notes.md` mục 8.
+
+   c. **Ép lỗi 1 model là chưa đủ sắc.** Cả LiteLLM và Bifrost đều nhắm model rẻ nhất còn sống, nên
+      khi chỉ `gpt-4o-mini` chết thì cả hai cùng rơi về `gemini-flash` → chi phí lại bằng nhau, y
+      như lúc không lỗi. Phải ép lỗi **2 model** (`gpt-4o-mini` **và** `gemini-flash`):
+
+      - **LiteLLM** còn 3 deployment sống trong `conduit-pool` → tự đi tiếp, ta không khai gì thêm.
+        ⚠️ **Chưa ai thử** — đừng giả định `conduit-pool` tự fallback (`log-khoa.md` phát hiện 8).
+      - **Bifrost** sống được bao xa tùy chuỗi dài bao nhiêu — muốn sống hết phải tự tay liệt kê
+        đủ 5 model (và hiện đã liệt kê đủ, xem 9b).
+      - **Portkey** lỗi ngay từ bước đầu (rule 1-1, không có dự phòng — điểm 5).
+
+      Phát biểu rút ra cho báo cáo: *"Bifrost đạt được kết quả y hệt LiteLLM, nhưng chỉ vì nhóm đã
+      liệt kê sẵn cả 5 model bằng tay. Khác biệt không nằm ở kết quả, mà nằm ở lượng cấu hình phải
+      viết và phải bảo trì mỗi khi pool model thay đổi."* → đây là bằng chứng cho trục 1 (điểm 8).
+
+   d. **Cảnh báo đo lường:** Gemini free tier hay lỗi tạm (rủi ro đã ghi ở `roadmap.md` mục 7) và
+      nó chính là **mắt xích thứ 2** của chuỗi. Nếu Gemini tự chết trong lúc chạy kịch bản ép lỗi
+      thì không tách được *"proxy bỏ qua Gemini vì cấu hình sai thứ tự"* khỏi *"Gemini tự chết"* →
+      phải kiểm tra độ ổn định Gemini **trước**, và ghi lại log của proxy (Bifrost `/api/logs` có
+      `fallback_index`) để chứng minh thứ tự thật đã đi.
+
+   e. **Phép thử bổ sung rất rẻ (3 lượt, ~$0.0001) cho trục 1 — "đổi giá, không chỉ ép lỗi":**
+      giả lập nhà cung cấp hạ giá để model khác thành rẻ nhất, rồi gửi 1 lượt/proxy.
+
+      | Proxy | Phải sửa ở đâu khi giá đổi |
+      |---|---|
+      | LiteLLM | Cập nhật bảng giá → **tự chọn lại**. 1 điểm sửa |
+      | Bifrost | Cập nhật bảng giá, **rồi còn phải sửa thứ tự chuỗi**. 2 điểm sửa |
+      | Portkey | Cập nhật bảng giá, **rồi còn phải sửa rule**. 2 điểm sửa |
+
+      Rủi ro vận hành đo được: quên điểm sửa thứ hai thì Bifrost/Portkey **định tuyến sai mà không
+      báo lỗi gì** — vẫn trả lời bình thường, chỉ là đắt hơn cần thiết.
+
 ## 6. Trạng thái cấu hình hiện tại (2026-09-30)
 
 | Proxy | Cấu hình routing | Verify trực tiếp | Verify qua app thật (D3) |

@@ -116,11 +116,11 @@ Trạng thái: ⬜ chưa bắt đầu · 🟨 đang làm · ✅ đạt (đã đ�
 
 | Phase | Trạng thái | Bắt đầu | Xong | Ghi chú |
 |---|---|---|---|---|
-| A | 🟨 | 2026-09-20 | | `main` có code cả hai, 2 bộ test pass; D1/D3/D4/D5/D6 đã chốt, còn D2/D7/D8 và câu hỏi GVHD chưa gửi |
-| B | 🟨 | 2026-09-22 | | `prompts.json` + luật chấm + test xong (Hùng); smoke test LiteLLM 4/5 model qua (1 lỗi do Gemini quá tải, không phải lỗi cấu hình); còn thiếu: `model_pricing` 10 dòng + nguồn giá (Khoa), rubric chấm mù + mẫu bảng chấm (Khoa) |
-| C | ⬜ | | | |
-| D | ⬜ | | | |
-| E | ⬜ | | | |
+| A | ✅ | 2026-09-20 | 2026-09-29 | `main` có code cả hai, 2 bộ test pass. D1–D7 đã chốt; **D8 còn trống**. Câu hỏi GVHD đã mang đi hỏi ở buổi họp 2026-10-03 (`docs/meetings/2026-10-03.md`) |
+| B | ✅ | 2026-09-22 | 2026-10-01 | `prompts.json` + luật chấm + test (Hùng); `model_pricing` 10 dòng + `docs/model-pricing-sources.md` (Khoa); `docs/grading-rubric.md` + mẫu bảng chấm + 3 câu chấm thử (Khoa). Smoke test LiteLLM 4/5 model qua — 1 lỗi do Gemini free tier quá tải, không phải lỗi cấu hình |
+| C | ✅ | 2026-09-29 | 2026-10-01 | Cả 3 proxy có routing thật + verify sống: LiteLLM `cost-based-routing` 10/10 lượt (H1), Portkey conditional 3/3 (H2), Bifrost `fallbacks` đủ 5 model theo giá + 1 lượt ép lỗi thật (K1). `docs/routing-policy.md` đã viết. ⚠️ **"Đạt khi" của phase này yêu cầu cả hai + GVHD đồng ý `routing-policy.md` — mới có cả hai, chưa có xác nhận của thầy** |
+| D | ✅ | 2026-10-01 | 2026-10-03 | `run_experiment.py` chạy qua app thật (D3); `decision_rule.py` 26/26 test; `dry_run.sh` tự chạy 3 proxy → gộp → áp luật quyết định. **Dry-run thật 27/27 lượt thành công và đúng** (2026-10-02, $0.0012) |
+| E | 🟨 | | | **Đang bị chặn.** 3 việc phải xong trước khi chạy 270 lượt + 1 vấn đề phương pháp cần hướng của GVHD — xem `docs/tasks/2026-10-05/tasks.md` |
 | F | ⬜ | | | |
 | G | ⬜ | | | |
 

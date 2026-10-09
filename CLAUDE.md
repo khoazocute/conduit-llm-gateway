@@ -192,7 +192,7 @@ mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên 
 - `log-hung.md` / `log-khoa.md` — nhật ký làm việc của mỗi người, tự viết dần trong tuần rồi commit kèm code (thay cho việc dán nguyên khối Markdown vào chat) — bảng "việc/kết quả/file/người kia cần làm" + mục "phát hiện quan trọng"/"cần bàn cùng nhau".
 - Review: người phản biện đọc `tasks.md` (được giao gì) + `log-*.md` của người kia (báo cáo gì) + tự chạy lại code/test thật để đối chiếu, rồi ghi kết luận thẳng vào cuối chính file `log-*.md` đó, dưới mục `## Review — <người review> (<ngày>)` — không tạo file riêng.
 
-Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-09-28/`** để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
+Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-10-05/`** để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. **Kết luận các buổi họp GVHD nằm ở `docs/meetings/<ngày>.md`** — đọc buổi gần nhất trước khi quyết bất cứ việc gì thuộc phần đánh giá proxy. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
 
 **Bảng quyết định D1–D8 (chi tiết ở `docs/roadmap.md` mục 4), tóm tắt:**
 - **D1 (đã chốt 2026-09-21):** Hùng chịu chi phí API key, dùng tối thiểu (xem "Chính sách chi phí API key" ở mục 2).
@@ -200,7 +200,9 @@ Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì
 - **D4 (đã chốt 2026-09-23):** 6 prompt code chấm rubric 3 tiêu chí như prompt mở (không chấm bằng test tự động).
 - **D5 (tạm chốt 2026-09-23):** giá Gemini dùng giá niêm yết; Khoa sẽ chốt lại toàn bộ `model_pricing` sau.
 - **D6 (đã chốt 2026-09-23):** 30% mẫu chấm kép tính theo lượt output (~49/162), không theo prompt.
-- **D2, D7, D8:** còn trống, xem `docs/roadmap.md` mục 4 và 6 (câu hỏi cho GVHD).
+- **D2 (đã chốt 2026-09-29):** mục tiêu routing chung = ưu tiên model rẻ nhất + có phương án dự phòng khi lỗi; mỗi proxy biểu đạt bằng cơ chế riêng (LiteLLM `cost-based-routing` tự chọn; Bifrost/Portkey dùng chuỗi/rule tĩnh rẻ→đắt). Không dùng Bifrost Complexity Router. Đây là kỷ luật thiết kế thí nghiệm, **không phải đóng góp kỹ thuật**.
+- **D7 (đã chốt 2026-09-29, bổ sung 2026-10-03):** `num_retries=2`, `timeout=45s` giống nhau cả 3 proxy. Lượt lỗi ghi `usage_logs.status=error`, không tính phí, tính là 1 trong 3 lần lặp, **không** tính vào chi phí trung bình ở bước 2 của luật quyết định (nếu tính ở $0 sẽ thưởng cho proxy hay lỗi); `error_rate` báo cáo riêng.
+- **D8:** còn trống — nâng role lên creator (chưa có API) + nguồn system prompt cho agent. Xem `docs/roadmap.md` mục 4 và câu hỏi 6–7 ở mục 6.
 
 **Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận. **Không thêm dòng `Co-Authored-By: Claude` (hay bất kỳ attribution/"Generated with Claude Code" nào) vào commit message hoặc mô tả PR** — quy tắc của Hùng, ưu tiên hơn gợi ý mặc định của công cụ.
 
