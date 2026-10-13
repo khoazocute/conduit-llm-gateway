@@ -1,4 +1,16 @@
-# Bộ 30 prompt đánh giá proxy (chốt trước khi chạy thực nghiệm)
+# Bộ 30 prompt tiếng Việt — phép thử nhạy ngôn ngữ (KHÔNG còn là bộ đánh giá chính)
+
+> ⚠️ **Đổi vai 2026-10-14.** Bộ đánh giá chính giờ là 4 bộ benchmark công khai (MMLU, GSM8K,
+> HumanEval, IFEval), 0-shot — xem `docs/experiment-design.md` mục 5. Bộ 30 câu tiếng Việt dưới đây
+> **vẫn giữ**, nhưng dùng cho **một mục đích riêng**: đo mức suy giảm của Bifrost Complexity Router
+> khi gặp tiếng Việt (đã đo 09/10: nó xếp **mọi** prompt tiếng Việt vào SIMPLE, `mechanism=semantic`
+> chứ không phải `skipped` — tức có phân loại nhưng luôn rơi đáy, **sai trong im lặng**). Phát biểu
+> rút ra: *"chọn Bifrost thì phải tự viết câu mẫu tiếng Việt, đó là công bảo trì thêm."*
+>
+> Rubric 3 tiêu chí nói ở dưới **không còn dùng** — đã thay bằng metric chuẩn tự động của từng bộ
+> benchmark (D4 giải quyết xong, D6 gần như không còn cần).
+
+## Nội dung gốc (giữ để truy vết)
 
 Theo CLAUDE.md mục 2: bộ prompt này **khóa cứng** trước khi chạy thực nghiệm tuần 9–10, không sửa giữa chừng để tránh thiên lệch (bias) khi so sánh 3 proxy. Mỗi prompt chạy **3 lần** trên **mỗi proxy** (LiteLLM / Bifrost / Portkey) → 30 × 3 × 3 = 270 lượt gọi API thật, tất cả phải ghi vào bảng `routing_decisions`.
 

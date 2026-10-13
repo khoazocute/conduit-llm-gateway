@@ -1,0 +1,46 @@
+[
+ {
+  "version": "v1.106.0-rc.1",
+  "requested_model": "smart-router",
+  "served": "gpt-4o-mini-2024-07-18",
+  "usage": {
+   "completion_tokens": 615,
+   "prompt_tokens": 29,
+   "total_tokens": 644,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 0,
+    "audio_tokens": 0,
+    "reasoning_tokens": 0,
+    "rejected_prediction_tokens": 0
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cached_tokens": 0
+   }
+  },
+  "finish_reason": "stop",
+  "max_tokens_respected": false
+ },
+ {
+  "version": "v1.106.0-rc.1",
+  "requested_model": "gpt-4o-mini",
+  "served": "gpt-4o-mini",
+  "usage": {
+   "completion_tokens": 16,
+   "prompt_tokens": 29,
+   "total_tokens": 45,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 0,
+    "audio_tokens": 0,
+    "reasoning_tokens": 0,
+    "rejected_prediction_tokens": 0
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cached_tokens": 0
+   }
+  },
+  "finish_reason": "length",
+  "max_tokens_respected": true
+ }
+]

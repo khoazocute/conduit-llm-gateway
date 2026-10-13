@@ -1,0 +1,222 @@
+[
+ {
+  "label": "1-MMLU",
+  "lang": "en",
+  "ms": 2376,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 42,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 1,
+   "completion_tokens_details": {},
+   "total_tokens": 43
+  },
+  "ok": true
+ },
+ {
+  "label": "2-GSM8K",
+  "lang": "en",
+  "ms": 1537,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 41,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 57
+  },
+  "ok": true
+ },
+ {
+  "label": "3-MTBench",
+  "lang": "en",
+  "ms": 1596,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 29,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 45
+  },
+  "ok": true
+ },
+ {
+  "label": "4-HumanEval",
+  "lang": "en",
+  "ms": 2006,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 25,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 41
+  },
+  "ok": true
+ },
+ {
+  "label": "5-CONTROL",
+  "lang": "en",
+  "ms": 1022,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 32,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 48
+  },
+  "ok": true
+ },
+ {
+  "label": "6-VN-simple",
+  "lang": "vi",
+  "ms": 1208,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 19,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 35
+  },
+  "ok": true
+ },
+ {
+  "label": "7-VN-code",
+  "lang": "vi",
+  "ms": 1486,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 35,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 51
+  },
+  "ok": true
+ },
+ {
+  "label": "2-GSM8K-r2",
+  "lang": "en",
+  "ms": 1519,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 41,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 57
+  },
+  "ok": true
+ },
+ {
+  "label": "2-GSM8K-r3",
+  "lang": "en",
+  "ms": 1509,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 41,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 57
+  },
+  "ok": true
+ },
+ {
+  "label": "5-CONTROL-r2",
+  "lang": "en",
+  "ms": 1084,
+  "model_returned": "gpt-4o-mini-2024-07-18",
+  "routing_info": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "key": "OPENAI_API_KEY_auto_detected"
+  },
+  "usage": {
+   "prompt_tokens": 32,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0
+   },
+   "completion_tokens": 16,
+   "completion_tokens_details": {},
+   "total_tokens": 48
+  },
+  "ok": true
+ }
+]
