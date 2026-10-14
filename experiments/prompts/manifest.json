@@ -107,6 +107,23 @@
    "prompt_note": "Prompt NGUYÊN VĂN, tuyệt đối không thêm gì — IFEval kiểm tra chính việc tuân thủ chỉ thị, thêm chữ nào cũng có thể phá ràng buộc đang được kiểm (vd. ràng buộc về số từ, về từ bị cấm)."
   }
  },
+ "portkey_prompt_len_thresholds": {
+  "unit": "ký tự của prompt",
+  "cheap_below": 211,
+  "expensive_at_or_above": 385,
+  "tier_models": {
+   "cheap": "gpt-4o-mini",
+   "mid": "claude-haiku",
+   "expensive": "claude-sonnet"
+  },
+  "derivation": "tercile của phân bố độ dài 40 item (cùng seed) — xem docs/routing-policy.md mục 7",
+  "split": {
+   "cheap": 13,
+   "mid": 13,
+   "expensive": 14
+  },
+  "locked_on": "2026-10-14"
+ },
  "prompt_length_chars": {
   "per_set": {
    "mmlu": {

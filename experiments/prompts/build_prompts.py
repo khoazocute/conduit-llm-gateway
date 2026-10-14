@@ -221,6 +221,19 @@ def main() -> None:
 
     lengths = {g: sorted(len(it["prompt"]) for it in items) for g, items in prompts.items()}
     all_len = sorted(l for v in lengths.values() for l in v)
+
+    # Nguong metadata.prompt_len cho Portkey (H3, khoa 2026-10-14) - TINH O DAY chu khong
+    # ghi tay vao manifest, vi script nay ghi de manifest.json moi lan chay.
+    # Dung tercile cua phan bo that: dat so tron tuy y rat de lam 1 tier nhan 0 item ->
+    # nhanh Portkey suy bien thanh "luon chon 1 model" va khong do duoc gi.
+    n = len(all_len)
+    t1 = all_len[round((1 / 3) * (n - 1))]
+    t2 = all_len[round((2 / 3) * (n - 1))]
+    split = {
+        "cheap": sum(1 for x in all_len if x < t1),
+        "mid": sum(1 for x in all_len if t1 <= x < t2),
+        "expensive": sum(1 for x in all_len if x >= t2),
+    }
     manifest = {
         "built_on": date.today().isoformat(),
         "seed": SEED,
@@ -230,6 +243,15 @@ def main() -> None:
         "decoding": {"max_tokens": 512, "temperature": 0,
                      "note": "temperature 0 là yêu cầu của pass@1; dùng chung cho cả 4 bộ để nhất quán"},
         "sets": manifest_sets,
+        "portkey_prompt_len_thresholds": {
+            "unit": "ký tự của prompt",
+            "cheap_below": t1,
+            "expensive_at_or_above": t2,
+            "tier_models": {"cheap": "gpt-4o-mini", "mid": "claude-haiku", "expensive": "claude-sonnet"},
+            "derivation": "tercile của phân bố độ dài 40 item (cùng seed) — xem docs/routing-policy.md mục 7",
+            "split": split,
+            "locked_on": "2026-10-14",
+        },
         "prompt_length_chars": {
             "per_set": {g: {"min": v[0], "median": v[len(v) // 2], "max": v[-1]} for g, v in lengths.items()},
             "all_40": {"min": all_len[0], "p25": all_len[len(all_len) // 4],
@@ -247,6 +269,9 @@ def main() -> None:
     a = manifest["prompt_length_chars"]["all_40"]
     print(f"  {'TẤT CẢ':10s} min={a['min']:5d}  p25={a['p25']:5d}  median={a['median']:5d}"
           f"  p75={a['p75']:5d}  max={a['max']:5d}")
+    print()
+    print(f"Ngưỡng Portkey (tercile): < {t1} rẻ | {t1}-{t2 - 1} trung | >= {t2} đắt"
+          f"  -> chia {split['cheap']}/{split['mid']}/{split['expensive']}")
 
 
 if __name__ == "__main__":
