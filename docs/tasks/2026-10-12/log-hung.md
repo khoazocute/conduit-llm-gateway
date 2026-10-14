@@ -72,3 +72,69 @@ hành thật cũng làm đúng việc đó. Nhưng **vẫn phải khai báo** tr
 - GHCR **có** publish tag trần cho LiteLLM bản mới (`v1.105.0` có, `v1.105.0-stable` không) — ghi
   chú trong `CLAUDE.md` chỉ đúng cho nhánh v1.83.x.
 - Docker Hub của Bifrost dùng tag **`v2.1.1`** (có tiền tố `v`), không có `2.1.1`.
+
+---
+
+## 2026-10-14 (chiều) — Phase 2 phần của Hùng, làm sớm 2 ngày
+
+| Việc | Kết quả | File | Khoa cần làm gì |
+|---|---|---|---|
+| H7 — 4 bộ chấm | Đủ 4 metric, **24 test** (mỗi metric ≥2 ca đúng + ≥2 ca sai, có cả ca bẫy) | `experiments/analysis/graders.py`, `experiments/tests/test_graders.py` | Review: đối chiếu 3 chỗ ở `benchmark-survey.md` mục 3 |
+| H8 — chấm offline | Runner bỏ chấm inline (ghi `passed: null`); script chấm riêng ghi `passed`/`score`/`grade_detail` vào file kết quả, `--db` nạp `response_quality_score` | `experiments/scripts/grade_results.py`, `run_experiment.py` | Dùng script này sau khi dry-run K5 |
+| Dependency | `requirements.txt` + README vendor | `experiments/requirements.txt`, `experiments/analysis/vendor/README.md` | **Phải chạy 2 lệnh setup** trước khi chấm, xem bên dưới |
+
+### Dùng verifier IFEval **chính thức**, không tự viết lại
+
+Vendor nguyên văn 3 file của `google-research/instruction_following_eval` (Apache-2.0, giữ header)
+vào `experiments/analysis/vendor/`. Lý do: thầy yêu cầu tiêu chí chấm chuẩn theo paper — tự viết lại
+verifier thì metric không còn là metric của paper. Registry có 25 verifier, bộ đề cần **12 loại**,
+có test kiểm đủ cả 12 đều build + chạy được (để không tới lúc chạy 360 lượt mới phát hiện thiếu).
+
+**Khoa phải chạy 2 lệnh này trước khi chấm, thiếu là nổ:**
+```bash
+python -m pip install -r experiments/requirements.txt
+python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt')"
+```
+Bước nltk là **bắt buộc**: 2 verifier tách câu (`length_constraints:number_sentences`,
+`change_case:capital_word_frequency`) ném `LookupError` nếu thiếu corpus `punkt`.
+
+### Hai quyết định nhỏ nhưng ảnh hưởng số liệu
+
+**1. IFEval: `passed` dùng prompt-level strict, không phải instruction-level.** Paper có 4 biến
+thể metric. Cổng ở bước 1 của luật quyết định là nhị phân "item đạt/không" nên phải chọn mức
+prompt-level (đạt **iff mọi** ràng buộc đều theo) cho khớp 3 bộ còn lại. Instruction-level (tỷ lệ
+ràng buộc theo được) **vẫn ghi** vào `score` từng lượt để báo cáo. Đã đổi tên metric
+`ifeval_strict_instruction` → **`ifeval_strict_prompt`** cho đúng cái nó thực sự đo.
+
+**2. Thêm `signature_prompt` vào item HumanEval.** Model có thể chỉ trả về *thân* hàm, không có
+signature. Bộ chấm cần prompt gốc (chưa có dòng chỉ thị) để ghép lại rồi mới chạy test. Có test
+riêng cho ca này.
+
+### Phát hiện quan trọng
+
+**Tự bắt được một lỗi của chính mình lúc kiểm lại.** Ngưỡng `prompt_len` ban đầu được ghi vào
+`manifest.json` bằng một script riêng, nhưng `build_prompts.py` **ghi đè `manifest.json` mỗi lần
+chạy** → lúc kiểm tái lập, ngưỡng bị xoá mất. Nếu không kiểm thì ai chạy lại script là ngưỡng biến
+mất lặng lẽ. Đã sửa đúng gốc: chính `build_prompts.py` tính tercile và ghi kèm. Giá trị không đổi
+(`< 211 / 211-384 / >= 385`).
+
+**`pass@1` chạy code model sinh ra trong subprocess có timeout 15s + thư mục tạm — KHÔNG phải
+sandbox đầy đủ** (không chặn mạng/filesystem). Harness chính thức của OpenAI cũng thực thi như vậy
+và kèm cảnh báo tương tự. Đã ghi vào giới hạn trong `graders.py`; cần nêu trong báo cáo. Có test
+kiểm vòng lặp vô hạn bị timeout chứ không treo.
+
+**Phương án lùi đã chạy thử, không phải chỉ nói trên giấy.** `grade_results.py --skip pass_at_1`
+cho kết quả: 7/9 chấm được, 2 lượt giữ `passed=null`, `decision_rule.py` tính accuracy trên 7 lượt
+và báo `ungraded_runs=2` riêng — **không** âm thầm coi 2 lượt đó là sai. Nên nếu 17/10 mà sandbox
+pass@1 có vấn đề thì vẫn chạy được đủ 360 lượt và bù chấm sau.
+
+### Cần bàn cùng nhau
+
+1. **Runner giờ ghi `passed: null` cho mọi lượt.** Chạy `decision_rule.py` **trước khi** chấm sẽ
+   thấy accuracy = 0 và `ungraded_runs` = toàn bộ. **Không phải lỗi** — phải chấm trước, rồi mới
+   áp luật quyết định. Thứ tự đúng: `run_experiment.py` → `grade_results.py` → `decision_rule.py`.
+2. **Cách trích đáp án GSM8K là quy ước, không phải quy định của paper.** Lấy *số cuối cùng* trong
+   câu trả lời. Có test cho ca bẫy (số ở bước trung gian, dấu phẩy hàng nghìn), nhưng vẫn nên kiểm
+   tay trên 10 item thật khi có kết quả — model có thể viết đơn vị hoặc năm ở cuối câu.
+3. Phần của mình cho 17/10 **đã xong hết**. Đường tới hạn giờ là K1–K4 của Khoa (nhất là
+   `resolveReturnedModel`) rồi mới tới dry-run K5–K7.

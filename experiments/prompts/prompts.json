@@ -157,6 +157,7 @@
   {
    "id": "humaneval_01",
    "prompt": "from typing import List\n\n\ndef factorize(n: int) -> List[int]:\n    \"\"\" Return list of prime factors of given integer in the order from smallest to largest.\n    Each of the factors should be listed number of times corresponding to how many times it appeares in factorization.\n    Input number should be equal to the product of all factors\n    >>> factorize(8)\n    [2, 2, 2]\n    >>> factorize(25)\n    [5, 5]\n    >>> factorize(70)\n    [2, 5, 7]\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "from typing import List\n\n\ndef factorize(n: int) -> List[int]:\n    \"\"\" Return list of prime factors of given integer in the order from smallest to largest.\n    Each of the factors should be listed number of times corresponding to how many times it appeares in factorization.\n    Input number should be equal to the product of all factors\n    >>> factorize(8)\n    [2, 2, 2]\n    >>> factorize(25)\n    [5, 5]\n    >>> factorize(70)\n    [2, 5, 7]\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "factorize",
    "test": "\n\nMETADATA = {\n    'author': 'jt',\n    'dataset': 'test'\n}\n\n\ndef check(candidate):\n    assert candidate(2) == [2]\n    assert candidate(4) == [2, 2]\n    assert candidate(8) == [2, 2, 2]\n    assert candidate(3 * 19) == [3, 19]\n    assert candidate(3 * 19 * 3 * 19) == [3, 3, 19, 19]\n    assert candidate(3 * 19 * 3 * 19 * 3 * 19) == [3, 3, 3, 19, 19, 19]\n    assert candidate(3 * 19 * 19 * 19) == [3, 19, 19, 19]\n    assert candidate(3 * 2 * 3) == [2, 3, 3]\n",
@@ -166,6 +167,7 @@
   {
    "id": "humaneval_02",
    "prompt": "\n\ndef unique(l: list):\n    \"\"\"Return sorted unique elements in a list\n    >>> unique([5, 3, 5, 2, 3, 3, 9, 0, 123])\n    [0, 2, 3, 5, 9, 123]\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\n\ndef unique(l: list):\n    \"\"\"Return sorted unique elements in a list\n    >>> unique([5, 3, 5, 2, 3, 3, 9, 0, 123])\n    [0, 2, 3, 5, 9, 123]\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "unique",
    "test": "\n\nMETADATA = {}\n\n\ndef check(candidate):\n    assert candidate([5, 3, 5, 2, 3, 3, 9, 0, 123]) == [0, 2, 3, 5, 9, 123]\n\n",
@@ -175,6 +177,7 @@
   {
    "id": "humaneval_03",
    "prompt": "\n\ndef change_base(x: int, base: int):\n    \"\"\"Change numerical base of input number x to base.\n    return string representation after the conversion.\n    base numbers are less than 10.\n    >>> change_base(8, 3)\n    '22'\n    >>> change_base(8, 2)\n    '1000'\n    >>> change_base(7, 2)\n    '111'\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\n\ndef change_base(x: int, base: int):\n    \"\"\"Change numerical base of input number x to base.\n    return string representation after the conversion.\n    base numbers are less than 10.\n    >>> change_base(8, 3)\n    '22'\n    >>> change_base(8, 2)\n    '1000'\n    >>> change_base(7, 2)\n    '111'\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "change_base",
    "test": "\n\nMETADATA = {}\n\n\ndef check(candidate):\n    assert candidate(8, 3) == \"22\"\n    assert candidate(9, 3) == \"100\"\n    assert candidate(234, 2) == \"11101010\"\n    assert candidate(16, 2) == \"10000\"\n    assert candidate(8, 2) == \"1000\"\n    assert candidate(7, 2) == \"111\"\n    for x in range(2, 8):\n        assert candidate(x, x + 1) == str(x)\n\n",
@@ -184,6 +187,7 @@
   {
    "id": "humaneval_04",
    "prompt": "\ndef is_multiply_prime(a):\n    \"\"\"Write a function that returns true if the given number is the multiplication of 3 prime numbers\n    and false otherwise.\n    Knowing that (a) is less then 100. \n    Example:\n    is_multiply_prime(30) == True\n    30 = 2 * 3 * 5\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef is_multiply_prime(a):\n    \"\"\"Write a function that returns true if the given number is the multiplication of 3 prime numbers\n    and false otherwise.\n    Knowing that (a) is less then 100. \n    Example:\n    is_multiply_prime(30) == True\n    30 = 2 * 3 * 5\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "is_multiply_prime",
    "test": "def check(candidate):\n\n    assert candidate(5) == False\n    assert candidate(30) == True\n    assert candidate(8) == True\n    assert candidate(10) == False\n    assert candidate(125) == True\n    assert candidate(3 * 5 * 7) == True\n    assert candidate(3 * 6 * 7) == False\n    assert candidate(9 * 9 * 9) == False\n    assert candidate(11 * 9 * 9) == False\n    assert candidate(11 * 13 * 7) == True\n\n",
@@ -193,6 +197,7 @@
   {
    "id": "humaneval_05",
    "prompt": "\ndef by_length(arr):\n    \"\"\"\n    Given an array of integers, sort the integers that are between 1 and 9 inclusive,\n    reverse the resulting array, and then replace each digit by its corresponding name from\n    \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\".\n\n    For example:\n      arr = [2, 1, 1, 4, 5, 8, 2, 3]   \n            -> sort arr -> [1, 1, 2, 2, 3, 4, 5, 8] \n            -> reverse arr -> [8, 5, 4, 3, 2, 2, 1, 1]\n      return [\"Eight\", \"Five\", \"Four\", \"Three\", \"Two\", \"Two\", \"One\", \"One\"]\n    \n      If the array is empty, return an empty array:\n      arr = []\n      return []\n    \n      If the array has any strange number ignore it:\n      arr = [1, -1 , 55] \n            -> sort arr -> [-1, 1, 55]\n            -> reverse arr -> [55, 1, -1]\n      return = ['One']\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef by_length(arr):\n    \"\"\"\n    Given an array of integers, sort the integers that are between 1 and 9 inclusive,\n    reverse the resulting array, and then replace each digit by its corresponding name from\n    \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\".\n\n    For example:\n      arr = [2, 1, 1, 4, 5, 8, 2, 3]   \n            -> sort arr -> [1, 1, 2, 2, 3, 4, 5, 8] \n            -> reverse arr -> [8, 5, 4, 3, 2, 2, 1, 1]\n      return [\"Eight\", \"Five\", \"Four\", \"Three\", \"Two\", \"Two\", \"One\", \"One\"]\n    \n      If the array is empty, return an empty array:\n      arr = []\n      return []\n    \n      If the array has any strange number ignore it:\n      arr = [1, -1 , 55] \n            -> sort arr -> [-1, 1, 55]\n            -> reverse arr -> [55, 1, -1]\n      return = ['One']\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "by_length",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert True, \"This prints if this assert fails 1 (good for debugging!)\"\n    assert candidate([2, 1, 1, 4, 5, 8, 2, 3]) == [\"Eight\", \"Five\", \"Four\", \"Three\", \"Two\", \"Two\", \"One\", \"One\"], \"Error\"\n    assert candidate([]) == [], \"Error\"\n    assert candidate([1, -1 , 55]) == ['One'], \"Error\"\n\n    # Check some edge cases that are easy to work out by hand.\n    assert True, \"This prints if this assert fails 2 (also good for debugging!)\"\n    assert candidate([1, -1, 3, 2]) == [\"Three\", \"Two\", \"One\"]\n    assert candidate([9, 4, 8]) == [\"Nine\", \"Eight\", \"Four\"]\n\n",
@@ -202,6 +207,7 @@
   {
    "id": "humaneval_06",
    "prompt": "\ndef odd_count(lst):\n    \"\"\"Given a list of strings, where each string consists of only digits, return a list.\n    Each element i of the output should be \"the number of odd elements in the\n    string i of the input.\" where all the i's should be replaced by the number\n    of odd digits in the i'th string of the input.\n\n    >>> odd_count(['1234567'])\n    [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"]\n    >>> odd_count(['3',\"11111111\"])\n    [\"the number of odd elements 1n the str1ng 1 of the 1nput.\",\n     \"the number of odd elements 8n the str8ng 8 of the 8nput.\"]\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef odd_count(lst):\n    \"\"\"Given a list of strings, where each string consists of only digits, return a list.\n    Each element i of the output should be \"the number of odd elements in the\n    string i of the input.\" where all the i's should be replaced by the number\n    of odd digits in the i'th string of the input.\n\n    >>> odd_count(['1234567'])\n    [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"]\n    >>> odd_count(['3',\"11111111\"])\n    [\"the number of odd elements 1n the str1ng 1 of the 1nput.\",\n     \"the number of odd elements 8n the str8ng 8 of the 8nput.\"]\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "odd_count",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(['1234567']) == [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"], \"Test 1\"\n    assert candidate(['3',\"11111111\"]) == [\"the number of odd elements 1n the str1ng 1 of the 1nput.\", \"the number of odd elements 8n the str8ng 8 of the 8nput.\"], \"Test 2\"\n    assert candidate(['271', '137', '314']) == [\n        'the number of odd elements 2n the str2ng 2 of the 2nput.',\n        'the number of odd elements 3n the str3ng 3 of the 3nput.',\n        'the number of odd elements 2n the str2ng 2 of the 2nput.'\n    ]\n\n    # Check some edge cases that are easy to work out by hand.\n    assert True, \"This prints if this assert fails 2 (also good for debugging!)\"\n\n",
@@ -211,6 +217,7 @@
   {
    "id": "humaneval_07",
    "prompt": "\ndef digits(n):\n    \"\"\"Given a positive integer n, return the product of the odd digits.\n    Return 0 if all digits are even.\n    For example:\n    digits(1)  == 1\n    digits(4)  == 0\n    digits(235) == 15\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef digits(n):\n    \"\"\"Given a positive integer n, return the product of the odd digits.\n    Return 0 if all digits are even.\n    For example:\n    digits(1)  == 1\n    digits(4)  == 0\n    digits(235) == 15\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "digits",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(5) == 5\n    assert candidate(54) == 5\n    assert candidate(120) ==1\n    assert candidate(5014) == 5\n    assert candidate(98765) == 315\n    assert candidate(5576543) == 2625\n\n    # Check some edge cases that are easy to work out by hand.\n    assert candidate(2468) == 0\n\n",
@@ -220,6 +227,7 @@
   {
    "id": "humaneval_08",
    "prompt": "\ndef fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "fix_spaces",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(\"Example\") == \"Example\", \"This prints if this assert fails 1 (good for debugging!)\"\n    assert candidate(\"Mudasir Hanif \") == \"Mudasir_Hanif_\", \"This prints if this assert fails 2 (good for debugging!)\"\n    assert candidate(\"Yellow Yellow  Dirty  Fellow\") == \"Yellow_Yellow__Dirty__Fellow\", \"This prints if this assert fails 3 (good for debugging!)\"\n    \n    # Check some edge cases that are easy to work out by hand.\n    assert candidate(\"Exa   mple\") == \"Exa-mple\", \"This prints if this assert fails 4 (good for debugging!)\"\n    assert candidate(\"   Exa 1 2 2 mple\") == \"-Exa_1_2_2_mple\", \"This prints if this assert fails 4 (good for debugging!)\"\n\n",
@@ -229,6 +237,7 @@
   {
    "id": "humaneval_09",
    "prompt": "\ndef words_in_sentence(sentence):\n    \"\"\"\n    You are given a string representing a sentence,\n    the sentence contains some words separated by a space,\n    and you have to return a string that contains the words from the original sentence,\n    whose lengths are prime numbers,\n    the order of the words in the new string should be the same as the original one.\n\n    Example 1:\n        Input: sentence = \"This is a test\"\n        Output: \"is\"\n\n    Example 2:\n        Input: sentence = \"lets go for swimming\"\n        Output: \"go for\"\n\n    Constraints:\n        * 1 <= len(sentence) <= 100\n        * sentence contains only letters\n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef words_in_sentence(sentence):\n    \"\"\"\n    You are given a string representing a sentence,\n    the sentence contains some words separated by a space,\n    and you have to return a string that contains the words from the original sentence,\n    whose lengths are prime numbers,\n    the order of the words in the new string should be the same as the original one.\n\n    Example 1:\n        Input: sentence = \"This is a test\"\n        Output: \"is\"\n\n    Example 2:\n        Input: sentence = \"lets go for swimming\"\n        Output: \"go for\"\n\n    Constraints:\n        * 1 <= len(sentence) <= 100\n        * sentence contains only letters\n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "words_in_sentence",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(\"This is a test\") == \"is\"\n    assert candidate(\"lets go for swimming\") == \"go for\"\n    assert candidate(\"there is no place available here\") == \"there is no place\"\n    assert candidate(\"Hi I am Hussein\") == \"Hi am Hussein\"\n    assert candidate(\"go for it\") == \"go for it\"\n\n    # Check some edge cases that are easy to work out by hand.\n    assert candidate(\"here\") == \"\"\n    assert candidate(\"here is\") == \"is\"\n\n",
@@ -238,6 +247,7 @@
   {
    "id": "humaneval_10",
    "prompt": "\ndef x_or_y(n, x, y):\n    \"\"\"A simple program which should return the value of x if n is \n    a prime number and should return the value of y otherwise.\n\n    Examples:\n    for x_or_y(7, 34, 12) == 34\n    for x_or_y(15, 8, 5) == 5\n    \n    \"\"\"\n\n\nComplete the function above. Reply with the complete function implementation only.",
+   "signature_prompt": "\ndef x_or_y(n, x, y):\n    \"\"\"A simple program which should return the value of x if n is \n    a prime number and should return the value of y otherwise.\n\n    Examples:\n    for x_or_y(7, 34, 12) == 34\n    for x_or_y(15, 8, 5) == 5\n    \n    \"\"\"\n",
    "metric": "pass_at_1",
    "entry_point": "x_or_y",
    "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(7, 34, 12) == 34\n    assert candidate(15, 8, 5) == 5\n    assert candidate(3, 33, 5212) == 33\n    assert candidate(1259, 3, 52) == 3\n    assert candidate(7919, -1, 12) == -1\n    assert candidate(3609, 1245, 583) == 583\n    assert candidate(91, 56, 129) == 129\n    assert candidate(6, 34, 1234) == 1234\n    \n\n    # Check some edge cases that are easy to work out by hand.\n    assert candidate(1, 2, 0) == 0\n    assert candidate(2, 2, 0) == 2\n\n",
@@ -249,7 +259,7 @@
   {
    "id": "ifeval_01",
    "prompt": "Write a rubric for how to evaluate the technical skills of a software engineer only using the Punjabi language, no other language is allowed.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "language:response_language"
    ],
@@ -264,7 +274,7 @@
   {
    "id": "ifeval_02",
    "prompt": "I work in the marketing department and I need your help. I need a template for an advertisement for a new product which is a portable camera. In the template, capitalize a few words to stress main points. Please limit the number of words with all capital letters to less than four. Your response should contain at least ten sentences.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "change_case:capital_word_frequency",
     "length_constraints:number_sentences"
@@ -285,7 +295,7 @@
   {
    "id": "ifeval_03",
    "prompt": "Write a 100-word advertisement for a company called \"Drags and Races\". Don't contain the letter \"p\" in your reply.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "keywords:letter_frequency",
     "length_constraints:number_words"
@@ -307,7 +317,7 @@
   {
    "id": "ifeval_04",
    "prompt": "Invent a funny tagline for a local comedy show, and put your whole response in double quotes.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "startend:quotation"
    ],
@@ -320,7 +330,7 @@
   {
    "id": "ifeval_05",
    "prompt": "Please rewrite the following sentence in a serious tone, similar to the president of the united states, and without an upward bias or inflation alarmism. Please also include the keywords \"ink\" and \"memoirs\" in the sentence: \"The main points to consider are the following: First, the ECB’s own forecasts, which currently have a strong upward bias, must be revised downwards. Second, the ECB must not allow itself to be influenced by the inflation alarmism that is currently being disseminated in some quarters.\"",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "keywords:existence"
    ],
@@ -338,7 +348,7 @@
   {
    "id": "ifeval_06",
    "prompt": "Make a list of ways to say the following sentence more professionally: \"Hey bautista, let me know if you need any help with the graphs.\" Also, make sure the letter q appears less than 5 times in your response.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "keywords:letter_frequency"
    ],
@@ -355,7 +365,7 @@
   {
    "id": "ifeval_07",
    "prompt": "I want a weird poem that I can send to my friend Steve in Australia. It should be about why there are no kangaroo invasions in the US. The word robber should appear at least 2 times, and the poem must contain exactly 2 bullet point in markdown format, using the exact format below:\n* Point 1\n* Pont 2\nDo not include keywords ['kill', 'slaughter', 'occupy', 'invasion'] in the response.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "keywords:frequency",
     "detectable_format:number_bullet_lists",
@@ -385,7 +395,7 @@
   {
    "id": "ifeval_08",
    "prompt": "Write a product description for a new pair of shoes that targets teenagers. Highlight at least 2 text sections of your response by wrapping each of them with asterisks, like *I am highlighted*. Your response should be at least 350 words.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "detectable_format:number_highlighted_sections",
     "length_constraints:number_words"
@@ -405,7 +415,7 @@
   {
    "id": "ifeval_09",
    "prompt": "Is it true that the first song ever sung in outer space is “Happy Birthday.”\n\nYour answer must contain one of the following phrases:\nMy answer is yes.\nMy answer is no.\nMy answer is maybe.",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "detectable_format:constrained_response"
    ],
@@ -418,7 +428,7 @@
   {
    "id": "ifeval_10",
    "prompt": "If a + b + c = 30 and b = 10 and c = 5. Is a = 20? Answer ”My answer is yes.\" or \"My answer is no.\" or \"My answer is maybe.\"",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "instruction_id_list": [
     "detectable_format:constrained_response"
    ],

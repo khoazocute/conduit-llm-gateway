@@ -40,9 +40,6 @@ PROMPTS_FILE = EXPERIMENTS_DIR / "prompts" / "prompts.json"
 RESULTS_DIR = EXPERIMENTS_DIR / "results"
 IDENTITY_FILE = SCRIPT_DIR / ".experiment_identity.json"
 
-sys.path.insert(0, str(EXPERIMENTS_DIR / "analysis"))
-from grading import is_correct  # noqa: E402
-
 BASE = "http://localhost:8081/api"
 PASSWORD = "experiment-runner-password-123"
 CREDIT_GRANTED = 200000  # Gemini reasoning token ăn credit nhanh (đã thấy ~580/lượt) - để dư.
@@ -200,21 +197,13 @@ def send_chat_and_read_result(buyer_token: str, agent_id: str, prompt_text: str)
     }
 
 
-def grade_closed_qa(prompt: dict[str, Any], response_text: str | None, stream_status: str) -> bool | None:
-    if prompt["category"] != "closed_qa":
-        return None
-    if stream_status != "done" or not response_text:
-        return False  # loi = tinh la sai (D7: loi tinh vao mau so, khong loai bo)
-    return is_correct(response_text, prompt["expected_answer"], prompt["match_type"])
-
-
-def record_quality_score(message_id: str, score: float) -> None:
-    """routing_decisions.response_quality_score, thang 0-1 chung cho mọi loại prompt: closed-QA
-    ghi ngay 1/0 ở đây; 18 câu code+mở chỉ có điểm sau khi chấm mù, nạp sau bằng message_id
-    (lưu trong file kết quả) theo tổng rubric / 3."""
-    uuid.UUID(message_id)  # message_id đi thẳng vào SQL - chặn mọi thứ không phải UUID
-    _db(f"UPDATE routing_decisions SET response_quality_score = {score} WHERE message_id = '{message_id}';")
-
+# Cham diem KHONG dien ra o day nua (D10, 2026-10-14). Runner chi THU output; cham chay
+# offline bang experiments/scripts/grade_results.py, vi 4 metric moi can harness khac nhau:
+# pass@1 phai chay code trong sandbox, IFEval phai chay verifier chinh thuc. Nho tach ra ma
+# mot bo cham chua xong cung khong chan viec chay thi nghiem.
+#
+# Hau qua can biet: moi record ghi ra co "passed": None. Chay decision_rule.py trước khi
+# cham se thay accuracy = 0 va ungraded_runs = toan bo — KHONG phai loi.
 
 def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, run_index: int) -> dict[str, Any]:
     _, buyer_token = register_and_login(identity["buyer_email"])  # fresh login, token het han nhanh
@@ -238,10 +227,7 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
     if latency_ms is None:
         latency_ms = elapsed_ms
 
-    is_correct_answer = grade_closed_qa(prompt, result.get("content"), result.get("stream_status", ""))
     message_id = result.get("message_id")
-    if is_correct_answer is not None and message_id:
-        record_quality_score(message_id, 1 if is_correct_answer else 0)
 
     return {
         "message_id": message_id,
@@ -256,7 +242,8 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
         "latency_ms": latency_ms,
         "latency_ms_runner": elapsed_ms,  # giữ lại để đối chiếu/debug, không dùng cho decision_rule.py
         "response": result.get("content"),
-        "passed": is_correct_answer,  # None = chua cham (4 metric moi cham offline, D10)
+        "passed": None,  # cham offline bang grade_results.py (D10)
+        "metric": prompt.get("metric"),
         "status": status,
     }
 

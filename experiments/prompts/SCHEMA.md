@@ -20,8 +20,8 @@ Mọi thứ cần tái lập (URL nguồn, sha256, split, seed, index đã chọ
 |---|---|---|
 | `mmlu` | `accuracy_letter` | `expected_answer` ∈ {A,B,C,D} |
 | `gsm8k` | `exact_match_number` | `expected_answer` là một số |
-| `humaneval` | `pass_at_1` | `entry_point`, `test` (bộ test gốc, phải chứa `def check(`) |
-| `ifeval` | `ifeval_strict_instruction` | `instruction_id_list` (list không rỗng), `kwargs` (list) |
+| `humaneval` | `pass_at_1` | `entry_point`, `test` (bộ test gốc, phải chứa `def check(`), `signature_prompt` |
+| `ifeval` | `ifeval_strict_prompt` | `instruction_id_list` (list không rỗng), `kwargs` (list) |
 
 ## Trường chung của mọi item
 
@@ -32,12 +32,16 @@ Mọi thứ cần tái lập (URL nguồn, sha256, split, seed, index đã chọ
 | `metric` | string | Metric chuẩn của bộ đó — phải khớp bảng trên |
 | `source_index` | int | Index trong dataset gốc, để tái lập mẫu |
 
-Trường tuỳ bộ: `subject` (mmlu), `source_id` (humaneval, vd `HumanEval/0`), `source_key` (ifeval).
+Trường tuỳ bộ: `subject` (mmlu), `source_id` + `signature_prompt` (humaneval), `source_key` (ifeval).
+
+`signature_prompt` = prompt gốc chưa thêm dòng chỉ thị — bộ chấm cần nó để ghép lại khi model
+chỉ trả về thân hàm.
 
 ## Chấm điểm diễn ra ở đâu
 
 **Offline, sau khi chạy** — không phải trong runner. `run_experiment.py` chỉ thu output và ghi
-`passed: null`; bước chấm riêng điền `passed` theo metric của từng bộ (việc H7/H8, Phase 2). Lý do:
+`passed: null`; `experiments/scripts/grade_results.py` điền `passed` / `score` / `grade_detail` theo metric
+của từng bộ (bộ chấm: `experiments/analysis/graders.py`). Lý do:
 `pass_at_1` phải chạy code trong sandbox và IFEval phải chạy verifier, nên thu output và chấm điểm
 tách nhau — nếu một bộ chấm chưa xong thì vẫn chạy được thí nghiệm và bù chấm sau.
 

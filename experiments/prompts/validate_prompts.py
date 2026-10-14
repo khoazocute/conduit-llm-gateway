@@ -20,7 +20,7 @@ METRIC_OF = {
     "mmlu": "accuracy_letter",
     "gsm8k": "exact_match_number",
     "humaneval": "pass_at_1",
-    "ifeval": "ifeval_strict_instruction",
+    "ifeval": "ifeval_strict_prompt",
 }
 MMLU_LETTERS = ("A", "B", "C", "D")
 
@@ -77,6 +77,8 @@ def validate(data: dict) -> list[str]:
                     errors.append(f"{pid}: thiếu entry_point (cần để chạy pass@1)")
                 if "def check(" not in str(item.get("test", "")):
                     errors.append(f"{pid}: thiếu bộ test gốc (cần 'def check(' để chạy pass@1)")
+                if "def " not in str(item.get("signature_prompt", "")):
+                    errors.append(f"{pid}: thiếu signature_prompt (cần để ghép code khi model chỉ trả về thân hàm)")
             elif group == "ifeval":
                 ids = item.get("instruction_id_list")
                 if not isinstance(ids, list) or not ids:

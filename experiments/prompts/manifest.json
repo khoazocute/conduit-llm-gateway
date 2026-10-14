@@ -87,7 +87,7 @@
    "paper": "Zhou et al. 2023, Instruction-Following Evaluation for Large Language Models (arXiv:2311.07911)",
    "repo": "google-research/google-research (instruction_following_eval)",
    "split": "input_data (bộ duy nhất)",
-   "metric": "ifeval_strict_instruction",
+   "metric": "ifeval_strict_prompt",
    "license": "Apache-2.0",
    "n_total": 541,
    "sha256": "67ffeee0fcb87c317c5b08a2de85557b4a7e96ada6178aa645b4954fe4b53d49",

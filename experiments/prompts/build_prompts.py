@@ -51,7 +51,7 @@ SOURCES = {
         "paper": "Zhou et al. 2023, Instruction-Following Evaluation for Large Language Models (arXiv:2311.07911)",
         "repo": "google-research/google-research (instruction_following_eval)",
         "split": "input_data (bộ duy nhất)",
-        "metric": "ifeval_strict_instruction",
+        "metric": "ifeval_strict_prompt",
         "license": "Apache-2.0",
     },
     "mmlu": {
@@ -148,6 +148,7 @@ def build_humaneval() -> tuple[list[dict], dict]:
         items.append({
             "id": f"humaneval_{i:02d}",
             "prompt": row["prompt"] + instr,
+            "signature_prompt": row["prompt"],  # prompt goc, chua them dong chi thi
             "metric": "pass_at_1",
             "entry_point": row["entry_point"],
             "test": row["test"],
@@ -167,7 +168,7 @@ def build_ifeval() -> tuple[list[dict], dict]:
         items.append({
             "id": f"ifeval_{i:02d}",
             "prompt": row["prompt"],  # NGUYEN VAN - xem PROMPT_NOTES
-            "metric": "ifeval_strict_instruction",
+            "metric": "ifeval_strict_prompt",
             "instruction_id_list": row["instruction_id_list"],
             "kwargs": row.get("kwargs", []),
             "source_key": row["key"],

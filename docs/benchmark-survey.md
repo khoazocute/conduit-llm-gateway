@@ -18,7 +18,7 @@ Số liệu trong file này sinh từ `experiments/prompts/manifest.json` (do
 | **MMLU** | Kiến thức học thuật đa lĩnh vực, trắc nghiệm 4 lựa chọn | accuracy | ✅ so chữ cái | MIT |
 | **GSM8K** | Toán đố nhiều bước (cấp tiểu học/THCS) | exact match đáp án số cuối | ✅ trích số | MIT |
 | **HumanEval** | Sinh code Python từ signature + docstring | **pass@1** | ✅ chạy test gốc | MIT |
-| **IFEval** | Tuân thủ chỉ thị, sinh văn bản mở | tỷ lệ chỉ thị được tuân thủ (strict) | ✅ verifier code | Apache-2.0 |
+| **IFEval** | Tuân thủ chỉ thị, sinh văn bản mở | **prompt-level strict** (đạt iff mọi ràng buộc đều theo) | ✅ verifier **chính thức** | Apache-2.0 |
 
 **Lấy 10 item/bộ = 40 item**, mỗi item chạy 3 lần trên 3 proxy → **360 lượt**.
 
@@ -87,7 +87,7 @@ Seed lấy mẫu: **20261014**. Ngày lấy: **2026-10-14**. Chạy lại cùng 
 | MMLU | `accuracy_letter` | Trích chữ cái (A/B/C/D) từ câu trả lời, so với `expected_answer`. Đạt = khớp |
 | GSM8K | `exact_match_number` | Trích **số cuối cùng** trong câu trả lời, so với `expected_answer` (số sau `####` của dataset). Đạt = khớp |
 | HumanEval | `pass_at_1` | Ghép code model sinh ra với **bộ test gốc** của bài, chạy trong sandbox. Đạt = test pass |
-| IFEval | `ifeval_strict_instruction` | Chạy verifier của từng `instruction_id` trên câu trả lời. Điểm = tỷ lệ chỉ thị được tuân thủ |
+| IFEval | `ifeval_strict_prompt` | Chạy **verifier chính thức** cho từng `instruction_id`. **Đạt = mọi** ràng buộc đều theo (prompt-level strict). Ghi thêm `score` = tỷ lệ ràng buộc theo được (instruction-level) để báo cáo |
 
 **Accuracy tổng của một proxy = tỷ lệ item đạt trên toàn bộ 40 item.** Khác thiết kế cũ (chỉ 12/30
 item closed-QA vào cổng chất lượng) — giờ **40/40 item** đều có metric khách quan nên cổng ở bước 1
@@ -99,8 +99,11 @@ Các định nghĩa trên đủ dùng để code, nhưng **ba chỗ phải xác 
 chính thức** — đây là phần review chéo của Khoa:
 
 1. **IFEval có 4 biến thể metric** trong paper (prompt-level / instruction-level × strict / loose).
-   Nhóm chọn **instruction-level strict**. Cần xác nhận tên gọi và công thức đúng như paper, và
-   dùng **verifier chính thức** của `instruction_following_eval` chứ không tự viết lại.
+   Nhóm chọn **prompt-level strict** làm `passed` — lý do: cổng ở bước 1 của luật quyết định là nhị
+   phân "item đạt / không đạt", khớp với 3 bộ còn lại. **Instruction-level strict vẫn được ghi** vào
+   `score` của từng lượt để báo cáo. ✅ **Đã dùng verifier chính thức** — vendor nguyên văn ở
+   `experiments/analysis/vendor/instruction_following_eval/` (Apache-2.0, 25 verifier, bộ đề cần 12
+   loại, có test kiểm đủ). Khoa cần xác nhận lại tên gọi 2 biến thể này đúng như paper.
 2. **`pass@1` của HumanEval** — paper định nghĩa `pass@k` kèm ước lượng không chệch khi sinh nhiều
    mẫu. Nhóm sinh **1 mẫu/lượt ở temperature 0**, nên `pass@1` ở đây là tỷ lệ bài pass trực tiếp.
    Cần xác nhận cách này khớp với cách paper báo `pass@1` greedy.
@@ -146,6 +149,10 @@ của các model. Chúng chỉ dùng để so 3 proxy với nhau.
 ## 6. Tái lập
 
 ```bash
+# Cài thư viện (lần đầu) — BẮT BUỘC cả bước tải nltk corpus, thiếu là verifier IFEval nổ
+python -m pip install -r experiments/requirements.txt
+python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt')"
+
 # Sinh lại đúng 40 item (cùng seed -> cùng mẫu). Cache trong experiments/prompts/.cache/ (gitignored).
 PYTHONIOENCODING=utf-8 python experiments/prompts/build_prompts.py
 
@@ -154,6 +161,10 @@ PYTHONIOENCODING=utf-8 python experiments/prompts/validate_prompts.py
 
 # Bộ 30 prompt tiếng Việt (phép thử nhạy ngôn ngữ của Bifrost, không phải bộ đánh giá chính)
 PYTHONIOENCODING=utf-8 python experiments/prompts/validate_prompts.py --vi
+
+# Chấm offline file kết quả thô (sau khi runner chạy xong)
+PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/results/run_*.json --db
+PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py ... --skip pass_at_1   # phương án lùi
 ```
 
 Mọi thứ cần để tái lập nằm trong `experiments/prompts/manifest.json`: URL nguồn, sha256 file đã tải,
