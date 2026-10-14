@@ -27,8 +27,8 @@ buổi họp đầu tuần, không coi đây là đã chốt.**
       lượt lỗi) có kết luận, ghi vào `docs/roadmap.md` mục 4. — chốt 2026-09-29.
 - [x] `docs/routing-policy.md` tồn tại: mục tiêu chung + cách mỗi proxy diễn đạt được/không diễn
       đạt được (dựa trên `docs/litellm-routing-notes.md`, `bifrost-routing-notes.md`,
-      `portkey-routing-notes.md`). — xong 2026-09-30 (Hùng viết, chờ Khoa đọc/đồng ý — J2 "Xong khi"
-      cần cả 2 người, mới có 1 người).
+      `portkey-routing-notes.md`). — xong 2026-09-30 (Hùng viết); 2026-10-02 Khoa đọc, đồng ý +
+      bổ sung 3 điểm (mục 5 điểm 4-6) — J2 coi như xong, Hùng chỉ cần đọc phần Khoa thêm.
 - [x] LiteLLM chạy với routing strategy thật (không còn `simple-shuffle` mặc định), xác định được
       `selected_model` mỗi lượt. — xong 2026-09-29 (H1).
 - [x] Bifrost có chuỗi `fallbacks` thật theo D2 (phần lớn nền tảng đã xong từ tuần trước — K4). — xong

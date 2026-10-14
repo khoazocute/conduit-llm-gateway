@@ -98,3 +98,36 @@ Xếp theo mức ảnh hưởng tới kết luận khóa luận.
 - Chưa có bước nạp điểm chấm mù (18 câu code+mở) vào `response_quality_score` — chỉ cần khi có dữ liệu
   chấm thật ở Phase E; runner đã lưu sẵn `message_id` để làm.
 - K4 (Complexity Router) không làm — D2 đã quyết định không dùng.
+
+## Review — Hùng (2026-10-03)
+
+Đã merge `main` (K1/K2/K3 + dry-run) vào `lhung` trước khi đọc — không conflict. Xử lý bảng
+"Cần chỉnh sửa trước Phase E":
+
+- **#1 (chi phí tính cả lượt lỗi) — đã sửa.** `compute_avg_cost` giờ chỉ tính trên `status=success`.
+  Viết test tái tạo đúng kịch bản Khoa mô tả (proxy đắt hơn 2%/lượt nhưng lỗi 4/36) — xác nhận lỗi cũ
+  có thật (sanity check trong test) và đã hết sau khi sửa, luật chọn đúng proxy rẻ hơn thật. Thêm
+  `compute_error_rate()`, luôn hiện trong `pareto_data` để không giấu rủi ro độ tin cậy dù không gộp
+  vào chi phí. Chạy lại trên `dry-run-20261002/merged.json` thật — kết quả không đổi (27/27 không lỗi,
+  đúng như kỳ vọng, không phải regression).
+- **#4 (latency_ms runner cộng overhead) — đã sửa.** `run_experiment.py` giờ ghi `latency_ms` từ
+  `messages.latency_ms` (backend tự đo), giữ `latency_ms_runner` (giá trị cũ) làm cột đối chiếu/debug,
+  không dùng cho `decision_rule.py`.
+- **#5 (dry_run.sh tự gộp + chạy luật) — đã làm.** Cuối mỗi lần chạy, tự gộp các file `run_<proxy>_*`
+  mới nhất (kể cả proxy báo lỗi giữa chừng — vẫn giữ record đã ghi được) vào
+  `experiments/results/dry-run-<timestamp>/merged.json`, chạy `decision_rule.py` luôn, in + lưu
+  `decision_rule_output.json`. Test lại đoạn gộp bằng 3 file dry-run thật của Khoa — ra đúng kết quả
+  cũ.
+- **#7 (hòa 4 bước chọn lặng lẽ + lỗi tính như 1 model ở consistency) — đã sửa phần "chọn lặng lẽ".**
+  `apply_decision_rule` giờ trả thêm `tie_unresolved`/`tied_candidates` nếu hòa tuyệt đối tới hết bước
+  4 — không còn `max()` âm thầm chọn phần tử đầu. Phần "lỗi tính như 1 model" ở consistency: **giữ
+  nguyên có chủ đích**, không coi là bug — đã đổi sentinel từ `""` sang `_ERROR_SENTINEL` tường minh +
+  viết rõ lý do trong docstring (lỗi = 1 dạng mất nhất quán thật sự, không phải trường hợp trung lập).
+  Nếu Khoa thấy cách hiểu này sai thì nói lại, dễ đổi.
+- Test: `experiments/tests/test_decision_rule.py` 26/26 pass (10 test mới/sửa).
+
+**Còn mở, cần cả hai/GVHD, chưa tự quyết:**
+- #2 (phát hiện 6 — 3 proxy cùng model ở lượt bình thường, chênh chi phí là nhiễu): đồng ý đây là vấn
+  đề thật, chưa có hướng xử lý — cần bàn trực tiếp, có thể đưa vào câu hỏi GVHD (roadmap mục 6).
+- #3 (ép lỗi LiteLLM): để Khoa làm như đã ghi, Hùng không tự làm thay.
+- #6 (Portkey fallback hay ghi hạn chế): chưa chốt, đọc `routing-policy.md` mục 5 rồi bàn tiếp.

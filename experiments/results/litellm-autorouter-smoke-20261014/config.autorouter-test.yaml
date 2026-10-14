@@ -1,0 +1,42 @@
+# THỬ KHẢ THI Auto Router v2 (H3) — container RIÊNG, port 4001.
+# KHÔNG dùng cho Phase E, KHÔNG thay config.yaml đang chạy ở port 4000.
+# Tier -> model map theo giá thật (docs/model-pricing-sources.md), rẻ -> đắt.
+# REASONING map trùng COMPLEX để so sánh được với Bifrost (Bifrost v2.1.1 đã
+# gộp REASONING vào COMPLEX, chỉ còn 3 tier).
+
+model_list:
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: smart-router
+    litellm_params:
+      model: auto_router/complexity_router
+      complexity_router_config:
+        tiers:
+          SIMPLE: gpt-4o-mini
+          MEDIUM: claude-haiku
+          COMPLEX: claude-sonnet
+          REASONING: claude-sonnet
+        # Bắt buộc: mặc định body trả alias "smart-router" -> backend ghi sai
+        # model và sai giá (cùng họ lỗi đã gặp ở Portkey).
+        return_raw_model_name: true
+      complexity_router_default_model: gpt-4o-mini
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+router_settings:
+  num_retries: 2   # D7
+  timeout: 45      # D7

@@ -61,6 +61,7 @@ stop_backend() {
 }
 
 FAILED_PROXIES=()
+RESULT_FILES=()
 
 for proxy in $PROXIES; do
   echo ""
@@ -94,6 +95,11 @@ for proxy in $PROXIES; do
     echo "  Runner báo lỗi cho $proxy — xem log ở trên, kết quả đã chạy được vẫn giữ nguyên (ghi ngay từng lượt)." >&2
     FAILED_PROXIES+=("$proxy")
   fi
+  # File runner vừa ghi (tên có timestamp lúc chạy, không đoán trước được) - lấy file
+  # run_<proxy>_*.json mới nhất để gộp, kể cả khi runner báo lỗi giữa chừng (vẫn có
+  # record đã ghi được, roadmap.md mục 7: không vứt dữ liệu thô).
+  latest=$(ls -t "$ROOT_DIR/experiments/results/run_${proxy}_"*.json 2>/dev/null | head -1 || true)
+  [ -n "$latest" ] && RESULT_FILES+=("$latest")
 done
 
 stop_backend
@@ -101,6 +107,28 @@ stop_backend
 echo ""
 echo "=== Xong ==="
 echo "Kết quả thô: $ROOT_DIR/experiments/results/run_*.json"
+
+# Gộp kết quả + áp decision_rule.py ngay (roadmap.md Phase D: "một lệnh chạy hết
+# dry-run và cho ra file kết quả thô + bảng tổng hợp" - trước đây phải gộp tay).
+if [ ${#RESULT_FILES[@]} -gt 0 ]; then
+  MERGE_DIR="$ROOT_DIR/experiments/results/dry-run-$(date +%Y%m%d-%H%M%S)"
+  mkdir -p "$MERGE_DIR"
+  PYTHONIOENCODING=utf-8 python - "${RESULT_FILES[@]}" <<'PYEOF' > "$MERGE_DIR/merged.json"
+import json, sys
+records = []
+for p in sys.argv[1:]:
+    records.extend(json.load(open(p, encoding="utf-8")))
+print(json.dumps(records, indent=2, ensure_ascii=False))
+PYEOF
+  echo "Gộp ${#RESULT_FILES[@]} file -> $MERGE_DIR/merged.json"
+  if PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/analysis/decision_rule.py" "$MERGE_DIR/merged.json" \
+      | tee "$MERGE_DIR/decision_rule_output.json"; then
+    echo "Bảng quyết định: $MERGE_DIR/decision_rule_output.json"
+  else
+    echo "decision_rule.py báo lỗi (có thể do chưa đủ proxy đạt ngưỡng closed-QA) — xem ở trên." >&2
+  fi
+fi
+
 if [ ${#FAILED_PROXIES[@]} -gt 0 ]; then
   echo "Proxy có vấn đề (xem log riêng): ${FAILED_PROXIES[*]}"
   exit 1

@@ -14,6 +14,7 @@ from decision_rule import (  # noqa: E402
     compute_avg_cost,
     compute_closed_qa_accuracy,
     compute_consistency_rate,
+    compute_error_rate,
     compute_p95_latency,
     _percentile,
 )
@@ -58,6 +59,30 @@ class ComputeFunctions(unittest.TestCase):
         records = make_records("p", CLOSED_QA_IDS, cost=0.02, latency=100)
         records += make_records("q", CLOSED_QA_IDS, cost=99.0, latency=100)
         self.assertAlmostEqual(compute_avg_cost(records, "p"), 0.02)
+
+    def test_avg_cost_excludes_errored_calls(self):
+        # Khoa, 2026-10-03: lượt lỗi ghi cost=0.0 (không có usage thật) - nếu tính
+        # vào trung bình sẽ làm proxy hay lỗi trông rẻ giả tạo. avg_cost chỉ tính
+        # trên lượt status=success.
+        records = make_records("p", CLOSED_QA_IDS, cost=0.02, latency=100)  # 12 thành công, 0.02/lượt
+        for i in range(3):  # thêm 3 lượt lỗi, cost=0 - không được kéo trung bình xuống
+            records.append({
+                "proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
+                "run_index": 10 + i, "model_selected": None, "cost": 0.0, "latency_ms": 100,
+                "response": None, "status": "error",
+            })
+        self.assertAlmostEqual(compute_avg_cost(records, "p"), 0.02)  # không bị kéo xuống
+
+    def test_error_rate(self):
+        records = make_records("p", CLOSED_QA_IDS, cost=0.01, latency=100)  # 12 thành công
+        for i in range(4):
+            records.append({
+                "proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
+                "run_index": 10 + i, "model_selected": None, "cost": 0.0, "latency_ms": None,
+                "response": None, "status": "error",
+            })
+        self.assertAlmostEqual(compute_error_rate(records, "p"), 4 / 16)
+        self.assertEqual(compute_error_rate(records, "q"), 0.0)  # proxy khong co record nao
 
     def test_percentile_known_values(self):
         # numpy-style linear interpolation, kiểm tra bằng tay: [10,20,30,40] p95
@@ -143,6 +168,60 @@ class DecisionRuleBranches(unittest.TestCase):
         records = make_records("proxyA", [], cost=0.01, latency=100)  # 0/12 đúng
         with self.assertRaises(ValueError):
             apply_decision_rule(records, ["proxyA"])
+
+    def test_error_prone_proxy_no_longer_wins_on_cost(self):
+        # Tái tạo đúng kịch bản Khoa phát hiện (log-khoa.md, 2026-10-03): proxyJ đắt
+        # hơn proxyI 2%/lượt thành công, nhưng lỗi 4/36 lượt. Trước khi sửa,
+        # avg_cost tính cả lượt lỗi (cost=0) khiến proxyJ trông RẺ HƠN proxyI dù
+        # thực ra đắt hơn - luật sẽ chọn nhầm. Sau khi sửa: phải chọn proxyI (rẻ
+        # hơn thật, 100% thành công) chứ không phải proxyJ.
+        records = make_records("proxyI", CLOSED_QA_IDS, cost=0.0100, latency=200, run_index=1)
+        records += make_records("proxyI", CLOSED_QA_IDS, cost=0.0100, latency=200, run_index=2)
+        records += make_records("proxyI", CLOSED_QA_IDS, cost=0.0100, latency=200, run_index=3)
+        for run_index in (1, 2, 3):
+            n_error = {1: 2, 2: 1, 3: 1}[run_index]  # tổng 4/36 lỗi, rải qua các lần lặp
+            correct_ids = CLOSED_QA_IDS[n_error:]
+            for pid in CLOSED_QA_IDS:
+                if pid in correct_ids:
+                    records.append({
+                        "proxy_name": "proxyJ", "prompt_id": pid, "category": "closed_qa",
+                        "run_index": run_index, "model_selected": "m", "cost": 0.0102,
+                        "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                    })
+                else:
+                    records.append({
+                        "proxy_name": "proxyJ", "prompt_id": pid, "category": "closed_qa",
+                        "run_index": run_index, "model_selected": None, "cost": 0.0,
+                        "latency_ms": None, "response": None, "status": "error",
+                    })
+
+        # Trước khi sửa (cost tính cả lượt lỗi), proxyJ sẽ ra "rẻ hơn":
+        buggy_avg_cost_j = sum(r["cost"] for r in records if r["proxy_name"] == "proxyJ") / 36
+        self.assertLess(buggy_avg_cost_j, 0.0100, "sanity: kịch bản phải tái hiện đúng lỗi cũ")
+
+        self.assertAlmostEqual(compute_avg_cost(records, "proxyJ"), 0.0102)  # chỉ tính 32 lượt thành công
+        self.assertAlmostEqual(compute_error_rate(records, "proxyJ"), 4 / 36)
+        self.assertEqual(compute_error_rate(records, "proxyI"), 0.0)
+
+        result = apply_decision_rule(records, ["proxyI", "proxyJ"])
+        self.assertEqual(result["selected_proxy"], "proxyI")  # rẻ hơn thật + không lỗi
+
+    def test_tie_unresolved_flagged_not_silent(self):
+        # Hòa tuyệt đối cả cost/latency/consistency -> không được âm thầm chọn
+        # proxy đầu tiên trong list mà không báo (Khoa, 2026-10-03).
+        records = []
+        for proxy in ("proxyX", "proxyY"):
+            for pid in CLOSED_QA_IDS:
+                for run in (1, 2, 3):
+                    records.append({
+                        "proxy_name": proxy, "prompt_id": pid, "category": "closed_qa",
+                        "run_index": run, "model_selected": "m", "cost": 0.01,
+                        "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                    })
+        result = apply_decision_rule(records, ["proxyY", "proxyX"])  # thu tu dau vao dao nguoc
+        self.assertTrue(result["tie_unresolved"])
+        self.assertEqual(result["tied_candidates"], ["proxyX", "proxyY"])
+        self.assertEqual(result["selected_proxy"], "proxyX")  # tie-break: alphabet, khong theo thu tu input
 
 
 if __name__ == "__main__":
