@@ -18,23 +18,17 @@ from pathlib import Path
 from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROMPTS_FILE = SCRIPT_DIR.parent / "prompts" / "prompts.json"
 
-sys.path.insert(0, str(SCRIPT_DIR))
-from grading import is_correct  # noqa: E402
-
-CLOSED_QA_PASS_THRESHOLD = 0.80
+# Tu 2026-10-14 (D10) file nay KHONG cham lai cau tra loi nua: moi record da mang san
+# diem cham ("passed", hoac "closed_qa_correct" o du lieu cu truoc 14/10). Cham dien ra
+# o buoc rieng (offline) vi 4 metric moi can harness khac nhau - pass@1 phai chay code,
+# IFEval phai chay verifier. Nho the thu output va cham diem doc lap nhau.
+QUALITY_PASS_THRESHOLD = 0.80  # buoc 1 cua luat quyet dinh, KHOA (CLAUDE.md muc 2)
 COST_TIE_THRESHOLD = 0.05  # 5%
 
 
 def load_records(results_file: Path) -> list[dict[str, Any]]:
     return json.loads(results_file.read_text(encoding="utf-8"))
-
-
-def _load_closed_qa_answers() -> dict[str, dict[str, str]]:
-    """id -> {expected_answer, match_type}, chỉ nhóm closed_qa (mục duy nhất chấm tự động)."""
-    data = json.loads(PROMPTS_FILE.read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["closed_qa"]}
 
 
 def _percentile(values: list[float], p: float) -> float:
@@ -49,34 +43,50 @@ def _percentile(values: list[float], p: float) -> float:
     return s[f] + (s[c] - s[f]) * (k - f)
 
 
-def compute_closed_qa_accuracy(records: list[dict[str, Any]], proxy_name: str) -> float:
-    """Tỷ lệ đúng closed-QA (so response với expected_answer theo match_type,
-    dùng đúng luật ở experiments/analysis/grading.py). Không tính prompt code/mở
-    vào đây — chỉ closed_qa có đáp án đúng/sai khách quan (CLAUDE.md mục 2)."""
-    answers = _load_closed_qa_answers()
-    qa_records = [
-        r for r in records
-        if r["proxy_name"] == proxy_name and r["category"] == "closed_qa"
-    ]
-    if not qa_records:
-        return 0.0
-    correct = 0
-    for r in qa_records:
-        item = answers.get(r["prompt_id"])
-        if item is None:
+def _grade_of(record: dict[str, Any]) -> bool | None:
+    """Diem da cham cua 1 luot. None = chua cham (vd. HumanEval chua chay pass@1)."""
+    if "passed" in record:
+        return record["passed"]
+    return record.get("closed_qa_correct")  # du lieu tho truoc 2026-10-14
+
+
+def compute_quality_accuracy(records: list[dict[str, Any]], proxy_name: str) -> float:
+    """Ty le dat tren TOAN BO item cua proxy do (D10: ca 4 bo benchmark deu co metric
+    khach quan, nen cong chat luong o buoc 1 phu 40/40 item thay vi 12/30 nhu truoc).
+
+    Luot loi tinh vao MAU SO va coi la sai (D7). Luot thanh cong nhung CHUA cham thi
+    khong tinh vao dau ca - dem rieng bang count_ungraded() de bao cao minh bach,
+    khong am tham coi la sai.
+    """
+    rows = [r for r in records if r["proxy_name"] == proxy_name]
+    graded = passed = 0
+    for r in rows:
+        if r.get("status") != "success":
+            graded += 1  # loi = sai, khong tinh phi (D7)
             continue
-        if r.get("status") == "success" and is_correct(
-            r.get("response") or "", item["expected_answer"], item["match_type"]
-        ):
-            correct += 1
-    return correct / len(qa_records)
+        grade = _grade_of(r)
+        if grade is None:
+            continue
+        graded += 1
+        if grade:
+            passed += 1
+    return passed / graded if graded else 0.0
+
+
+def count_ungraded(records: list[dict[str, Any]], proxy_name: str) -> int:
+    """So luot thanh cong nhung chua cham - phai hien trong bao cao."""
+    return sum(
+        1 for r in records
+        if r["proxy_name"] == proxy_name and r.get("status") == "success" and _grade_of(r) is None
+    )
+
 
 
 def compute_avg_cost(records: list[dict[str, Any]], proxy_name: str) -> float:
     """Chi phí trung bình/prompt của proxy_name — trung bình record['cost'] trên
     CÁC LƯỢT THÀNH CÔNG (status == "success") của proxy_name.
 
-    Lượt lỗi KHÔNG tính vào đây (dù vẫn tính vào mẫu số của compute_closed_qa_accuracy
+    Lượt lỗi KHÔNG tính vào đây (dù vẫn tính vào mẫu số của compute_quality_accuracy
     và compute_consistency_rate — D7, lỗi vẫn là 1 lần lặp). Lý do: lượt lỗi ghi
     cost=0.0 (không có usage thật để tính giá — CLAUDE.md mục 5, "billing chỉ tính
     khi có usage thật"), nhưng $0 không có nghĩa là "rẻ" — nếu tính cả lượt lỗi vào
@@ -142,15 +152,15 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
     """Áp dụng đúng 4 bước quy tắc quyết định, trả về proxy được chọn + số liệu
     Pareto (cost vs quality vs latency) của từng proxy còn lại sau bước 1."""
 
-    # Bước 1: loại proxy có tỷ lệ đúng closed-QA < 80%
+    # Bước 1: loại proxy có tỷ lệ đạt < 80% (ngưỡng đã khóa)
     candidates = [
         name
         for name in proxy_names
-        if compute_closed_qa_accuracy(records, name) >= CLOSED_QA_PASS_THRESHOLD
+        if compute_quality_accuracy(records, name) >= QUALITY_PASS_THRESHOLD
     ]
 
     if not candidates:
-        raise ValueError("Không có proxy nào đạt ngưỡng closed-QA >= 80%")
+        raise ValueError("Không có proxy nào đạt ngưỡng chất lượng >= 80%")
 
     # Bước 2: chi phí trung bình/prompt thấp nhất
     costs = {name: compute_avg_cost(records, name) for name in candidates}
@@ -196,7 +206,8 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
         "candidates_after_qa_filter": candidates,
         "pareto_data": {
             name: {
-                "closed_qa_accuracy": compute_closed_qa_accuracy(records, name),
+                "quality_accuracy": compute_quality_accuracy(records, name),
+                "ungraded_runs": count_ungraded(records, name),
                 "avg_cost": costs.get(name),
                 "error_rate": compute_error_rate(records, name),
                 "p95_latency_ms": compute_p95_latency(records, name),

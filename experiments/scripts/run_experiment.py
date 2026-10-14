@@ -256,7 +256,7 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
         "latency_ms": latency_ms,
         "latency_ms_runner": elapsed_ms,  # giữ lại để đối chiếu/debug, không dùng cho decision_rule.py
         "response": result.get("content"),
-        "closed_qa_correct": is_correct_answer,
+        "passed": is_correct_answer,  # None = chua cham (4 metric moi cham offline, D10)
         "status": status,
     }
 
@@ -294,7 +294,7 @@ def main() -> None:
             record = run_one(identity, prompt, args.proxy_name, run_index)
             append_result(record, out_file)
             print(f"  -> status={record['status']} model={record['model_selected']} "
-                  f"cost={record['cost']} correct={record['closed_qa_correct']}")
+                  f"cost={record['cost']} passed={record['passed']}")
 
     print(f"\nĐã ghi {total} record vào {out_file}")
 

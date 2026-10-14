@@ -1,11 +1,17 @@
 # Routing policy — mục tiêu chung cho 3 proxy (J2, Phase C)
 
+> ⚠️ **Mục 1–2 và mục 5 là THIẾT KẾ CŨ (D2 bản 2026-09-29), giữ lại làm bằng chứng *vì sao* phải
+> đổi — không phải mô tả thiết kế đang chạy.** Thiết kế đang chạy là **Design Y** (D2 sửa
+> 2026-10-14): mỗi proxy dùng cơ chế mạnh nhất mà bản OSS của nó cho phép. **Nguồn đúng:
+> `docs/experiment-design.md`.** Phần còn giá trị trực tiếp cho thiết kế mới: **mục 3** (giới hạn
+> từng proxy) và **mục 7** (ngưỡng `prompt_len` của Portkey, chốt 2026-10-14).
+
 Tổng hợp từ `docs/litellm-routing-notes.md`, `docs/bifrost-routing-notes.md`,
 `docs/portkey-routing-notes.md` (đã đọc kỹ + verify sống cả 3 tính đến 2026-09-30). Đọc file này
 **trước khi** phân tích kết quả Phase E — có vài chỗ dễ hiểu nhầm nếu không biết giới hạn của
 từng proxy trước.
 
-## 1. Mục tiêu chung (D2, đã chốt 2026-09-29 — `docs/roadmap.md` mục 4)
+## 1. Mục tiêu chung — THIẾT KẾ CŨ (D2 bản 2026-09-29, đã bị D2 sửa 2026-10-14 thay thế)
 
 > Ưu tiên model rẻ nhất đủ tốt, có phương án dự phòng khi lỗi.
 
@@ -18,7 +24,7 @@ proxy khác. Đây chính là thứ đang được đánh giá (proxy nào biể
 mục 1), nhưng LiteLLM/Portkey không có cơ chế tương đương, dùng sẽ làm lệch so sánh. Ghi nhận là
 hạn chế/khác biệt trong báo cáo, không bật khi chạy Phase E.
 
-## 2. Cách mỗi proxy biểu đạt mục tiêu
+## 2. Cách mỗi proxy biểu đạt mục tiêu — THIẾT KẾ CŨ (xem `docs/experiment-design.md` mục 4)
 
 ### LiteLLM — tự động, có "trí thông minh" thật
 - Cơ chế: `routing_strategy: cost-based-routing`, gom 5 model vào 1 alias `conduit-pool`
@@ -75,7 +81,7 @@ hạn chế/khác biệt trong báo cáo, không bật khi chạy Phase E.
 Lượt lỗi sau khi hết retry: ghi `messages`+`usage_logs.status=error`+`routing_decisions` (không
 tính phí), tính là 1 trong 3 lần lặp, không chạy bù.
 
-## 5. Ảnh hưởng tới cách diễn giải kết quả Phase E — đọc trước khi phân tích
+## 5. Phân tích dưới THIẾT KẾ CŨ (D2) — giữ làm bằng chứng vì sao phải đổi
 
 1. **LiteLLM cost-based gần như luôn chọn tầng rẻ** (GPT-4o-mini/Gemini Flash) → độ chính xác
    closed-QA của LiteLLM sẽ gần bằng độ chính xác riêng của 2 model đó, dễ qua ngưỡng 80% nhưng
@@ -200,3 +206,56 @@ thành công và đúng, cả 3 proxy đều gọi `gpt-4o-mini` — đúng như
 phí giữa 3 proxy chỉ đến từ độ dài câu trả lời (số liệu: `docs/tasks/2026-09-28/log-khoa.md` phát
 hiện 6). Còn mở: `decision_rule.py` tính lượt lỗi `cost = 0` vào chi phí trung bình (phần review
 cuối `docs/tasks/2026-09-28/log-hung.md`, điểm 3) — dry-run không có lượt lỗi nên chưa ảnh hưởng.
+
+## 7. Ngưỡng `metadata.prompt_len` cho Portkey (chốt 2026-10-14, H3 — **khóa trước khi chạy**)
+
+Nhánh Portkey của Design Y định tuyến theo **độ dài prompt**, vì Portkey **không có** cơ chế tự
+phân loại nào. Giới hạn kỹ thuật: điều kiện của Portkey chỉ khớp `metadata.*` / `params.*`, kiểu
+nguyên thủy, khóa tối đa 2 đoạn — nên **không đọc được** `params.messages[0].content.length`.
+**App phải tự tính độ dài rồi gửi kèm `metadata.prompt_len`** (việc K3 của Khoa). Bản thân điều đó
+là một kết quả: **logic định tuyến của Portkey rò vào code ứng dụng**, LiteLLM/Bifrost thì không.
+
+### Ngưỡng
+
+| `metadata.prompt_len` (ký tự) | Tier | Model |
+|---|---|---|
+| `< 211` | rẻ | `gpt-4o-mini` |
+| `211` – `384` | trung | `claude-haiku` |
+| `>= 385` | đắt | `claude-sonnet` |
+
+Dùng `$lt` / `$gte`. Map tier → model **giống hệt Bifrost** để hai nhánh so được ngang hàng.
+
+### Ngưỡng suy từ đâu
+
+**Tercile của phân bố độ dài thật của chính 40 item** (`experiments/prompts/manifest.json`, seed
+20261014):
+
+| | min | p25 | median | p75 | max |
+|---|---|---|---|---|---|
+| cả 40 item | 93 | 190 | 315 | 500 | 1102 |
+
+Kết quả chia: **13 rẻ / 13 trung / 14 đắt**.
+
+**Vì sao dùng tercile chứ không phải số tròn tự đặt:** đặt số tròn theo cảm tính rất dễ dẫn tới một
+tier nhận **0 item** → nhánh Portkey suy biến thành "luôn chọn 1 model" và không đo được gì.
+Tercile đảm bảo cả 3 tier đều có lưu lượng.
+
+**Đây là hiệu chỉnh trên ĐẦU VÀO, không phải trên đáp án** — chỉ dùng phân bố độ dài prompt, không
+dùng nhãn độ khó hay đáp án đúng. Người vận hành thật cũng làm đúng việc này (xem phân bố độ dài
+traffic rồi đặt ngưỡng). Vẫn phải khai báo trong báo cáo là ngưỡng suy từ chính bộ đề.
+
+### Điểm yếu dự đoán trước — làm sắc thêm giả thuyết H3
+
+Độ dài prompt **tương quan với *loại bài*, không với *độ khó***:
+
+| Bộ | min | median | max | Xu hướng ở ngưỡng trên |
+|---|---|---|---|---|
+| mmlu | 170 | 445 | 1102 | trải cả 3 tier |
+| gsm8k | 103 | 225 | 510 | **phần lớn rơi tier rẻ** |
+| humaneval | 233 | 476 | 893 | **hầu như không bao giờ rẻ** |
+| ifeval | 93 | 209 | 510 | **phần lớn rơi tier rẻ** |
+
+Nghĩa là Portkey sẽ gần như **định tuyến theo bộ benchmark** chứ không theo độ khó: bài HumanEval đi
+model trung/đắt, phần lớn GSM8K và IFEval đi model rẻ. Đây là **điểm yếu nội tại của heuristic do
+người viết**, và chính là nội dung giả thuyết **H3** (`docs/experiment-design.md` mục 7). Phải nêu
+trong báo cáo, **không** được trình bày như thể Portkey "định tuyến theo độ khó".

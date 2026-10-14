@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "analysis"))
 from decision_rule import (  # noqa: E402
     apply_decision_rule,
     compute_avg_cost,
-    compute_closed_qa_accuracy,
+    compute_quality_accuracy,
     compute_consistency_rate,
     compute_error_rate,
     compute_p95_latency,
@@ -38,6 +38,7 @@ def make_records(proxy_name, correct_ids, cost, latency, run_index=1, model_sele
             "proxy_name": proxy_name, "prompt_id": pid, "category": "closed_qa",
             "run_index": run_index, "model_selected": model_selected,
             "cost": cost, "latency_ms": latency, "response": response, "status": "success",
+            "passed": pid in correct_ids,
         })
     return records
 
@@ -50,7 +51,7 @@ class ComputeFunctions(unittest.TestCase):
             "run_index": 2, "model_selected": "m", "cost": 0.01, "latency_ms": 100,
             "response": "Canberra", "status": "error",
         })
-        acc = compute_closed_qa_accuracy(records, "p")
+        acc = compute_quality_accuracy(records, "p")
         # 13 dòng tổng (12 + 1 lượt lỗi thêm cho cq_01), 9 đúng -> lượt lỗi vẫn tính vào
         # mẫu số (đúng nguyên tắc D7: lượt lỗi tính là 1 lần lặp, không loại bỏ).
         self.assertAlmostEqual(acc, 9 / 13)
@@ -104,12 +105,14 @@ class ComputeFunctions(unittest.TestCase):
         for run in (1, 2, 3):
             records.append({"proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
                              "run_index": run, "model_selected": "gpt-4o-mini", "cost": 0.01,
-                             "latency_ms": 100, "response": "Canberra", "status": "success"})
+                             "latency_ms": 100, "response": "Canberra", "status": "success",
+                             "passed": True})
         # prompt B: đổi model giữa các lần -> không nhất quán
         for run, model in ((1, "gpt-4o-mini"), (2, "gemini-flash"), (3, "gpt-4o-mini")):
             records.append({"proxy_name": "p", "prompt_id": "cq_02", "category": "closed_qa",
                              "run_index": run, "model_selected": model, "cost": 0.01,
-                             "latency_ms": 100, "response": "Natri", "status": "success"})
+                             "latency_ms": 100, "response": "Natri", "status": "success",
+                             "passed": True})
         # 1/2 prompt nhất quán
         self.assertAlmostEqual(compute_consistency_rate(records, "p"), 0.5)
 
@@ -157,6 +160,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "run_index": run, "model_selected": model,
                         "cost": 0.01, "latency_ms": 200,
                         "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
         result = apply_decision_rule(records, ["proxyF", "proxyG"])
         self.assertEqual(compute_avg_cost(records, "proxyF"), compute_avg_cost(records, "proxyG"))
@@ -187,6 +191,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "proxy_name": "proxyJ", "prompt_id": pid, "category": "closed_qa",
                         "run_index": run_index, "model_selected": "m", "cost": 0.0102,
                         "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
                 else:
                     records.append({
@@ -217,6 +222,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "proxy_name": proxy, "prompt_id": pid, "category": "closed_qa",
                         "run_index": run, "model_selected": "m", "cost": 0.01,
                         "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
         result = apply_decision_rule(records, ["proxyY", "proxyX"])  # thu tu dau vao dao nguoc
         self.assertTrue(result["tie_unresolved"])
