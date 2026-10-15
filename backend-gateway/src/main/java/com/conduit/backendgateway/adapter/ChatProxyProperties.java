@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 public class ChatProxyProperties {
     private String activeProxy = "litellm";
     private String defaultModel = "gpt-4o-mini";
+    // D7: gioi han sinh token, gui kem moi request. <= 0 thi khong gui.
+    private int maxTokens = 512;
     private Map<String, String> proxyBaseUrls = Map.of();
     private Map<String, String> proxyApiKeys = Map.of();
     private Map<String, Map<String, String>> proxyModelNames = Map.of();

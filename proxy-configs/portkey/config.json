@@ -1,16 +1,14 @@
 {
   "_comment": "Portkey OSS gateway không nhận config lúc khởi động container — config này là một 'Config object' của Portkey, gửi kèm mỗi request qua header x-portkey-config (hoặc field 'config' trong body).",
-  "_comment_2": "H2 (2026-09-29): conditional routing thật, thay strategy.mode=single. Portkey không có khái niệm alias như LiteLLM (portkey-routing-notes.md) -- mô phỏng bằng cách khớp params.model (chuỗi caller gửi, VD 'gemini-flash') với 1 target, mỗi target override_params sang model thật. D2: chuỗi tĩnh, không tự tính giá. default rơi về gpt-4o-mini (rẻ nhất) nếu model không khớp target nào.",
+  "_comment_2": "Design Y (K2, 2026-10-16, docs/experiment-design.md mục 4): định tuyến theo độ dài prompt. Ngưỡng khóa 2026-10-14 (docs/routing-policy.md mục 7): < 211 ký tự -> gpt-4o-mini, 211-384 -> claude-haiku (default), >= 385 -> claude-sonnet. Portkey không tự đọc được độ dài prompt nên backend tính rồi gửi header x-portkey-metadata {\"prompt_len\": N} (HttpProxyChatClient). Đã thử 16/10: Portkey so $lt/$gte theo SỐ, cả khi giá trị gửi dạng số lẫn dạng chuỗi (93 -> rẻ, 300 -> trung, 1102 -> đắt).",
+  "_comment_3": "Tên target = alias trong model_pricing: HttpProxyChatClient đọc header x-portkey-last-used-option-index (config.targets[i]) rồi lấy targets[i].name làm model đã dùng. Đổi tên target thì phải giữ trùng alias.",
   "strategy": {
     "mode": "conditional",
     "conditions": [
-      { "query": { "params.model": { "$eq": "gpt-4o-mini" } }, "then": "gpt-4o-mini" },
-      { "query": { "params.model": { "$eq": "gemini-flash" } }, "then": "gemini-flash" },
-      { "query": { "params.model": { "$eq": "claude-haiku" } }, "then": "claude-haiku" },
-      { "query": { "params.model": { "$eq": "gpt-4o" } }, "then": "gpt-4o" },
-      { "query": { "params.model": { "$eq": "claude-sonnet" } }, "then": "claude-sonnet" }
+      { "query": { "metadata.prompt_len": { "$lt": 211 } }, "then": "gpt-4o-mini" },
+      { "query": { "metadata.prompt_len": { "$gte": 385 } }, "then": "claude-sonnet" }
     ],
-    "default": "gpt-4o-mini"
+    "default": "claude-haiku"
   },
   "targets": [
     {

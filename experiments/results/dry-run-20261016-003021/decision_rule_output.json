@@ -1,0 +1,18 @@
+{
+  "selected_proxy": "bifrost",
+  "tie_unresolved": false,
+  "tied_candidates": [],
+  "candidates_after_qa_filter": [
+    "bifrost"
+  ],
+  "pareto_data": {
+    "bifrost": {
+      "quality_accuracy": 0.9166666666666666,
+      "ungraded_runs": 0,
+      "avg_cost": 0.0018153333333333335,
+      "error_rate": 0.0,
+      "p95_latency_ms": 6455.7,
+      "consistency_rate": 0.75
+    }
+  }
+}

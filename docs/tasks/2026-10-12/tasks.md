@@ -202,8 +202,8 @@ cấu hình đang chạy" trong bản nháp.
 - [x] H1–H4: bộ 40 item + validator + ngưỡng `prompt_len` + `benchmark-survey.md` — xong 14/10
 - [x] H5, H6: pin Bifrost `v2.1.1`, dọn container thử — xong 14/10
 - [x] H7, H8: 4 bộ chấm có test, runner đọc 4 nhóm + chấm offline — xong 14/10
-- [ ] K1–K4: Bifrost tier→model, Portkey `prompt_len`, backend metadata + `max_tokens`, **sửa `resolveReturnedModel`**
-- [ ] K5–K7: dry-run 36 lượt, kiểm `routing_decisions`, chạy `decision_rule.py`
+- [x] K1–K4: Bifrost tier→model, Portkey `prompt_len`, backend metadata + `max_tokens`, **sửa `resolveReturnedModel`** — xong 15–16/10, xem `log-khoa.md`
+- [x] K5–K7: dry-run 36 lượt, kiểm `routing_decisions`, chạy `decision_rule.py` — xong 16/10, 36/36 thành công, 0 dòng sai giá
 - [ ] Phase 3: 360 lượt, chấm, `experiment-results.md` có kết luận + đối chiếu giả thuyết
 - [ ] Review chéo xong, cả hai đã viết `log-*.md`
 - [ ] `roadmap.md` mục 5 cập nhật: Phase B/C → 🟨, Phase E ghi mốc 17/10
@@ -214,7 +214,7 @@ cấu hình đang chạy" trong bản nháp.
 |---|---|---|
 | Phase 0 | ✅ | 14/10, Hùng |
 | H1–H6 (Phase 1) | ✅ | 14/10, làm sớm 1 ngày. Xem `log-hung.md` |
-| K1–K4 (Phase 1) | | |
+| K1–K4 (Phase 1) | ✅ | 15–16/10, Khoa. e2e 43/43 cả 3 proxy. Portkey so `prompt_len` theo số (đã thử 93/300/1102). Xem `log-khoa.md` |
 | H7–H8 (Phase 2) | ✅ | 14/10, làm sớm 2 ngày. Xem `log-hung.md` |
-| K5–K7 (Phase 2) | | |
+| K5–K7 (Phase 2) | ✅ | 16/10, Khoa. 36/36, $0.0505. Sửa bộ chấm HumanEval (thiếu import của đề). ⛔ Trước Phase 3 phải chốt `max_tokens` vì Sonnet dùng hết 512 token để suy nghĩ → trả lời rỗng |
 | Phase 3 | | |

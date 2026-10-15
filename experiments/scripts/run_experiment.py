@@ -56,6 +56,25 @@ def load_prompts() -> list[dict[str, Any]]:
     return prompts
 
 
+def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> list[dict[str, Any]]:
+    """Lọc theo bộ (--sets) và lấy N item đầu mỗi bộ (--per-set), giữ thứ tự trong prompts.json.
+    Dry-run K5 dùng --per-set 1 (1 item/bộ); Phase 3 chia đôi theo bộ bằng --sets."""
+    wanted = {s.strip() for s in sets.split(",") if s.strip()}
+    unknown = wanted - {p["category"] for p in prompts}
+    if unknown:
+        raise SystemExit(f"--sets có bộ không tồn tại: {sorted(unknown)}")
+    selected: list[dict[str, Any]] = []
+    taken: dict[str, int] = {}
+    for p in prompts:
+        if wanted and p["category"] not in wanted:
+            continue
+        if per_set and taken.get(p["category"], 0) >= per_set:
+            continue
+        taken[p["category"]] = taken.get(p["category"], 0) + 1
+        selected.append(p)
+    return selected
+
+
 def _db(sql: str) -> str:
     """psql trong container — chỉ để ghi log nghiên cứu (đọc cost_upstream, ghi
     response_quality_score: cả 2 không lộ qua API nào), không phải cách gọi model."""
@@ -264,9 +283,13 @@ def main() -> None:
     parser.add_argument("--runs", type=int, default=3, help="Số lần lặp/prompt (mặc định 3).")
     parser.add_argument("--proxy-name", default="litellm",
                          help="Nhãn ghi vào record - phải khớp CHAT_ACTIVE_PROXY thật của backend.")
+    parser.add_argument("--sets", default="",
+                         help="Chỉ chạy các bộ này, cách nhau dấu phẩy (VD humaneval,ifeval). Mặc định: cả 4.")
+    parser.add_argument("--per-set", type=int, default=0,
+                         help="Lấy N item đầu của MỖI bộ (VD dry-run 1/bộ). 0 = lấy hết.")
     args = parser.parse_args()
 
-    prompts = load_prompts()[: args.limit]
+    prompts = select_prompts(load_prompts(), args.sets, args.per_set)[: args.limit]
     identity = ensure_experiment_identity()
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)

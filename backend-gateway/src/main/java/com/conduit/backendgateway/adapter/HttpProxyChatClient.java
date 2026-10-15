@@ -6,9 +6,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +40,21 @@ public class HttpProxyChatClient implements ProxyChatClient {
     // values before sending it (also found in H2).
     private static final String PORTKEY_CONFIG_HEADER = "x-portkey-config";
 
+    // Design Y (K2/K3): Portkey routes on metadata.prompt_len, but cannot measure the prompt
+    // itself, so the app computes it and sends it here. Only Portkey gets it - LiteLLM and Bifrost
+    // don't need it, and putting a "metadata" field in the body risks it being forwarded to the
+    // upstream provider.
+    private static final String PORTKEY_METADATA_HEADER = "x-portkey-metadata";
+
+    // Portkey reports which config target answered as "config.targets[N]" (checked live 16/10).
+    private static final String PORTKEY_TARGET_INDEX_HEADER = "x-portkey-last-used-option-index";
+    private static final Pattern PORTKEY_TARGET_INDEX = Pattern.compile("targets\\[(\\d+)]");
+
     private final WebClient webClient;
     private final ChatProxyProperties properties;
+    // Target names in proxy-configs/portkey/config.json, in order; each name equals the
+    // model_pricing alias. Empty unless activeProxy=portkey.
+    private final List<String> portkeyTargetNames;
 
     public HttpProxyChatClient(ChatProxyProperties properties) {
         this.properties = properties;
@@ -46,12 +62,22 @@ public class HttpProxyChatClient implements ProxyChatClient {
                 .baseUrl(properties.activeBaseUrl())
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.activeApiKey());
         if ("portkey".equals(properties.getActiveProxy())) {
-            builder.defaultHeader(PORTKEY_CONFIG_HEADER, loadPortkeyConfigHeader(properties.getPortkeyConfigPath()));
+            JsonNode portkeyConfig = readPortkeyConfig(properties.getPortkeyConfigPath());
+            this.portkeyTargetNames = targetNames(portkeyConfig);
+            builder.defaultHeader(PORTKEY_CONFIG_HEADER, toPortkeyConfigHeader(portkeyConfig));
+        } else {
+            this.portkeyTargetNames = List.of();
         }
         this.webClient = builder.build();
     }
 
-    private static String loadPortkeyConfigHeader(String configPath) {
+    private static List<String> targetNames(JsonNode portkeyConfig) {
+        List<String> names = new ArrayList<>();
+        portkeyConfig.path("targets").forEach(t -> names.add(t.path("name").asText()));
+        return List.copyOf(names);
+    }
+
+    private static JsonNode readPortkeyConfig(String configPath) {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root;
         try {
@@ -61,8 +87,12 @@ public class HttpProxyChatClient implements ProxyChatClient {
                     "Cannot read Portkey config at " + configPath + " (app.chat.portkey-config-path)", e);
         }
         substituteEnvVars(root);
+        return root;
+    }
+
+    private static String toPortkeyConfigHeader(JsonNode portkeyConfig) {
         try {
-            return mapper.writeValueAsString(root);
+            return new ObjectMapper().writeValueAsString(portkeyConfig);
         } catch (IOException e) {
             throw new IllegalStateException("Cannot serialize Portkey config", e);
         }
@@ -94,6 +124,9 @@ public class HttpProxyChatClient implements ProxyChatClient {
         body.put("messages", messages.stream()
                 .map(t -> Map.of("role", t.role(), "content", t.content()))
                 .toList());
+        if (properties.getMaxTokens() > 0) {
+            body.put("max_tokens", properties.getMaxTokens());
+        }
         List<String> fallbacks = properties.fallbacksFor(model);
         if (!fallbacks.isEmpty()) {
             body.put("fallbacks", fallbacks);
@@ -102,9 +135,14 @@ public class HttpProxyChatClient implements ProxyChatClient {
         long start = System.currentTimeMillis();
         ResponseEntity<JsonNode> entity;
         try {
-            entity = webClient.post()
+            WebClient.RequestBodySpec request = webClient.post()
                     .uri("/chat/completions")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_JSON);
+            if ("portkey".equals(properties.getActiveProxy())) {
+                request = request.header(PORTKEY_METADATA_HEADER,
+                        "{\"prompt_len\":" + promptLength(messages) + "}");
+            }
+            entity = request
                     .bodyValue(body)
                     .retrieve()
                     .toEntity(JsonNode.class)
@@ -149,12 +187,47 @@ public class HttpProxyChatClient implements ProxyChatClient {
             return properties.aliasOf(routing.get("provider").asText() + "/" + routing.get("model").asText());
         }
         if ("portkey".equals(properties.getActiveProxy())) {
-            // Portkey's conditional routing (H2) is a static 1:1 alias->target mapping - it never
-            // dynamically picks a different model the way LiteLLM/Bifrost can, so the requested
-            // alias IS the model actually used. Its top-level "model" is the provider's dated
-            // snapshot id (e.g. "gpt-4o-mini-2024-07-18"), which matches nothing in model_pricing.
-            return requestedAlias;
+            // Design Y: Portkey picks the model from metadata.prompt_len, so the requested alias
+            // is NOT the model used (the old H2 assumption of a static 1:1 mapping no longer
+            // holds). Its top-level "model" is the provider's dated id (e.g.
+            // "gpt-4o-mini-2024-07-18"), which matches nothing in model_pricing - the target
+            // index header is the reliable source. If it is missing, return that raw id rather
+            // than guess: it shows up as an unknown model when routing_decisions is checked,
+            // instead of being silently recorded as the requested alias.
+            String alias = portkeyTargetAlias(headers.getFirst(PORTKEY_TARGET_INDEX_HEADER), portkeyTargetNames);
+            if (alias != null) {
+                return alias;
+            }
+            return response.hasNonNull("model") ? response.get("model").asText() : requestedAlias;
         }
         return response.hasNonNull("model") ? properties.aliasOf(response.get("model").asText()) : requestedAlias;
+    }
+
+    // Length of the latest user message in characters (code points, same as Python len() used
+    // to set the thresholds in docs/routing-policy.md section 7). Only the latest message counts,
+    // matching Bifrost's message_history_count=1.
+    static int promptLength(List<ChatTurn> messages) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            ChatTurn turn = messages.get(i);
+            if ("user".equals(turn.role())) {
+                String content = turn.content() == null ? "" : turn.content();
+                return content.codePointCount(0, content.length());
+            }
+        }
+        return 0;
+    }
+
+    // "config.targets[2]" -> name of target 2, which equals its model_pricing alias. Null when the
+    // header is missing, malformed or points past the configured targets.
+    static String portkeyTargetAlias(String headerValue, List<String> targetNames) {
+        if (headerValue == null) {
+            return null;
+        }
+        Matcher m = PORTKEY_TARGET_INDEX.matcher(headerValue);
+        if (!m.find()) {
+            return null;
+        }
+        int index = Integer.parseInt(m.group(1));
+        return index < targetNames.size() ? targetNames.get(index) : null;
     }
 }

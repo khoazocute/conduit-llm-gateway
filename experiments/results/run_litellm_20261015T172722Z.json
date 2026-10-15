@@ -1,0 +1,284 @@
+[
+  {
+    "message_id": "b9641212-d10a-4ed9-98c6-f214a266b956",
+    "timestamp": "2026-10-15T17:27:23.932819+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.94e-05,
+    "credit_charged": 290,
+    "latency_ms": 874,
+    "latency_ms_runner": 1195.540899999969,
+    "response": "B",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "B",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "0248b445-39a0-4208-8d12-b54fb929736d",
+    "timestamp": "2026-10-15T17:27:24.884241+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.94e-05,
+    "credit_charged": 290,
+    "latency_ms": 626,
+    "latency_ms_runner": 853.8891999999123,
+    "response": "B",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "B",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "fd34f9ab-5456-4f08-b237-482f69a4b95e",
+    "timestamp": "2026-10-15T17:27:25.916506+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.94e-05,
+    "credit_charged": 290,
+    "latency_ms": 723,
+    "latency_ms_runner": 936.8189000001621,
+    "response": "A",
+    "passed": true,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "A",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "39325365-a37f-47e6-a772-b79a2f12fdc4",
+    "timestamp": "2026-10-15T17:27:29.816565+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00015705,
+    "credit_charged": 451,
+    "latency_ms": 3516,
+    "latency_ms_runner": 3763.2724000000053,
+    "response": "Let’s begin by determining Raymond's age. Since Samantha is now 31 years old and Raymond was born 6 years before her, we can calculate Raymond's age as follows:\n\n\\[\n\\text{Raymond's age} = \\text{Samantha's age} + 6 = 31 + 6 = 37\n\\]\n\nNext, we know that Raymond had a son at the age of 23. To find out how many years ago Raymond's son was born, we first find the age of Raymond's son now. Since Raymond is currently 37 years old and he had his son at 23, we can calculate the age of his son as:\n\n\\[\n\\text{Raymond's son's age} = \\text{Raymond's current age} - \\text{Raymond's age when son was born} = 37 - 23 = 14\n\\]\n\nNow, since Raymond's son is currently 14 years old, we can determine how many years ago he was born:\n\n\\[\n\\text{Years ago Raymond's son was born} = \\text{Raymond's son's age} = 14\n\\]\n\nTherefore, Raymond's son was born **14 years ago**.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "1f1617f2-d91d-4144-8a67-4ec81859a5f9",
+    "timestamp": "2026-10-15T17:27:33.673371+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00014685,
+    "credit_charged": 425,
+    "latency_ms": 3542,
+    "latency_ms_runner": 3763.792199999898,
+    "response": "To determine how many years ago Raymond's son was born, we first need to establish the ages of Raymond and his son based on the information provided.\n\n1. **Calculate Raymond's Age**:\n   - If Samantha is currently 31 years old and Raymond was born 6 years before Samantha, then Raymond is:\n   \\[\n   31 + 6 = 37 \\text{ years old.}\n   \\]\n\n2. **Determine Raymond's Age When His Son Was Born**:\n   - We know that Raymond had a son when he was 23 years old.\n\n3. **Calculate Raymond's Son's Age**:\n   - Since Raymond is now 37 years old, the difference between his age now and the age he was when his son was born is:\n   \\[\n   37 - 23 = 14.\n   \\]\n\nThis means that Raymond's son is currently 14 years old.\n\n4. **Determine How Many Years Ago His Son Was Born**:\n   - Since the son is currently 14 years old, he was born 14 years ago.\n\nTherefore, Raymond's son was born **14 years ago**.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "2aa23474-950b-46c8-956b-4dd7d0faa5b8",
+    "timestamp": "2026-10-15T17:27:36.267688+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00011025,
+    "credit_charged": 334,
+    "latency_ms": 2250,
+    "latency_ms_runner": 2503.580499999998,
+    "response": "To find out how many years ago Raymond's son was born, let's first establish some key pieces of information.\n\n1. Samantha's current age: 31 years.\n2. Raymond is 6 years older than Samantha. Therefore, Raymond's age is:\n   \\[\n   31 + 6 = 37 \\text{ years}\n   \\]\n\n3. Raymond had a son at the age of 23. Thus, the age of Raymond's son now would be:\n   \\[\n   37 - 23 = 14 \\text{ years old}\n   \\]\n\nTo determine how many years ago Raymond's son was born, we subtract the current age of the son from 0 (which represents the birth year):\n\\[\n14 \\text{ years ago}\n\\]\n\nThus, Raymond's son was born **14 years ago**.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "1234bcff-9d38-4780-bbdf-30c1d555d845",
+    "timestamp": "2026-10-15T17:27:37.983994+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1407,
+    "latency_ms_runner": 1613.7840999999753,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "3e2ddf2e-a9cd-4088-a8b4-46ff124f08a5",
+    "timestamp": "2026-10-15T17:27:39.869022+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1486,
+    "latency_ms_runner": 1754.7336000000087,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "239b8b74-fa78-473c-a8d8-498f88abfe50",
+    "timestamp": "2026-10-15T17:27:42.513627+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 2311,
+    "latency_ms_runner": 2546.328399999993,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "40d4c949-646f-471a-95bd-13b0acf86d74",
+    "timestamp": "2026-10-15T17:27:48.454719+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00031215,
+    "credit_charged": 818,
+    "latency_ms": 5555,
+    "latency_ms_runner": 5811.118099999931,
+    "response": "### ਟੈਕਨੀਕਲ ਸKills ਦਾ ਮੁੱਲਾਂਕਣ ਕਰਨ ਲਈ ਰੁਬ੍ਰਿਕ\n\n**1. ਕੋਡਿੰਗ ਸਮਰੱਥਾ (30 ਅੰਕ)**\n   - 25-30 ਅੰਕ: ਕੋਡ ਦੀਆਂ ਡھانਚਨਾ ਅਤੇ ਸ਼ੈਲੀ ਅਤਿ ਸ਼ਾਨਦਾਰ। ਨੋਟਬੁੱਕਾਂ ਦੇ ਕੋਡ ਵਿੱਚ ਕਿਸੇ ਵੀ ਸਮੱਸਿਆ ਦਾ ਸਹੀ ਹੱਲ।\n   - 20-24 ਅੰਕ: ਕੋਡ ਸੰਰਚਨਾ ਚੰਗੀ, ਪਰ ਕੁਝ ਸ਼ੈਲੀ ਦੀਆਂ ਕਮੀਾਂ ਹਨ। ਸਮੱਸਿਆਵਾਂ ਦੇ ਹੱਲ ਵਿੱਚ ਕੁਝ ਗਲਤੀਆਂ।\n   - 15-19 ਅੰਕ: ਕੋਡ ਵਿੱਚ ਮੱਧਮ ਸਰਦਾਰੀ, ਕਿਸੇ ਕੋਡ ਨਾਲ ਸਬੰਧਤ ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਪੂਰੀ ਤਰ੍ਹਾਂ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਨਹੀਂ।\n   - 0-14 ਅੰਕ: ਕੋਡ ਬਿਲਕੁਲ ਸਮਰੱਥ ਨਹੀਂ, ਸਮੱਸਿਆਵਾਂ ਦੇ ਹੱਲ ਵਿੱਚ ਗਲਤੀਆਂ।\n\n**2. ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ (25 ਅੰਕ)**\n   - 21-25 ਅੰਕ: ਉੱਚ ਮਿਆਰੀ ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ ਤਕਨੀਕਾਂ ਦੀ ਸਮਝ। ਕਾਸਤਨ ਦੇ ਸਟੇਕਹੋਲਡਰਾਂ ਦੀਆਂ ਜ਼ਰੂਰਤਾਂ ਨੂੰ ਬਹੁਰੂਪ ਵਿੱਚ ਅਪਲਾਈ ਕਰਨਾ।\n   - 16-20 ਅੰਕ: ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ ਦੇ ਹਰੇਕ ਅੰਗ ਨੂੰ ਸਮਝਣ ਦੀ ਯੋਗਤਾ, ਪਰ ਕੁਝ ਹਿੱਸਿਆਂ ਵਿੱਚ ਕਮੀ।\n   - 11-15 ਅੰਕ: ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ ਦੇ ਮੁੱਢਲੇ ਤੱਤਾਂ ਦਾ ਪਤਾ, ਪਰ ਵਿਧਾਨ ਕਰਨਾ ਮੁਸ਼ਕਲ।\n   - 0-10 ਅੰਕ: ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ ਦੀ ਸਮਝ ਨਾ ਹੋਣਾ।\n\n**3. ਸਮੱਸਿਆ ਸੋਚਣ ਦੀ ਯੋਗਤਾ (25 ਅੰਕ)**\n   - 21-25 ਅੰਕ: ਸਮੱਸਿਆ ਨੂੰ ਖਤਮ ਕਰਨ ਲਈ ਨਵੀਂ ਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਤਕਨੀਕਾਂ ਦੀ ਵਰਤੋਂ।\n   - 16-20 ਅੰਕ: ਕੁਝ ਪਰੰਪਰਾਗਤ ਤਰੀਕੇ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "d9419154-959c-41c0-b20f-56784e69b621",
+    "timestamp": "2026-10-15T17:27:53.656919+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00031215,
+    "credit_charged": 818,
+    "latency_ms": 4821,
+    "latency_ms_runner": 5076.615599999968,
+    "response": "## سافٹ ویئر انجینئر کی تکنیکی مہارتوں کا جائزہ لینے کے لئے روبریک\n\n| معیار               | 5 نمبر  | 4 نمبر  | 3 نمبر  | 2 نمبر  | 1 نمبر  |\n|--------------------|---------|---------|---------|---------|---------|\n| **پروگرامنگ زبانیں** | ماہر، مختلف زبانوں میں مہارت، مثلاً جاوا، پائتھن، جاوا اسکرپٹ وغیرہ | اچھی مہارت، چند زبانوں پر تسلط | بنیادی مہارت، ایک یا دو زبانوں کا علم | محدود علم، چند پروگرامنگ تصورات نہیں سمجھتا | بالکل ناقص، کوئی پروگرامنگ زبان نہیں جانتا |\n| **ڈیٹا اسٹرکچر اور الگورڈمز** | اعلیٰ مہارت، تازہ ترین الگورڈمز اور ڈیٹا اسٹرکچر کا مکمل علم | اچھی سمجھ، بنیادی اور کچھ پیچیدہ مسائل حل کر سکتا ہے | بنیادی سطح کی معلومات، آسان مسائل تک محدود | کمزور سمجھ، مشکلات میں دقت محسوس کرتا ہے | بالکل ناقص، ڈیٹا اسٹرکچر اور الگورڈمز کا علم نہیں |\n| **نظام ڈیزائن**      | بہترین، بڑے سسٹمز کا ڈیزائن کرنے کی مکمل صلاحیت | اچھی مہارت، چھوٹے سسٹمز کا مؤثر ڈیزائن کر سکتا ہے | بنیادی سمجھ، سادہ نظام ڈیزائن کر سکتا ہے | کمزور، سسٹم ڈیزائن میں مشکلات کا سامنا کرنا پڑتا ہے | بالکل ناقص، سسٹم ڈیزائن کا علم نہیں |\n| **بگ فکسنگ / ٹیسٹنگ** | بگ ٹھیک کرنے کی مسلسل صلاحیت، مختلف ٹیسٹنگ تکنیکوں میں ماہر | اچھی مہارت، بنیادی ٹیسٹنگ اور بگ فکسنگ کے لئے اہل | معقول مہارت، چند بگ ٹھیک کر سکتا ہے | کمزور، اپنی کوڈ کی جانچ کرنے میں مشکلات | بالکل ناقص، ٹیسٹنگ میں کوئی مہارت نہیں |\n| **ٹریندز اور ٹیکنالوجیز** | جدید ٹیکنالوجیز اور ٹرینڈز سے واقف، نئے ٹولز سیکھنے میں تیز | کچھ حد تک جانکاری، نئے ٹیکنالوجیز کے بارے میں جانتا ہے | بنیادی علم، مگر جدید ٹیکنالوجیز سے دور | کمزور،",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "instruction_level": 0.0,
+      "followed": 0,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": false
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "a59e95b2-06c0-4975-8e99-e0c7097d9fd7",
+    "timestamp": "2026-10-15T17:27:59.584333+00:00",
+    "proxy_name": "litellm",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00031215,
+    "credit_charged": 818,
+    "latency_ms": 5614,
+    "latency_ms_runner": 5848.12880000004,
+    "response": "**ਇੱਕ ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਸਕੱਲਾਂ ਦਾ ਮੁਲਾਂਕਣ ਕਰਨ ਲਈ ਰੂਬਰਿਕ**\n\n| ਮੁਲਾਂਕਣ ਕ੍ਰਾਈਟੇਰੀਆ        | ਸ਼੍ਰੇਣੀ 1 (ਨਿਥਰ)    | ਸ਼੍ਰੇਣੀ 2 (ਮਿਆਰੀ)   | ਸ਼੍ਰੇਣੀ 3 (ਚੰਗਾ)  | ਸ਼੍ਰੇਣੀ 4 (ਬਹੁਤ ਚੰਗਾ) | ਸ਼੍ਰੇਣੀ 5 (ਅਨੁਕੂਲ ਵਿਕਾਸ) |\n|--------------------------|------------------|------------------|----------------|-------------------|----------------------|\n| **ਕੋਡਿੰਗ ਸਮਰਥਾ**        | ਕੋਡ ਕਹਿੰਦਾ ਨੈੱਕ ਅਤੇ ਬਹੁਤ ਗਲਤੀਆਂ | ਕੋਡ ਸਮਝਣ ਵਾਲਾ ਪਰ ਬੋਲ-ਬਾਲ ਦੀਆਂ ਗਲਤੀਆਂ | ਕੋਡ ਬਹੁਤ ਚੰਗਾ ਪਰ ਕੁਝ ਥੋੜਾ ਗਲਤ | ਕੋਡ ਸੁਚੱਜਾ ਅਤੇ ਸਹੀ | ਉੱਚ ਦਰਜੇ ਦਾ ਕੋਡ, ਡਿਜ਼ਾਈਨ ਪੈਟਰਨ ਵਰਤਣਾ |\n| **ਸੰਕਲਨ ਤੇ ਜ਼ਰੂਰੀ ਟੂਲਜ਼**  | ਕੋਈ ਜਾਣਕਾਰੀ ਨਹੀਂ      | ਜ਼ਰੂਰੀ ਟੂਲਜ਼ ਵਰਤਦੇ ਪਰ ਸਮਝਾਉਣ ਵਿੱਚ ਫੰਦਾ | ਕੁਝ ਟੂਲਜ਼ ਦੀ ਜਾਣਕਾਰੀ | ਬਹੁਤ ਸਾਰੇ ਟੂਲਜ਼ ਦੀ ਜਾਣਕਾਰੀ | ਆਪਣੇ ਆਪ ਨੂੰ ਨਵੇਂ ਟੂਲਜ਼ ਨਾਲ ਅੱਪ-ਡੇਟ ਰੱਖਣਾ |\n| **ਡਿਬੱਗਿੰਗ ਅਤੇ ਸਮੱਸਿਆ ਸੋਜ** | ਸਮੱਸਿਆ ਦਾ ਹੱਲ ਨਹੀਂ ਲੱਭ ਸਕਦੇ | ਦੂਰ ਰੱਖੀਆਂ ਚੁਣੌਤੀਆਂ ਨਾਲ ਸੰਘਰਸ਼ ਕਰਨਾ | ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ | ਪ੍ਰਗਟ ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਸੋਲ੍ਹਾਂ ਸੁਚੱਜਾ | ਨਵੇਂ ਦਰਖਤਾਂ ਦਾ ਪ੍ਰਯੋਗ ਅਤੇ ਚਿੰਤਨ |\n| **ਡੀਬੱਗਿੰਗ ਸਮਰਥਾ**     | ਡੀਬੱਗਿੰਗ ਵਿੱਚ ਕੋਈ ਵੀ ਜਾਣਕਾਰੀ ਨਹੀਂ | ਮੂਲ ਭਾਂਜੀਆਂ ਦਾ ਕੰਮ ਕਰਨ ਵਿੱਚ ਮੁਸ਼ਕਲ | ਕੁਝ ਪ੍ਰਭਾਵਿਤ ਡੀਬੱਗਿੰਗ ਉਪਾਇਆਂ | ਆਤਮ-ਹੰਤਾ ਡੀਬੱਗਿੰਗ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  }
+]

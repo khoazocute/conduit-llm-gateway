@@ -128,9 +128,13 @@ def grade_humaneval(response: str | None, item: dict[str, Any]) -> GradeResult:
     if not code.strip():
         return GradeResult(False, 0.0, {"reason": "không trích được code nào"})
 
-    # Model co the chi tra ve than ham -> ghep lai voi signature goc.
-    if f"def {entry}" not in code:
-        code = item["signature_prompt"] + "\n" + code
+    # Luon dat de goc (import + signature + docstring) truoc code cua model, giong harness
+    # chinh thuc (problem["prompt"] + completion + test). Model hay viet lai ca ham ma bo
+    # dong import cua de (VD `from typing import List`) - neu chi chay code cua model thi
+    # NameError du loi giai dung (gap that o dry-run 16/10, humaneval_01). Ham model viet
+    # dinh nghia lai ham trong de nen ban cua model duoc dung; neu model chi tra ve than
+    # ham thi than ham noi tiep signature nhu cu.
+    code = item["signature_prompt"] + "\n" + code
 
     program = f"{code}\n\n{item['test']}\n\ncheck({entry})\n"
     with tempfile.TemporaryDirectory() as tmp:

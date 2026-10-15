@@ -89,6 +89,19 @@ class HumanEvalGrader(unittest.TestCase):
         """Model chỉ viết thân hàm -> phải ghép với signature_prompt rồi mới chạy."""
         self.assertTrue(grade_humaneval("    return x + 1\n", self.ITEM).passed)
 
+    def test_dung_khi_model_viet_lai_ham_nhung_bo_dong_import_cua_de(self):
+        """Lỗi gặp ở dry-run 16/10 (humaneval_01): đề có `from typing import List`, model viết
+        lại cả hàm nhưng bỏ dòng import -> trước đây NameError dù lời giải đúng. Harness chính
+        thức chạy đề + câu trả lời nên phải chấm đạt."""
+        item = {
+            "id": "t2", "metric": "pass_at_1", "entry_point": "first",
+            "signature_prompt": "from typing import List\n\n\ndef first(xs: List[int]) -> int:\n"
+                                "    \"\"\"Return the first element.\"\"\"\n",
+            "test": "def check(candidate):\n    assert candidate([3, 4]) == 3\n",
+        }
+        resp = "```python\ndef first(xs: List[int]) -> int:\n    return xs[0]\n```"
+        self.assertTrue(grade_humaneval(resp, item).passed)
+
     def test_sai_logic(self):
         r = grade_humaneval("def add_one(x: int) -> int:\n    return x + 2\n", self.ITEM)
         self.assertFalse(r.passed)

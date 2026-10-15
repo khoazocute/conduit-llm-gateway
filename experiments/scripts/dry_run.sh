@@ -29,9 +29,16 @@ mkdir -p "$LOG_DIR"
 PROMPT_LIMIT="${PROMPT_LIMIT:-3}"
 RUNS="${RUNS:-3}"
 PROXIES="${PROXIES:-litellm bifrost portkey}"
+# Design Y (K5, Phase 3): SETS lọc bộ (VD "humaneval,ifeval"), PER_SET lấy N item đầu mỗi bộ.
+# Dry-run 36 lượt: PER_SET=1 PROMPT_LIMIT=40 RUNS=3. PROMPT_LIMIT cắt SAU khi lọc.
+SETS="${SETS:-}"
+PER_SET="${PER_SET:-0}"
 
-echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
-echo "Tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((PROMPT_LIMIT * RUNS * $(echo $PROXIES | wc -w)))"
+echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
+N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
+import run_experiment as r
+print(len(r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)[:$PROMPT_LIMIT]))")
+echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"
 
 set -a
 # .env soạn trên Windows có CRLF - không bỏ \r thì mọi giá trị dính \r ở cuối
@@ -91,7 +98,8 @@ for proxy in $PROXIES; do
 
   # PYTHONIOENCODING: console Windows mac dinh cp1252, khong in duoc tieng Viet co dau.
   if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/run_experiment.py" \
-      --proxy-name "$proxy" --limit "$PROMPT_LIMIT" --runs "$RUNS"; then
+      --proxy-name "$proxy" --limit "$PROMPT_LIMIT" --runs "$RUNS" \
+      --sets "$SETS" --per-set "$PER_SET"; then
     echo "  Runner báo lỗi cho $proxy — xem log ở trên, kết quả đã chạy được vẫn giữ nguyên (ghi ngay từng lượt)." >&2
     FAILED_PROXIES+=("$proxy")
   fi
@@ -107,6 +115,14 @@ stop_backend
 echo ""
 echo "=== Xong ==="
 echo "Kết quả thô: $ROOT_DIR/experiments/results/run_*.json"
+
+# Chấm TRƯỚC khi gộp: runner chỉ thu output (passed=null). Gộp rồi áp luật ngay thì mọi
+# proxy có độ chính xác 0% và decision_rule.py báo "không proxy nào đạt" (gặp ở dry-run
+# 16/10). --db nạp luôn response_quality_score. Chấm lại sau được, không tốn tiền.
+if [ ${#RESULT_FILES[@]} -gt 0 ]; then
+  PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/grade_results.py" "${RESULT_FILES[@]}" --db \
+    || echo "grade_results.py báo lỗi — decision_rule.py bên dưới sẽ thấy lượt chưa chấm." >&2
+fi
 
 # Gộp kết quả + áp decision_rule.py ngay (roadmap.md Phase D: "một lệnh chạy hết
 # dry-run và cho ra file kết quả thô + bảng tổng hợp" - trước đây phải gộp tay).

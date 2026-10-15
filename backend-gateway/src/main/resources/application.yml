@@ -43,6 +43,9 @@ app:
     # tuan truoc). Env override de thu routing that (VD conduit-pool, H1) ma khong
     # phai sua file/commit gia tri tam.
     default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
+    # D7 (docs/experiment-design.md muc 3): max_tokens gui kem MOI request, giong nhau ca 3 proxy.
+    # Truoc 2026-10-16 backend chua gui bao gio nen D7 chua tung duoc thuc thi qua duong app.
+    max-tokens: ${CHAT_MAX_TOKENS:512}
     proxy-base-urls:
       litellm: http://localhost:4000/v1
       bifrost: ${BIFROST_BASE_URL:http://localhost:8080/v1}
