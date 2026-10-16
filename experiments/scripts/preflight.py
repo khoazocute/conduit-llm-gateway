@@ -107,6 +107,26 @@ def check_bifrost():
     else:
         ok("Bifrost analyzer", f"ready, {s['loaded']} câu mẫu")
 
+    # Han timeout cua analyzer: mac dinh 1.5s QUA CHAT - luot embedding dau tien sau idle
+    # mat ~1650ms -> qua han -> tier TRONG -> khong rule nao khop -> roi ve model app xin,
+    # ghi nhan nhu quyet dinh routing binh thuong ma KHONG bao loi (do that 2026-10-17).
+    cfgs = http("http://localhost:8080/api/routing/complexity-analyzer-config")
+    if cfgs:
+        sem = json.loads(cfgs).get("semantic") or {}
+        t = str(sem.get("timeout", ""))
+        try:
+            secs = float(t.rstrip("s")) if t.endswith("s") else 0.0
+        except ValueError:
+            secs = 0.0
+        if secs < 5:
+            bad("Bifrost timeout", f"semantic.timeout={t or 'khong dat'} — quá chặt, lượt đầu "
+                                   f"~1650ms sẽ quá hạn và rơi về model app xin TRONG IM LẶNG. "
+                                   f"Chạy lại complexity-setup.sh (đặt 8s)")
+        else:
+            ok("Bifrost timeout", f"semantic.timeout={t}")
+    else:
+        warn("Bifrost timeout", "không đọc được complexity-analyzer-config")
+
     rl = http("http://localhost:8080/api/routing/rules")
     if not rl:
         bad("Bifrost CEL rule", "không đọc được")

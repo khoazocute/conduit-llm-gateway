@@ -113,7 +113,14 @@ def main() -> None:
              "error_status": 0, "no_item": 0, "db_written": 0}
 
     for pattern in args.files:
-        for path in sorted(Path().glob(pattern)) or [Path(pattern)]:
+        # Path().glob() khong nhan pattern tuyet doi (NotImplementedError) - ma dry_run.sh
+        # truyen duong dan tuyet doi. Tach thu muc ra roi glob trong do.
+        p = Path(pattern)
+        if p.is_absolute() or "/" in pattern or "\\" in pattern:
+            matches = sorted(p.parent.glob(p.name))
+        else:
+            matches = sorted(Path().glob(pattern))
+        for path in matches or [p]:
             if not path.exists():
                 print(f"  ! bỏ qua {path} (không tồn tại)")
                 continue

@@ -6,8 +6,8 @@
 #
 # CHỈ chạy khi đã xin xác nhận số lượt/model với Hùng (CLAUDE.md mục 2) - script này
 # TỰ NÓ không hỏi lại, kiểm tra kỹ PROMPT_LIMIT/RUNS/PROXIES trước khi Enter.
-# Test cơ chế an toàn (không tốn tiền): PROMPT_LIMIT=0 (bootstrap chạy nhưng
-# không lượt chat thật nào).
+# Test cơ chế an toàn (không tốn tiền): NO_CALLS=1 (bootstrap + restart backend chạy
+# nhưng KHÔNG gọi runner). PROMPT_LIMIT=0 KHÔNG còn là cách test an toàn — nó bị chặn.
 #
 # Cách dùng:
 #   PROMPT_LIMIT=3 RUNS=3 PROXIES="litellm bifrost portkey" bash experiments/scripts/dry_run.sh
@@ -26,7 +26,22 @@ BACKEND_DIR="$ROOT_DIR/backend-gateway"
 LOG_DIR="$ROOT_DIR/experiments/results/dry-run-logs"
 mkdir -p "$LOG_DIR"
 
-PROMPT_LIMIT="${PROMPT_LIMIT:-0}"   # 0 = lay het (sau khi loc SETS/PER_SET)
+PROMPT_LIMIT="${PROMPT_LIMIT:-}"    # trong = lay het (sau khi loc SETS/PER_SET)
+NO_CALLS="${NO_CALLS:-}"            # =1 -> chi bootstrap, KHONG goi runner (test khong ton tien)
+
+# CHAN mot cai bay that: truoc 2026-10-16, PROMPT_LIMIT=0 nghia la "khong chay luot nao"
+# (vi code cu cat bang [:0]) va header cua file nay ghi do la cach test khong ton tien.
+# Tu khi --limit 0 doi thanh "lay het", truyen 0 se chay TOAN BO bo de. Da dinh that
+# 2026-10-16: 57 luot ngoai y muon. Chan lai thay vi de no chay im lang.
+if [ "$PROMPT_LIMIT" = "0" ]; then
+  cat >&2 <<'WARN'
+PROMPT_LIMIT=0 KHONG con nghia la "khong chay luot nao".
+   Tu 2026-10-16, --limit 0 nghia la LAY HET item -> truyen 0 se chay TOAN BO bo de.
+   - Test khong ton tien:  NO_CALLS=1 bash experiments/scripts/dry_run.sh
+   - Chay het that su:     bo han PROMPT_LIMIT (de trong)
+WARN
+  exit 1
+fi
 RUNS="${RUNS:-3}"
 PROXIES="${PROXIES:-litellm bifrost portkey}"
 # Design Y (K5, Phase 3): SETS lọc bộ (VD "humaneval,ifeval"), PER_SET lấy N item đầu mỗi bộ.
@@ -38,7 +53,8 @@ echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RU
 N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
 import run_experiment as r
 ps=r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)
-print(len(ps[:$PROMPT_LIMIT] if $PROMPT_LIMIT else ps))")
+lim='$PROMPT_LIMIT'
+print(len(ps[:int(lim)] if lim else ps))")
 echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"
 
 set -a
@@ -97,9 +113,15 @@ for proxy in $PROXIES; do
   fi
   echo "  Backend sẵn sàng (active-proxy=$proxy). Chạy runner..."
 
+  if [ "$NO_CALLS" = "1" ]; then
+    echo "  NO_CALLS=1 -> bo qua runner cho $proxy (KHONG goi luot that nao)."
+    continue
+  fi
+
   # PYTHONIOENCODING: console Windows mac dinh cp1252, khong in duoc tieng Viet co dau.
   if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/run_experiment.py" \
-      --proxy-name "$proxy" --limit "$PROMPT_LIMIT" --runs "$RUNS" \
+      --proxy-name "$proxy" --runs "$RUNS" \
+      ${PROMPT_LIMIT:+--limit "$PROMPT_LIMIT"} \
       --sets "$SETS" --per-set "$PER_SET"; then
     echo "  Runner báo lỗi cho $proxy — xem log ở trên, kết quả đã chạy được vẫn giữ nguyên (ghi ngay từng lượt)." >&2
     FAILED_PROXIES+=("$proxy")

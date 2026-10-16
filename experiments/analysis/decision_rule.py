@@ -148,6 +148,24 @@ def compute_consistency_rate(records: list[dict[str, Any]], proxy_name: str) -> 
     return consistent / len(by_prompt)
 
 
+def _pareto(records: list[dict[str, Any]], names: list[str],
+            costs: dict[str, float]) -> dict[str, dict[str, Any]]:
+    """So lieu day du cho TUNG proxy. Dung cho ca proxy bi loai o buoc 1 - bao cao can
+    biet proxy bi loai vi gi (phat hien E cua Khoa). avg_cost tinh lai neu chua co."""
+    return {
+        name: {
+            "quality_accuracy": compute_quality_accuracy(records, name),
+            "ungraded_runs": count_ungraded(records, name),
+            "avg_cost": costs.get(name, compute_avg_cost(records, name)),
+            "error_rate": compute_error_rate(records, name),
+            "p95_latency_ms": compute_p95_latency(records, name),
+            "consistency_rate": compute_consistency_rate(records, name),
+            "passed_gate": compute_quality_accuracy(records, name) >= QUALITY_PASS_THRESHOLD,
+        }
+        for name in names
+    }
+
+
 def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -> dict[str, Any]:
     """Áp dụng đúng 4 bước quy tắc quyết định, trả về proxy được chọn + số liệu
     Pareto (cost vs quality vs latency) của từng proxy còn lại sau bước 1."""
@@ -160,7 +178,19 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
     ]
 
     if not candidates:
-        raise ValueError("Không có proxy nào đạt ngưỡng chất lượng >= 80%")
+        # KHONG nem exception nua (sua 2026-10-17): neu khong proxy nao qua cong thi do la
+        # MOT KET QUA, phai bao cao kem day du so lieu cua ca 3 proxy de biet vi sao - chu
+        # khong phai mot stack trace. Truoc day nem ValueError nen chay that ma khong ai
+        # qua 80% la mat luon bang so lieu.
+        return {
+            "selected_proxy": None,
+            "no_proxy_passed_gate": True,
+            "gate_threshold": QUALITY_PASS_THRESHOLD,
+            "tie_unresolved": False,
+            "tied_candidates": [],
+            "candidates_after_qa_filter": [],
+            "pareto_data": _pareto(records, proxy_names, {}),
+        }
 
     # Bước 2: chi phí trung bình/prompt thấp nhất
     costs = {name: compute_avg_cost(records, name) for name in candidates}
@@ -201,20 +231,14 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
 
     return {
         "selected_proxy": selected,
+        "no_proxy_passed_gate": False,
+        "gate_threshold": QUALITY_PASS_THRESHOLD,
         "tie_unresolved": tie_unresolved,
         "tied_candidates": tied_candidates,
         "candidates_after_qa_filter": candidates,
-        "pareto_data": {
-            name: {
-                "quality_accuracy": compute_quality_accuracy(records, name),
-                "ungraded_runs": count_ungraded(records, name),
-                "avg_cost": costs.get(name),
-                "error_rate": compute_error_rate(records, name),
-                "p95_latency_ms": compute_p95_latency(records, name),
-                "consistency_rate": compute_consistency_rate(records, name),
-            }
-            for name in candidates
-        },
+        # pareto_data cho TAT CA proxy, khong chi proxy qua cong (phat hien E cua Khoa):
+        # bao cao can so lieu ca proxy bi loai de biet no bi loai vi gi.
+        "pareto_data": _pareto(records, proxy_names, costs),
     }
 
 

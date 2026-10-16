@@ -168,10 +168,38 @@ class DecisionRuleBranches(unittest.TestCase):
         self.assertLess(compute_consistency_rate(records, "proxyF"), compute_consistency_rate(records, "proxyG"))
         self.assertEqual(result["selected_proxy"], "proxyG")
 
-    def test_no_candidate_raises(self):
-        records = make_records("proxyA", [], cost=0.01, latency=100)  # 0/12 đúng
-        with self.assertRaises(ValueError):
-            apply_decision_rule(records, ["proxyA"])
+    def test_khong_proxy_nao_qua_cong_thi_BAO_CAO_chu_khong_nem_exception(self):
+        """Đổi 2026-10-17: trước đây ném ValueError, nên nếu chạy thật mà không proxy nào
+        qua 80% thì mất luôn bảng số liệu (gặp ở đợt kiểm 24 lượt). Giờ đó là MỘT KẾT QUẢ:
+        trả về selected_proxy=None + no_proxy_passed_gate=True + số liệu đủ cả 3 proxy."""
+        records = (make_records("proxyA", [], cost=0.01, latency=100)          # 0/12 đúng
+                   + make_records("proxyB", CLOSED_QA_IDS[:3], cost=0.02, latency=200))  # 3/12
+        result = apply_decision_rule(records, ["proxyA", "proxyB"])
+
+        self.assertIsNone(result["selected_proxy"])
+        self.assertTrue(result["no_proxy_passed_gate"])
+        self.assertEqual(result["candidates_after_qa_filter"], [])
+        # So lieu phai co cho CA HAI proxy du ca hai deu bi loai
+        self.assertEqual(set(result["pareto_data"]), {"proxyA", "proxyB"})
+        for name, row in result["pareto_data"].items():
+            self.assertFalse(row["passed_gate"], name)
+            self.assertIn("avg_cost", row)
+            self.assertIn("p95_latency_ms", row)
+
+    def test_pareto_data_co_ca_proxy_bi_loai(self):
+        """Phát hiện E của Khoa: trước đây chỉ in số liệu của proxy QUA cổng, nên báo cáo
+        không có số của proxy bị loại — không biết nó bị loại vì gì."""
+        records = (make_records("proxyPass", CLOSED_QA_IDS, cost=0.02, latency=100)      # 12/12
+                   + make_records("proxyFail", CLOSED_QA_IDS[:5], cost=0.001, latency=50))  # 5/12
+        result = apply_decision_rule(records, ["proxyPass", "proxyFail"])
+
+        self.assertEqual(result["selected_proxy"], "proxyPass")
+        self.assertEqual(set(result["pareto_data"]), {"proxyPass", "proxyFail"})
+        self.assertTrue(result["pareto_data"]["proxyPass"]["passed_gate"])
+        self.assertFalse(result["pareto_data"]["proxyFail"]["passed_gate"])
+        # proxyFail re hon nhung bi loai o buoc 1 - bao cao phai thay duoc dieu do
+        self.assertLess(result["pareto_data"]["proxyFail"]["avg_cost"],
+                        result["pareto_data"]["proxyPass"]["avg_cost"])
 
     def test_error_prone_proxy_no_longer_wins_on_cost(self):
         # Tái tạo đúng kịch bản Khoa phát hiện (log-khoa.md, 2026-10-03): proxyJ đắt

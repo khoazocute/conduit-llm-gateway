@@ -33,7 +33,15 @@ for k in ("simple_keywords", "medium_keywords", "complex_keywords"):
 cfg["semantic"] = {
     "provider": "openai",
     "embedding_model": "text-embedding-3-small",
-    "timeout": "1.5s",
+    # 8s, KHONG dung mac dinh 1.5s. Ly do do duoc (2026-10-17): luot embedding dau tien
+    # sau khi idle mat ~1650ms -> VUOT han 1.5s -> analyzer bo cuoc -> complexity_tier
+    # TRONG -> khong CEL rule nao khop -> request roi ve model ma app xin (gpt-4o-mini),
+    # va duoc ghi nhan nhu mot quyet dinh routing binh thuong, KHONG co loi nao bao ra.
+    # Bang chung trong /api/logs: tier=trong, mechanism=skipped, overhead=1647ms. Mot luot
+    # khac mat 1465ms - sat han. Neu khong nang, Phase 3 se co nhung luot Bifrost am tham
+    # bi tinh nhu "chon gpt-4o-mini", keo consistency_rate xuong va lam Bifrost trong re
+    # hon thuc te. Nang han KHONG doi chinh sach dinh tuyen, chi cho analyzer du thoi gian.
+    "timeout": "8s",
     "min_similarity": 0,
     "message_history_count": 1,
 }
