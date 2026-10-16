@@ -138,3 +138,123 @@ pass@1 có vấn đề thì vẫn chạy được đủ 360 lượt và bù ch�
    tay trên 10 item thật khi có kết quả — model có thể viết đơn vị hoặc năm ở cuối câu.
 3. Phần của mình cho 17/10 **đã xong hết**. Đường tới hạn giờ là K1–K4 của Khoa (nhất là
    `resolveReturnedModel`) rồi mới tới dry-run K5–K7.
+
+---
+
+## 2026-10-16 — Review K1–K7 của Khoa + sửa 4 lỗi, chốt D12
+
+### Duyệt bản sửa HumanEval của Khoa: ĐÚNG
+
+Tái hiện độc lập trên `humaneval_01` thật: bản cũ của tôi báo `NameError: name 'List' is not
+defined` trên một **lời giải đúng** — đề có `from typing import List`, model không viết lại dòng đó
+(mà sao phải viết lại), bộ chấm của tôi chỉ chạy code model nên thiếu import. Khoa sửa thành luôn
+ghép đề gốc trước, đúng như harness chính thức (`prompt + completion + test`). Kiểm chiều ngược:
+không gây **đạt oan**, vì đề chỉ là stub trả `None` nên test không pass nhờ đề. Đã merge.
+
+Phần backend của Khoa (K3/K4) chất lượng cao: `promptLength` dùng `codePointCount` khớp `len()` của
+Python; đọc `x-portkey-last-used-option-index` thay vì đoán alias; thiếu header thì trả id thô cho
+lộ ra thay vì sai trong im lặng. `--sets`/`--per-set` giải đúng vấn đề `--limit` cũ chỉ lấy N item
+đầu (= toàn MMLU). `dry_run.sh` chấm trước khi gộp — sửa đúng thứ tự mà tôi ghi trong log mà không
+nối vào script.
+
+### Lỗi 1 (của tôi, nặng nhất): bộ chấm MMLU CHẤM ĐẠT OAN
+
+Pattern cuối `\b([ABCD])\b` bắt chữ cái ở **bất kỳ đâu** trong text. `claude-haiku` trả lời
+`mmlu_01` bằng 1400+ ký tự lập luận rồi **bị cắt giữa câu** ("Actually, let me") — **chưa hề đưa ra
+đáp án**. Nhưng text đầy `A[i]` và `Array A` (tên biến trong đề về cache) nên pattern bắt ra `'A'`,
+trùng đáp án đúng → `passed=True`.
+
+Chấm lại dry-run với **cả hai** bản sửa:
+
+| Proxy | Khoa báo | Thật |
+|---|---|---|
+| LiteLLM | 9/12 (75%) | 9/12 (75%) |
+| **Bifrost** | **11/12 (92%)** | **9/12 (75%)** |
+| Portkey | 9/12 (75%) | 9/12 (75%) |
+
+Cả ba bằng nhau. Kết luận "chỉ Bifrost qua 80% → chọn Bifrost" của K7 là **do bug này**. Sửa: bỏ hẳn
+pattern "bất kỳ đâu", chỉ nhận đáp án rõ ràng, lấy cái **cuối** (đáp án chốt thường ở cuối), không
+có thì trả `None` = không đạt. Kiểm: **không làm mất lượt đạt hợp lệ nào**. 2 test hồi quy.
+
+### Lỗi 2 (của tôi): `--limit` mặc định 30 nhưng bộ đề 40 item
+
+Chạy cả 4 bộ mà không truyền `--limit` → âm thầm bỏ mất **10 item IFEval cuối**. Sửa: mặc định 0 =
+lấy hết. Kiểm: không `--sets` → 40 item; `mmlu,gsm8k` → 20; `humaneval,ifeval` → 20; `--per-set 1` → 4.
+
+### Lỗi 3 (code cũ): chi phí ghi 0 trong im lặng
+
+`ChatService.unitPrice()` trả `BigDecimal.ZERO` khi không khớp `model_pricing`. Nên lượt ghi sai tên
+model được tính là **tốn $0** — mà bước 2 của luật quyết định là "chi phí trung bình thấp nhất", nên
+proxy bị lỗi đó sẽ trông như **miễn phí và thắng**. Thêm `experiments/scripts/verify_results.py`
+kiểm 5 thứ trước khi áp luật. Chạy trên dry-run của Khoa → **bắt ngay 3 lượt Portkey trả rỗng**.
+
+### Lỗi 4 (cả hai bỏ sót): `temperature` chưa bao giờ được gửi
+
+Tài liệu ghi `temperature: 0` (yêu cầu của protocol `pass@1`), nhưng backend và cả 3 config proxy
+**không có chỗ nào gửi** → đang chạy ngẫu nhiên. Bằng chứng trong chính dry-run: LiteLLM
+`ifeval_01`, cùng model cùng prompt, **đạt / trượt / đạt** qua 3 lần. Mỗi bộ chỉ 10 item nên nhiễu
+này đủ sức lật kết quả.
+
+### D12: tier đắt đổi sang `gpt-4o`, bỏ `claude-sonnet-5` khỏi mọi đường định tuyến
+
+Phương án (a) của Khoa (tăng `max_tokens` lên 2048) **đã thử và chết**. Gọi thẳng Anthropic:
+
+| Thử | Kết quả |
+|---|---|
+| Sonnet, `max_tokens: 2048` | **2048 token thinking, text RỖNG**, `stop_reason=max_tokens`, **$0.021** |
+| Sonnet, `thinking: disabled` | trả `A` đúng, 3 token, **$0.00054** (rẻ hơn 39 lần) |
+| Sonnet, `temperature: 0` | **HTTP 400 — "`temperature` is deprecated for this model"** |
+| gpt-4o, `mmlu_01` | 1 token, `stop_reason=stop`, $0.00049 — không có bệnh |
+| gpt-4o, `ifeval_08` (đòi ≥350 từ) | 467 token / 379 từ, `stop` — **512 đủ** |
+
+Sonnet **nở suy nghĩ cho vừa hết ngân sách**, nên tăng `max_tokens` không bao giờ cứu được. Phương
+án (b) tắt thinking **không dùng được cho kiến trúc này**: backend không biết trước proxy chọn model
+nào (đó là điểm của Design Y) nên không gửi tham số riêng-Anthropic có điều kiện được; gửi vô điều
+kiện thì model OpenAI nhận tham số lạ. `temperature` vướng **đúng cùng một chỗ**.
+
+→ Đổi tier COMPLEX sang `gpt-4o` (cũng thuộc tầng đắt của pool, CLAUDE.md mục 2). Sonnet bị bỏ khỏi
+**cả bốn** chỗ: CEL rule Bifrost, condition Portkey, `conduit-pool` LiteLLM, và **chuỗi `fallbacks`
+Bifrost trong `application.yml`** (chỗ này là mìn: model rẻ lỗi thì Bifrost leo tới sonnet rồi 400).
+Áp dụng như nhau cho cả 3 proxy nên vẫn công bằng. `max_tokens` **giữ 512**.
+
+**Đây là một phát hiện của khoá luận, không chỉ là ghi chú cấu hình:** *đặt một reasoning model vào
+pool thì mọi router chọn nó đều trả giá đầy đủ cho một câu trả lời trống, và không có cảnh báo nào.*
+
+### Phát hiện C (Bifrost không tất định): phản biện đề xuất thêm warmup
+
+Khoa hỏi có nên thêm lượt warmup. **Tôi nghĩ không nên.** Bifrost `mmlu_01` nhảy giữa **hai tier
+liền kề** (SIMPLE lượt 1 → MEDIUM lượt 2–3). Mà đợt 09/10 tôi chạy GSM8K 3 lần trên analyzer **vừa
+dựng mới** → SIMPLE cả 3, câu đối chứng 2 lần → COMPLEX cả 2. Nếu là warmup thì lượt 1 hôm đó cũng
+phải lệch — nó không lệch. Cách giải thích khớp hơn: điểm của `mmlu_01` nằm **sát ngưỡng tier**
+(`tier_boundaries` 0.2/0.4) nên dao động nhỏ đủ lật. Nếu đúng thì đó là **tính chất nội tại của cơ
+chế**, thêm warmup chỉ che nó đi. Để nguyên, báo `consistency_rate` thật, ghi rõ **không xác nhận
+được cơ chế** vì v2.1.1 không expose `complexity_score`.
+
+Khoa đúng ở điểm quan trọng nhất: **không được viết "tất định" vào báo cáo** — kết luận 09/10 của
+tôi chỉ đúng với 2 prompt đã thử, tôi đã tổng quát hoá quá.
+
+### Phát hiện F (nltk): đính chính nhẹ
+
+`punkt_tab` **có** trong `experiments/requirements.txt` (phần hướng dẫn đầu file) và
+`benchmark-survey.md` mục 6. Nhưng điểm của Khoa vẫn đúng: dễ bỏ sót và thiếu thì IFEval trượt hàng
+loạt. Nên biến thành kiểm trong code — việc còn mở.
+
+### ⚠️ BƯỚC TRIỂN KHAI phải làm trước Phase 3 (cả hai máy)
+
+Cấu hình Bifrost nằm trong volume, không trong git; config LiteLLM mount vào container. Nên sửa file
+**chưa có hiệu lực** cho tới khi:
+
+```bash
+docker compose up -d --force-recreate litellm     # conduit-pool mới, không còn sonnet
+bash proxy-configs/bifrost/complexity-setup.sh    # CEL rule COMPLEX -> gpt-4o
+# rồi khởi động lại backend (temperature + chuỗi fallback mới)
+```
+
+Sau đó chạy `verify_results.py` trên dry-run mới trước khi áp luật quyết định.
+
+### Còn mở
+
+- Chưa verify end-to-end qua app (Docker tắt lúc làm). **Phải chạy lại dry-run nhỏ sau 3 bước trên.**
+- `decision_rule.py` chỉ in `pareto_data` của proxy qua bước 1 (phát hiện E của Khoa) — nên sửa để
+  in cả 3 proxy, báo cáo cần số của cả proxy bị loại.
+- Java: 13/14 test pass; lượt lỗi duy nhất là `contextLoads` do Postgres chưa chạy, không liên quan.

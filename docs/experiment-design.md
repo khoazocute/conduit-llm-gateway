@@ -77,6 +77,16 @@ nhiễu.**
 | **Bifrost** | Complexity Router + 3 CEL rule | **v2.1.1** | Proxy — theo **độ khó** | **~257 ms/request** | Không |
 | **Portkey** | `conditional` trên `metadata.prompt_len` | hiện tại | **Người + app** | ~0 | **Có** |
 
+**Map tier → model (giống hệt cho Bifrost và Portkey):** SIMPLE → `gpt-4o-mini` · MEDIUM →
+`claude-haiku` · COMPLEX → `gpt-4o`.
+
+> ⚠️ **`claude-sonnet-5` bị loại khỏi mọi đường định tuyến (2026-10-16), kèm số liệu.** Nó bật
+> thinking mặc định và nở suy nghĩ cho vừa hết `max_tokens` rồi trả về **rỗng** (512→512 thinking,
+> 2048→2048 thinking, cả hai lần text rỗng mà vẫn tính tiền), và **từ chối `temperature`**
+> (HTTP 400). Chi tiết: `docs/routing-policy.md` mục 7. Đây là một **phát hiện của khoá luận**,
+> không chỉ là ghi chú cấu hình: *đặt một reasoning model vào pool thì mọi router chọn nó đều trả
+> giá đầy đủ cho một câu trả lời trống, và không có cảnh báo nào.*
+
 Ba hành vi khác nhau thật và dự đoán được trước:
 
 - **LiteLLM** tối ưu chi phí một cách "mù" — luôn rẻ nhất, không xét chất lượng.
@@ -175,7 +185,7 @@ một quan sát đáng viết.
 ### 6.2. Bắt buộc báo cáo kèm
 
 **Bảng tỷ lệ model mà mỗi proxy đã chọn.** Không có bảng này thì con số accuracy vô nghĩa. Có nó thì
-đọc được, ví dụ: *"Bifrost đẩy 40% câu sang `claude-sonnet`, đạt 95%, giá $0.0007/lượt; LiteLLM đẩy
+đọc được, ví dụ: *"Bifrost đẩy 40% câu sang `gpt-4o`, đạt 95%, giá $0.0007/lượt; LiteLLM đẩy
 100% sang `gpt-4o-mini`, đạt 82%, giá $0.00004/lượt."*
 
 ---

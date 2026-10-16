@@ -127,6 +127,9 @@ public class HttpProxyChatClient implements ProxyChatClient {
         if (properties.getMaxTokens() > 0) {
             body.put("max_tokens", properties.getMaxTokens());
         }
+        if (properties.getTemperature() >= 0) {
+            body.put("temperature", properties.getTemperature());
+        }
         List<String> fallbacks = properties.fallbacksFor(model);
         if (!fallbacks.isEmpty()) {
             body.put("fallbacks", fallbacks);

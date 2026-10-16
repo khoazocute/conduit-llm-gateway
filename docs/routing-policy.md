@@ -221,9 +221,22 @@ là một kết quả: **logic định tuyến của Portkey rò vào code ứng
 |---|---|---|
 | `< 211` | rẻ | `gpt-4o-mini` |
 | `211` – `384` | trung | `claude-haiku` |
-| `>= 385` | đắt | `claude-sonnet` |
+| `>= 385` | đắt | `gpt-4o` |
 
 Dùng `$lt` / `$gte`. Map tier → model **giống hệt Bifrost** để hai nhánh so được ngang hàng.
+
+> ⚠️ **Tier đắt dùng `gpt-4o`, KHÔNG dùng `claude-sonnet` (đổi 2026-10-16).** `claude-sonnet-5`
+> bật thinking mặc định và **nở phần suy nghĩ cho vừa hết `max_tokens` rồi trả về RỖNG** — đo
+> trực tiếp qua Anthropic: `max_tokens 512` → 512 thinking token, `2048` → 2048 thinking token,
+> cả hai lần `stop_reason=max_tokens`, text rỗng, **vẫn bị tính tiền đầy đủ** ($0.021 cho lượt
+> 2048). Tăng ngân sách không cứu được. Nó còn **từ chối tham số `temperature`** (HTTP 400
+> *"temperature is deprecated for this model"*) nên không áp được greedy decoding mà protocol
+> `pass@1` yêu cầu. `gpt-4o` cũng thuộc **tầng đắt** của pool (CLAUDE.md mục 2) và không có cả
+> hai vấn đề: `mmlu_01` → 1 token, trả đúng định dạng, `stop_reason=stop`.
+>
+> `claude-sonnet-5` đã bị bỏ khỏi **cả ba** đường định tuyến (CEL rule của Bifrost, condition của
+> Portkey, `conduit-pool` của LiteLLM) — áp dụng như nhau nên vẫn công bằng. Ghi thành phát hiện
+> + giới hạn trong báo cáo.
 
 ### Ngưỡng suy từ đâu
 

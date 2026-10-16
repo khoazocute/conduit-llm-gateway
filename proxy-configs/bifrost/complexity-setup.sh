@@ -78,4 +78,9 @@ print(next((r['id'] for r in rules if r.get('name') == '$name'), ''))
 }
 create_rule SIMPLE  openai    gpt-4o-mini                 5
 create_rule MEDIUM  anthropic claude-haiku-4-5-20251001   6
-create_rule COMPLEX anthropic claude-sonnet-5             7
+# COMPLEX dung gpt-4o, KHONG dung claude-sonnet-5: Sonnet bat thinking mac dinh va no
+# phan suy nghi cho vua het max_tokens roi tra ve RONG (do 16/10: 512->512 thinking,
+# 2048->2048 thinking, ca 2 lan text rong nhung van bi tinh tien). Sonnet cung tu choi
+# tham so temperature ("deprecated for this model") nen khong ap duoc greedy decoding.
+# gpt-4o cung thuoc tang dat trong pool (CLAUDE.md muc 2) va khong co ca 2 van de do.
+create_rule COMPLEX openai    gpt-4o                      7

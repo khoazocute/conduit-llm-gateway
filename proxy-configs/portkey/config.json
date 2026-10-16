@@ -5,8 +5,22 @@
   "strategy": {
     "mode": "conditional",
     "conditions": [
-      { "query": { "metadata.prompt_len": { "$lt": 211 } }, "then": "gpt-4o-mini" },
-      { "query": { "metadata.prompt_len": { "$gte": 385 } }, "then": "claude-sonnet" }
+      {
+        "query": {
+          "metadata.prompt_len": {
+            "$lt": 211
+          }
+        },
+        "then": "gpt-4o-mini"
+      },
+      {
+        "query": {
+          "metadata.prompt_len": {
+            "$gte": 385
+          }
+        },
+        "then": "gpt-4o"
+      }
     ],
     "default": "claude-haiku"
   },
@@ -15,36 +29,57 @@
       "name": "gpt-4o-mini",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o-mini" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gpt-4o-mini"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "gemini-flash",
       "provider": "google",
       "api_key": "$GEMINI_API_KEY",
-      "override_params": { "model": "gemini-flash-latest" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gemini-flash-latest"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "claude-haiku",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-haiku-4-5-20251001" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "gpt-4o",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gpt-4o"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "claude-sonnet",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-sonnet-5" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "claude-sonnet-5"
+      },
+      "retry": {
+        "attempts": 2
+      }
     }
-  ]
+  ],
+  "_comment_4": "Tier dat dung gpt-4o chu KHONG dung claude-sonnet: Sonnet bat thinking mac dinh, no phan suy nghi cho vua het max_tokens roi tra ve rong (do 16/10, ca o 512 va 2048 token) va tu choi tham so temperature. gpt-4o cung thuoc tang dat trong pool."
 }

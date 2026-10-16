@@ -141,8 +141,15 @@ của các model. Chúng chỉ dùng để so 3 proxy với nhau.
 | `num_retries` | 2 | D7 |
 | `timeout` | 45s | D7 |
 
-⚠️ `HttpProxyChatClient.complete()` hiện **chưa gửi `max_tokens`/`temperature`** — việc K3 của Khoa
-(Phase 1). Trước khi có, D7 chưa thực sự được thực thi qua đường đi của app.
+✅ Đã thực thi qua app: `max_tokens` (K3, 2026-10-16) và `temperature` (2026-10-16). Trước đó
+`HttpProxyChatClient.complete()` **chưa gửi cả hai** nên D7 chưa từng thực sự có hiệu lực.
+
+⚠️ **`claude-sonnet-5` bị loại khỏi mọi đường định tuyến** vì nó từ chối `temperature` (HTTP 400
+*"deprecated for this model"*) và nở thinking cho vừa hết `max_tokens` rồi trả về rỗng. Tier đắt
+dùng `gpt-4o`. Chi tiết + số liệu: `docs/routing-policy.md` mục 7.
+
+`max_tokens = 512` **giữ nguyên**, đã kiểm là đủ: `gpt-4o` trả `ifeval_08` (đòi ≥ 350 từ) hết
+467 token / 379 từ, `finish_reason=stop` — còn dư ngân sách.
 
 ---
 
