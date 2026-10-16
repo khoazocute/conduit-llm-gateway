@@ -18,7 +18,7 @@ public class ChatProxyProperties {
     private String activeProxy = "litellm";
     private String defaultModel = "gpt-4o-mini";
     // D7: gioi han sinh token, gui kem moi request. <= 0 thi khong gui.
-    private int maxTokens = 512;
+    private int maxTokens = 1024;
     // D7: greedy decoding - protocol pass@1 cua HumanEval yeu cau temperature 0, va
     // khong co no thi cung 1 proxy + 1 model + 1 cau hoi co the dat/truot khac nhau giua
     // cac lan lap (thay that o dry-run 16/10: litellm ifeval_01 dat/truot/dat).

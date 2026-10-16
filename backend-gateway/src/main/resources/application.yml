@@ -45,7 +45,12 @@ app:
     default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
     # D7 (docs/experiment-design.md muc 3): max_tokens gui kem MOI request, giong nhau ca 3 proxy.
     # Truoc 2026-10-16 backend chua gui bao gio nen D7 chua tung duoc thuc thi qua duong app.
-    max-tokens: ${CHAT_MAX_TOKENS:512}
+    # 1024 (nang tu 512 ngay 2026-10-16, D12 bo sung). Ly do do duoc: claude-haiku
+    # (tier MEDIUM) viet 855 token lap luan cho mmlu_01 -> o 512 bi cat TRUOC KHI kip
+    # dua dap an => truot vi NGAN SACH chu khong phai vi sai. O 1024: 0/10 item MMLU bi
+    # cat, 10/10 trich duoc dap an, 8/10 dung = do nang luc that. Gan nhu khong ton them
+    # vi 9/10 item haiku tra loi dung 4 token (10 luot = $0.0056).
+    max-tokens: ${CHAT_MAX_TOKENS:1024}
     # D7: greedy decoding (protocol pass@1 doi temperature 0). Am = khong gui.
     # claude-sonnet-5 tu choi tham so nay nen da bi bo khoi moi duong dinh tuyen.
     temperature: ${CHAT_TEMPERATURE:0}

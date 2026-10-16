@@ -5,9 +5,9 @@
  "n_total": 40,
  "shot": "0-shot (D10) — xem prompt_note của từng bộ để biết chỗ lệch khỏi protocol gốc",
  "decoding": {
-  "max_tokens": 512,
+  "max_tokens": 1024,
   "temperature": 0,
-  "note": "temperature 0 là yêu cầu của pass@1; dùng chung cho cả 4 bộ để nhất quán"
+  "note": "temperature 0 la yeu cau cua pass@1; dung chung ca 4 bo cho nhat quan. max_tokens nang 512 -> 1024 ngay 2026-10-16 (D12 bo sung): o 512, claude-haiku bi cat truoc khi kip dua dap an cho mmlu_01 (855 token moi xong) => truot vi ngan sach chu khong phai vi sai. O 1024: 0/10 item MMLU bi cat. Chi phi khong tang dang ke vi model chi dung dung cai no can."
  },
  "sets": {
   "mmlu": {

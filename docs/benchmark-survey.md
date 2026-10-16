@@ -136,7 +136,7 @@ của các model. Chúng chỉ dùng để so 3 proxy với nhau.
 
 | Tham số | Giá trị | Lý do |
 |---|---|---|
-| `max_tokens` | **512** | Đủ dài để chấm được (câu trả lời 16 token thì không chấm nổi), đủ ngắn để chặn generation chạy dài và không chạm `REQUEST_TIMEOUT` 45s |
+| `max_tokens` | **1024** | Nâng từ 512 ngày 2026-10-16 (D12). Ở 512, `claude-haiku` bị cắt **trước khi kịp đưa đáp án** cho `mmlu_01` (cần 855 token mới xong) → trượt vì **ngân sách**, không phải vì sai. Ở 1024: **0/10** item MMLU bị cắt, 10/10 trích được đáp án, 8/10 đúng = đo năng lực thật. Chi phí gần như không tăng vì 9/10 item haiku trả lời đúng **4 token** |
 | `temperature` | **0** | Yêu cầu của `pass@1` greedy; dùng chung cả 4 bộ cho nhất quán |
 | `num_retries` | 2 | D7 |
 | `timeout` | 45s | D7 |
@@ -148,8 +148,14 @@ của các model. Chúng chỉ dùng để so 3 proxy với nhau.
 *"deprecated for this model"*) và nở thinking cho vừa hết `max_tokens` rồi trả về rỗng. Tier đắt
 dùng `gpt-4o`. Chi tiết + số liệu: `docs/routing-policy.md` mục 7.
 
-`max_tokens = 512` **giữ nguyên**, đã kiểm là đủ: `gpt-4o` trả `ifeval_08` (đòi ≥ 350 từ) hết
-467 token / 379 từ, `finish_reason=stop` — còn dư ngân sách.
+`max_tokens = 1024` (nâng từ 512, D12). Đã kiểm hai chiều: `gpt-4o` trả `ifeval_08` (đòi ≥ 350
+từ) hết 467 token / 379 từ `finish_reason=stop`; và `claude-haiku` chạy cả 10 item MMLU ở 1024 thì
+**0 lượt bị cắt** (ở 512 có 1 lượt bị cắt mất đáp án).
+
+⚠️ **Ghi vào giới hạn:** `claude-haiku` rất dài dòng trên IFEval — nó chạm trần ngân sách ngay cả ở
+1536 token (vẫn đạt ràng buộc). Nghĩa là **chi phí đo được của haiku trên IFEval bị quyết định bởi
+trần ta đặt**, không phải bởi độ dài tự nhiên của nó. Áp cùng trần cho cả 3 proxy nên vẫn công bằng,
+nhưng phải nêu khi diễn giải trục chi phí.
 
 ---
 

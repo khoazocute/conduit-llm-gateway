@@ -241,7 +241,7 @@ def main() -> None:
         "n_per_set": N_PER_SET,
         "n_total": sum(len(v) for v in prompts.values()),
         "shot": "0-shot (D10) — xem prompt_note của từng bộ để biết chỗ lệch khỏi protocol gốc",
-        "decoding": {"max_tokens": 512, "temperature": 0,
+        "decoding": {"max_tokens": 1024, "temperature": 0,
                      "note": "temperature 0 là yêu cầu của pass@1; dùng chung cho cả 4 bộ để nhất quán"},
         "sets": manifest_sets,
         "portkey_prompt_len_thresholds": {

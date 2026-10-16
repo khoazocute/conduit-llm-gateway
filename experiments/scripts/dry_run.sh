@@ -26,7 +26,7 @@ BACKEND_DIR="$ROOT_DIR/backend-gateway"
 LOG_DIR="$ROOT_DIR/experiments/results/dry-run-logs"
 mkdir -p "$LOG_DIR"
 
-PROMPT_LIMIT="${PROMPT_LIMIT:-3}"
+PROMPT_LIMIT="${PROMPT_LIMIT:-0}"   # 0 = lay het (sau khi loc SETS/PER_SET)
 RUNS="${RUNS:-3}"
 PROXIES="${PROXIES:-litellm bifrost portkey}"
 # Design Y (K5, Phase 3): SETS lọc bộ (VD "humaneval,ifeval"), PER_SET lấy N item đầu mỗi bộ.
@@ -37,7 +37,8 @@ PER_SET="${PER_SET:-0}"
 echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
 N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
 import run_experiment as r
-print(len(r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)[:$PROMPT_LIMIT]))")
+ps=r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)
+print(len(ps[:$PROMPT_LIMIT] if $PROMPT_LIMIT else ps))")
 echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"
 
 set -a
