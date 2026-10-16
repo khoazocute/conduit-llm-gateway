@@ -44,6 +44,27 @@ class MmluGrader(unittest.TestCase):
         """'Choice A is wrong, B is right' -> phải ra B, không phải A."""
         self.assertEqual(extract_mmlu_letter("The answer is B, not A."), "B")
 
+    def test_cau_tra_loi_bi_cat_giua_lap_luan_KHONG_duoc_cham_dat(self):
+        """Lỗi chấm ĐẠT OAN gặp ở dry-run 16/10: claude-haiku viết 1400+ ký tự lập luận rồi
+        bị cắt ở max_tokens, CHƯA HỀ đưa ra đáp án. Text đầy `A[i]` / `Array A` (tên biến
+        trong đề về cache) nên pattern cũ `([ABCD])` bắt ra 'A' và trùng đáp án đúng
+        -> passed=True oan, đẩy Bifrost từ 75% lên 92% giả tạo."""
+        truncated = (
+            "I need to analyze the cache behavior for this loop with a write-back policy.\n\n"
+            "**Cache Parameters:**\n- Size: 2K bytes = 2048 bytes\n- Block size: 8 bytes\n"
+            "Array A occupies 256 blocks, and each write to A[i] evicts the block holding "
+            "B data, so A[i] misses while B[i] hits. Actually, let me")
+        self.assertIsNone(extract_mmlu_letter(truncated),
+                          "câu trả lời bị cắt, không có đáp án -> phải trả None")
+        item = {"id": "t", "metric": "accuracy_letter", "expected_answer": "A"}
+        self.assertFalse(grade_mmlu(truncated, item).passed,
+                         "không có đáp án thì phải tính là KHÔNG đạt")
+
+    def test_lay_dap_an_CHOT_o_cuoi_khong_phai_cai_dau(self):
+        """Model lập luận rồi mới chốt — phải lấy đáp án cuối."""
+        self.assertEqual(extract_mmlu_letter(
+            "Option A looks plausible.\nBut B fits better.\n\nFinal answer: B"), "B")
+
     def test_khong_trich_duoc(self):
         self.assertIsNone(extract_mmlu_letter("không có chữ cái lựa chọn nào"))
 

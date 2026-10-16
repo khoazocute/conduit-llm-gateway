@@ -279,7 +279,11 @@ def append_result(record: dict[str, Any], out_file: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--limit", type=int, default=30, help="Chỉ chạy N prompt đầu (mặc định 30).")
+    # Mac dinh 0 = lay HET. Truoc day default=30 (tu thiet ke 30 prompt cu) nhung bo de gio
+    # co 40 item -> chay ca 4 bo ma khong truyen --limit se AM THAM bo mat 10 item IFEval
+    # cuoi (IFEval nam cuoi prompts.json). Mat tron mot bo benchmark ma khong bao gi.
+    parser.add_argument("--limit", type=int, default=0,
+                         help="Chỉ chạy N item đầu (sau khi lọc --sets). 0 = lấy hết.")
     parser.add_argument("--runs", type=int, default=3, help="Số lần lặp/prompt (mặc định 3).")
     parser.add_argument("--proxy-name", default="litellm",
                          help="Nhãn ghi vào record - phải khớp CHAT_ACTIVE_PROXY thật của backend.")
@@ -289,7 +293,9 @@ def main() -> None:
                          help="Lấy N item đầu của MỖI bộ (VD dry-run 1/bộ). 0 = lấy hết.")
     args = parser.parse_args()
 
-    prompts = select_prompts(load_prompts(), args.sets, args.per_set)[: args.limit]
+    prompts = select_prompts(load_prompts(), args.sets, args.per_set)
+    if args.limit:
+        prompts = prompts[: args.limit]
     identity = ensure_experiment_identity()
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)

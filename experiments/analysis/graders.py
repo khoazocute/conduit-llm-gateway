@@ -40,22 +40,31 @@ class GradeResult:
 
 # ---------------------------------------------------------------- MMLU
 
+# Thu tu uu tien. KHONG con pattern "chu cai o bat ky dau" - no tung cham DAT OAN:
+# claude-haiku tra loi mmlu_01 bi cat giua lap luan (max_tokens), CHUA HE dua ra dap an,
+# nhung text day `A[i]` va `Array A` (ten bien trong de bai ve cache) nen pattern cu bat
+# ra 'A', trung dap an dung -> passed=True oan. Phat hien khi Hung review dry-run 16/10:
+# Bifrost 11/12 (92%) that ra chi la 9/12 (75%).
+# Gio khong co dap an ro rang thi tra None -> tinh la khong dat, dung hon la doan bua tu
+# text lap luan.
 _MMLU_PATTERNS = (
-    r"^\s*\(?([ABCD])\)?\s*[.):\-]?\s*$",            # ca ly tuong: chi 1 chu cai
-    r"(?:answer|đáp án)\s*(?:is|:|là)?\s*\(?([ABCD])\)?\b",
-    r"^\s*\(?([ABCD])\)?[.):\-\s]",                   # bat dau bang chu cai roi giai thich
-    r"\b([ABCD])\b",                                  # cuoi cung: chu cai don le bat ky
+    r"^\s*\(?([ABCD])\)?\s*[.):\-]?\s*$",                        # ca ly tuong: chi 1 chu cai
+    r"(?:final answer|answer|đáp án)\s*(?:is|:|là)?\s*\*{0,2}\(?([ABCD])\)?\b",
+    r"\A\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]",              # MO DAU bang "B." / "(B)"
+    r"(?:^|\n)\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]?\s*$",   # chu cai dung MOT MINH tren 1 dong
 )
 
 
 def extract_mmlu_letter(response: str) -> str | None:
+    """Chu cai dap an, hoac None neu khong co dap an ro rang (vd. cau tra loi bi cat giua
+    lap luan). None -> khong dat. Tha tra None con hon doan bua tu text lap luan."""
     if not response:
         return None
     text = response.strip()
     for pat in _MMLU_PATTERNS:
-        m = re.search(pat, text, flags=re.IGNORECASE | re.MULTILINE)
-        if m:
-            return m.group(1).upper()
+        matches = list(re.finditer(pat, text, flags=re.IGNORECASE | re.MULTILINE))
+        if matches:
+            return matches[-1].group(1).upper()  # lay cai CUOI: dap an chot thuong o cuoi
     return None
 
 
