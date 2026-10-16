@@ -164,7 +164,14 @@ PYEOF
       | tee "$MERGE_DIR/decision_rule_output.json"; then
     echo "Bảng quyết định: $MERGE_DIR/decision_rule_output.json"
   else
-    echo "decision_rule.py báo lỗi (có thể do chưa đủ proxy đạt ngưỡng closed-QA) — xem ở trên." >&2
+    echo "decision_rule.py báo lỗi — xem ở trên." >&2
+  fi
+
+  # Xuất CSV để đọc/vẽ biểu đồ. decision_rule_output.json lồng nhau, không mở Excel được.
+  echo ""
+  if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/analysis/export_tables.py" \
+      "$MERGE_DIR/merged.json" -o "$MERGE_DIR/tables"; then
+    echo "export_tables.py báo lỗi — chạy tay lại được, không tốn tiền." >&2
   fi
 fi
 
