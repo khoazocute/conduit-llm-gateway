@@ -42,7 +42,11 @@ IDENTITY_FILE = SCRIPT_DIR / ".experiment_identity.json"
 
 BASE = "http://localhost:8081/api"
 PASSWORD = "experiment-runner-password-123"
-CREDIT_GRANTED = 200000  # Gemini reasoning token ăn credit nhanh (đã thấy ~580/lượt) - để dư.
+# 1.000.000: du cho mot nguoi chay het 360 luot (uoc ~576.000 o muc 1.600 credit/luot).
+# Truoc day 200.000 - do that 17/10 cho thay 360 luot can ~249.000 nen vi se can giua
+# dot, va cac luot sau bi ghi status=error lam ban error_rate. Credit la don vi NOI BO
+# (khong phai tien that) nen de du thoai mai khong ton gi.
+CREDIT_GRANTED = 1000000
 REQUEST_TIMEOUT = 60  # giây, chờ SSE - khớp router_settings.timeout (D7) + biên độ mạng.
 
 
@@ -73,6 +77,57 @@ def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> li
         taken[p["category"]] = taken.get(p["category"], 0) + 1
         selected.append(p)
     return selected
+
+
+# Credit uoc can cho MOI luot, dung de kiem so du truoc khi chay. Do that tu dot 24 luot
+# 16/10: trung binh 692 credit/luot, cao nhat 1.595. Lay 1.600 cho du bien an toan.
+CREDIT_PER_RUN_ESTIMATE = 1600
+
+
+def assert_enough_credit(buyer_token: str, n_runs: int) -> None:
+    """Chan dot chay neu vi KHONG du credit cho het so luot da len ke hoach.
+
+    Vi sao can: het credit giua dot thi moi luot con lai bi tu choi va ghi
+    status=error - nhung do la loi VI MINH CAN TIEN NOI BO, khong phai loi nha cung cap,
+    the la `error_rate` cua dung proxy dang chay luc do bi ban. Do that 17/10: 360 luot
+    can ~249.000 credit ma vi chi con 155.681 -> se chet o khoang luot 225.
+    """
+    resp = _req("GET", "/wallet", token=buyer_token)
+    if resp.status_code != 200:
+        print(f"  (khong doc duoc so du vi: HTTP {resp.status_code} - bo qua buoc kiem)")
+        return
+    balance = resp.json().get("balance", 0)
+    need = n_runs * CREDIT_PER_RUN_ESTIMATE
+    print(f"  vi credit: {balance:,} | uoc can cho {n_runs} luot: ~{need:,} "
+          f"({CREDIT_PER_RUN_ESTIMATE}/luot)")
+    if balance < need:
+        sys.exit(
+            f"\n⛔ DUNG LAI: vi chi con {balance:,} credit, uoc can ~{need:,} cho {n_runs} luot.\n"
+            f"   Het credit giua dot se lam cac luot con lai bi ghi status=error va ban\n"
+            f"   error_rate cua proxy dang chay. Cach xu ly:\n"
+            f"   1. Xoa {IDENTITY_FILE.name} roi chay lai -> tao danh tinh moi,\n"
+            f"      duoc cap {CREDIT_GRANTED:,} credit; HOAC\n"
+            f"   2. Chia nho dot chay (--sets) de moi dot nam trong so du hien co; HOAC\n"
+            f"   3. Nap thêm credit cho vi qua webhook mock / admin.")
+
+
+def plan_runs(prompts: list[dict[str, Any]], runs: int,
+              resume_file: "Path | None") -> tuple[list[tuple[dict[str, Any], int]], int]:
+    """Danh sach (prompt, run_index) can chay, va so luot duoc bo qua nho --resume.
+
+    Bo qua nhung luot DA THANH CONG trong file cu -> khong tra tien hai lan cho cung mot
+    luot khi dot chay bi dut giua chung (rui ro ghi o roadmap.md muc 7 "chay tiep tu luot
+    loi", truoc day chua co cach lam). Luot LOI thi CHAY LAI: no khong ton tien va moi
+    item can du 3 lan lap.
+    """
+    already: set[tuple[str, int]] = set()
+    if resume_file is not None:
+        for r in json.loads(resume_file.read_text(encoding="utf-8")):
+            if r.get("status") == "success":
+                already.add((r.get("prompt_id"), r.get("run_index")))
+    planned = [(p, i) for p in prompts for i in range(1, runs + 1)
+               if (p["id"], i) not in already]
+    return planned, len(already)
 
 
 def _db(sql: str) -> str:
@@ -289,6 +344,9 @@ def main() -> None:
                          help="Nhãn ghi vào record - phải khớp CHAT_ACTIVE_PROXY thật của backend.")
     parser.add_argument("--sets", default="",
                          help="Chỉ chạy các bộ này, cách nhau dấu phẩy (VD humaneval,ifeval). Mặc định: cả 4.")
+    parser.add_argument("--resume", metavar="FILE",
+                         help="Chạy tiếp vào file kết quả cũ, bỏ qua các lượt ĐÃ thành công "
+                              "(không trả tiền hai lần khi đợt chạy bị dứt giữa chừng).")
     parser.add_argument("--per-set", type=int, default=0,
                          help="Lấy N item đầu của MỖI bộ (VD dry-run 1/bộ). 0 = lấy hết.")
     args = parser.parse_args()
@@ -301,16 +359,53 @@ def main() -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out_file = RESULTS_DIR / f"run_{args.proxy_name}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
 
-    total = len(prompts) * args.runs
+    # --resume: bo qua nhung (prompt_id, run_index) DA CO trong file ket qua truoc, de
+    # khong tra tien hai lan cho cung mot luot khi dot chay bi dut giua chung (rui ro da
+    # ghi o roadmap.md muc 7 "chay tiep tu luot loi" nhung truoc day chua co cach lam).
+    resume_file = None
+    if args.resume:
+        resume_file = Path(args.resume)
+        if not resume_file.exists():
+            sys.exit(f"--resume: khong thay file {resume_file}")
+        out_file = resume_file  # ghi tiep vao chinh file cu
+
+    planned, n_skipped = plan_runs(prompts, args.runs, resume_file)
+    if resume_file is not None:
+        print(f"--resume: bo qua {n_skipped} luot da thanh cong truoc do")
+    total = len(planned)
+
+    # Chan TRUOC khi tieu dong nao: vi khong du credit thi dot chay chet giua duong va
+    # cac luot con lai bi ghi status=error (ban error_rate). Thà dừng ngay còn hơn.
+    if total:
+        _, check_token = register_and_login(identity["buyer_email"])
+        assert_enough_credit(check_token, total)
+
+    checked_proxy = False
     done = 0
-    for prompt in prompts:
-        for run_index in range(1, args.runs + 1):
-            done += 1
-            print(f"[{done}/{total}] {prompt['id']} (proxy={args.proxy_name}, run={run_index})...")
-            record = run_one(identity, prompt, args.proxy_name, run_index)
-            append_result(record, out_file)
-            print(f"  -> status={record['status']} model={record['model_selected']} "
-                  f"cost={record['cost']} passed={record['passed']}")
+    for prompt, run_index in planned:
+        done += 1
+        print(f"[{done}/{total}] {prompt['id']} (proxy={args.proxy_name}, run={run_index})...")
+        record = run_one(identity, prompt, args.proxy_name, run_index)
+        append_result(record, out_file)
+        print(f"  -> status={record['status']} model={record['model_selected']} "
+              f"cost={record['cost']} passed={record['passed']}")
+
+        # Chan nhan sai NGAY o luot dau: --proxy-name chi la cai NHAN runner tu ghi, con
+        # backend ghi proxy that cua no vao routing_decisions.proxy_name. Lech nhau thi ca
+        # dot du lieu bi dan nhan sai va phep so sanh thanh vo nghia - ma khong co loi nao
+        # bao ra. Phase 3 hai nguoi chay tay nen day la cho de go lech nhat.
+        if not checked_proxy and record.get("message_id") and record["status"] == "success":
+            checked_proxy = True
+            actual = _db("SELECT proxy_name FROM routing_decisions "
+                         f"WHERE message_id = '{record['message_id']}';").strip()
+            if actual and actual != args.proxy_name:
+                sys.exit(
+                    f"\n⛔ DUNG LAI: --proxy-name='{args.proxy_name}' nhung backend dang chay "
+                    f"proxy '{actual}' (doc tu routing_decisions).\n"
+                    f"   Da chay 1 luot roi - xoa {out_file.name} hoac dung --resume sau khi sua.\n"
+                    f"   Khoi dong lai backend voi CHAT_ACTIVE_PROXY={args.proxy_name}, "
+                    f"hoac doi --proxy-name thanh '{actual}'.")
+            print(f"  (da doi chieu: backend that su dang chay proxy '{actual}')")
 
     print(f"\nĐã ghi {total} record vào {out_file}")
 

@@ -241,6 +241,29 @@ def check_backend_config():
 
 
 # ---------------------------------------------------------------- 7. bo de + bo cham
+def check_credit():
+    """Vi credit cua user thi nghiem co du cho 360 luot khong.
+
+    Het credit giua dot -> cac luot con lai bi tu choi va ghi status=error, ma do la loi
+    VI NOI BO can tien, khong phai loi nha cung cap -> ban error_rate cua proxy dang chay.
+    Do that 17/10: 360 luot can ~249.000 credit (692/luot), vi chi con 155.681.
+    """
+    code, out, _ = sh([*PG,
+        "SELECT u.email, w.balance FROM credit_wallets w JOIN users u ON u.id=w.user_id "
+        "WHERE u.email LIKE 'exp.buyer.%' ORDER BY w.balance DESC LIMIT 1;"])
+    if code != 0 or not out:
+        warn("Vi credit", "khong tim thay user thi nghiem (exp.buyer.*) - runner se tu tao")
+        return
+    email, bal = out.split("|")[0], int(out.split("|")[1])
+    need_360 = 360 * 1600
+    if bal < need_360:
+        warn("Vi credit", f"{email} con {bal:,}, uoc can ~{need_360:,} cho 360 luot. "
+                          f"Xoa experiments/scripts/.experiment_identity.json de tao danh "
+                          f"tinh moi (duoc cap 1.000.000), hoac chia nho dot chay")
+    else:
+        ok("Vi credit", f"{bal:,} - du cho 360 luot (~{need_360:,})")
+
+
 def check_prompts_and_graders():
     code, out, err = sh([sys.executable, str(EXP / "prompts" / "validate_prompts.py")])
     if code != 0:
@@ -273,6 +296,7 @@ def main():
     check_portkey()
     check_pricing()
     check_backend_config()
+    check_credit()
     check_prompts_and_graders()
 
     print("=" * 78)

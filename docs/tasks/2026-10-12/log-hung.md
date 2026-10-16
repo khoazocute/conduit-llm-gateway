@@ -258,3 +258,126 @@ Sau đó chạy `verify_results.py` trên dry-run mới trước khi áp luật 
 - `decision_rule.py` chỉ in `pareto_data` của proxy qua bước 1 (phát hiện E của Khoa) — nên sửa để
   in cả 3 proxy, báo cáo cần số của cả proxy bị loại.
 - Java: 13/14 test pass; lượt lỗi duy nhất là `contextLoads` do Postgres chưa chạy, không liên quan.
+
+---
+
+## 2026-10-17 — Cổng kiểm tiền-bay trước Phase 3
+
+Hùng yêu cầu kiểm hết mọi rủi ro để không phải chạy lại lần 2. Tìm ra **7 vấn đề**, trong đó
+**3 cái sẽ làm sai kết quả mà không có lỗi nào báo ra**.
+
+### ⛔ 1. Bifrost quá hạn embedding → định tuyến sai TRONG IM LẶNG (nặng nhất)
+
+Analyzer đặt `timeout: 1.5s` cho lượt embedding. Bằng chứng trong `/api/logs`: lượt đầu sau
+khi idle mất **1647 ms** → vượt hạn → `complexity_tier` **TRỐNG** → **không CEL rule nào khớp**
+→ request rơi về model mà app xin (`gpt-4o-mini`), và được ghi nhận như một quyết định routing
+bình thường. Một lượt khác mất **1465 ms** — sát hạn.
+
+Đây chính là **phát hiện C của Khoa** ("Bifrost không tất định") và **tôi phản biện SAI hôm
+16/10**: tôi đoán điểm nằm sát ngưỡng tier. Gọi **thẳng** Bifrost 6 lần (`max_tokens=1`, gần như
+miễn phí) thì nó **tất định hoàn toàn** — `claude-haiku` cả 6 lần. Không phải nhiễu, không phải
+warmup, mà là **quá hạn**.
+
+Hậu quả nếu không sửa: Bifrost có những lượt âm thầm bị tính là "chọn `gpt-4o-mini`" → kéo
+`consistency_rate` xuống và làm nó **trông rẻ hơn thực tế**. Cả hai đều là chỉ số trong luật chọn.
+
+Sửa: `timeout` 1.5s → **8s** (không đổi chính sách định tuyến, chỉ cho analyzer đủ thời gian)
++ `preflight.py` kiểm mục này.
+
+### ⛔ 2. Ví credit không đủ cho 360 lượt → chết giữa đợt, bẩn `error_rate`
+
+Đo từ đợt 24 lượt: **692 credit/lượt** trung bình, cao nhất 1.595 → 360 lượt cần **~249.000**.
+Ví của user thí nghiệm chỉ còn **155.681** → sẽ cạn khoảng **lượt 225**, và mọi lượt sau bị ghi
+`status=error` — nhưng đó là **lỗi ví nội bộ cạn tiền**, không phải lỗi nhà cung cấp → bẩn
+`error_rate` của đúng proxy đang chạy lúc đó.
+
+Sửa: `CREDIT_GRANTED` 200.000 → **1.000.000** (credit là đơn vị nội bộ, để dư không tốn gì) +
+`assert_enough_credit()` chặn **trước khi tiêu đồng nào** + mục kiểm trong `preflight.py`.
+
+### ⛔ 3. `--proxy-name` chỉ là cái NHÃN, không ai kiểm
+
+Runner ghi bất kỳ nhãn nào ta truyền. Backend đang chạy Portkey mà gõ `--proxy-name bifrost`
+thì 120 bản ghi bị dán nhãn sai và **cả phép so sánh thành vô nghĩa, không lỗi nào báo**.
+`dry_run.sh` an toàn vì set cả hai từ cùng biến, nhưng **Phase 3 hai người chạy tay** — đúng chỗ
+dễ gõ lệch.
+
+Sửa: backend **có** ghi proxy thật của nó vào `routing_decisions.proxy_name` → runner đọc lại
+dòng vừa tạo ở **lượt đầu** và **dừng ngay** nếu lệch.
+
+### 4. Bước chấm trong `dry_run.sh` chưa bao giờ chạy được
+
+`grade_results.py` / `verify_results.py` chết với đường dẫn tuyệt đối (`Path().glob` không nhận
+pattern tuyệt đối) — mà `dry_run.sh` truyền kiểu đó. Sửa cả hai.
+
+### 5. `decision_rule.py` ném exception khi không proxy nào qua cổng
+
+Chạy thật mà không ai đạt 80% thì mất luôn bảng số liệu, chỉ còn stack trace. Giờ đó là **một
+kết quả**: `selected_proxy=None` + `no_proxy_passed_gate=True` + số liệu đủ cả 3 proxy. Kèm luôn
+**phát hiện E của Khoa**: `pareto_data` in cho **tất cả** proxy, không chỉ proxy qua cổng.
+
+### 6. Không có cách chạy tiếp → dứt giữa đợt là trả tiền hai lần
+
+`roadmap.md` mục 7 ghi cách giảm rủi ro là "chạy tiếp từ lượt lỗi" nhưng chưa ai làm. Thêm
+`--resume FILE`: bỏ qua lượt **đã thành công**, chạy lại lượt **lỗi** (lượt lỗi không tốn tiền và
+mỗi item cần đủ 3 lần lặp). Tách thành `plan_runs()` + 5 test.
+
+### 7. Cái bẫy tôi tự tạo, và nó đã nổ
+
+`--limit 0` đổi nghĩa từ *"không chạy lượt nào"* sang *"lấy hết"*, nhưng header `dry_run.sh` vẫn
+ghi `PROMPT_LIMIT=0` là cách test không tốn tiền. Bản vá chặn **bị lỗi cú pháp nên chưa áp**, mà
+lệnh thử lại nằm ngay sau đó trong **cùng một lượt gọi** → chạy thật. **79 lượt ngoài ý muốn,
+$0.00325.**
+
+Bài học, đã sửa đúng gốc: **không bao giờ gộp "vá lỗi" và "thử xem vá có ăn không" vào cùng một
+lệnh** — phải xác nhận bản vá đã áp trước, thành một bước riêng. Giờ `PROMPT_LIMIT=0` bị chặn kèm
+hướng dẫn; test không tốn tiền dùng `NO_CALLS=1`. Dữ liệu dở dang chuyển vào
+`experiments/results/_khong-phai-du-lieu-thi-nghiem/` kèm README (28/79 lượt lỗi là do bị kill).
+
+### Những mặt đã kiểm và SẠCH
+
+| Mặt | Cách kiểm | Kết quả |
+|---|---|---|
+| Sandbox chạy code HumanEval | Cả 10 bài với **lời giải chuẩn** của dataset | **10/10 đạt**; lời giải sai **10/10 trượt**; 0.7s, không treo |
+| Bộ chấm MMLU sau khi sửa | Trên 10 câu trả lời haiku thật | **10/10 trích được đáp án**, không chấm trượt oan |
+| `temperature: 0` | 17 item × 3 lần qua app | **17/17 cùng kết quả**, 0 dao động |
+| `max_tokens: 1024` đủ chưa | haiku cả 10 item MMLU; `ifeval_08` (đòi ≥350 từ) trên haiku | **0/10 bị cắt**; `ifeval_08` 534 token / 366 từ, `end_turn`, **đạt** — dùng 52% ngân sách |
+| Ghi đúng model + đúng tiền | 24 lượt qua app, cả 3 nhánh | **0 lượt** thành công nào bị ghi `cost<=0`; `verify_results` sạch |
+| Phân bố model của Portkey | Tính trên cả 40 item (tất định) | **14 gpt-4o / 13 gpt-4o-mini / 13 haiku** — không tier nào bỏ trống |
+| `routing_decisions` ghi cả lượt lỗi | Query DB | Có (`litellm|error|7`) → đếm vẫn khớp |
+| Số bản ghi file vs DB | Đợt 24 lượt | **24 = 24** |
+| Hai nửa Phase 3 có trùng item không | Test tự động | 20 + 20 = 40, **giao nhau rỗng** |
+| Gõ sai tên bộ | Test tự động | Nổ, không âm thầm chạy sai |
+
+### Chi phí ngày 16–17/10
+
+| Việc | Lượt | Tiền |
+|---|---|---|
+| Tìm nguyên nhân Sonnet / haiku / gpt-4o | 24 | $0.056 |
+| Sự cố `PROMPT_LIMIT=0` | 79 | $0.0033 |
+| Cổng kiểm 2 nhánh (bifrost + portkey) | 24 | $0.0502 |
+| Dò Bifrost tất định (`max_tokens=1`) | 6 | ~$0 |
+| `ifeval_08` trên haiku (2 ngân sách) | 2 | $0.0055 |
+| **Tổng** | **135** | **~$0.116** |
+
+Chiếu từ 24 lượt = $0.0502 → **360 lượt ước $0.75**. Thời gian ~**30 phút** (≈4s/lượt + 3 lần
+restart backend).
+
+### Khoa cần làm trước khi chạy phần của mình
+
+```bash
+git pull
+bash proxy-configs/bifrost/complexity-setup.sh    # nhận timeout 8s mới
+docker compose up -d --force-recreate litellm      # conduit-pool không còn sonnet
+rm -f experiments/scripts/.experiment_identity.json  # ví mới 1.000.000 credit
+PYTHONIOENCODING=utf-8 python experiments/scripts/preflight.py   # phải xanh hết
+```
+
+### Còn lại — chưa kiểm được / chấp nhận
+
+- **Hạn mức chi tiêu của API key**: không đọc được từ đây. Hùng nên xem console của provider
+  trước khi chạy, vì hết hạn mức giữa đợt cũng gây lỗi hàng loạt.
+- **Rate limit**: nhịp tự nhiên ~4s/lượt (≈15 lượt/phút) nên rủi ro thấp; runner không có nghỉ
+  giữa lượt. Nếu gặp 429 thì lượt đó ghi `status=error` và `--resume` chạy lại được.
+- **Giới hạn để ghi báo cáo:** `claude-haiku` chạm trần ngân sách trên một số item IFEval
+  (`ifeval_01` chạm cả ở 1536) → **chi phí đo được của haiku trên IFEval bị quyết định bởi trần
+  ta đặt**, không phải độ dài tự nhiên. Áp cùng trần cho cả 3 proxy nên vẫn công bằng.
