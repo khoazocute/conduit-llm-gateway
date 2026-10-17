@@ -171,13 +171,15 @@ class DecisionRuleBranches(unittest.TestCase):
     def test_khong_proxy_nao_qua_cong_thi_BAO_CAO_chu_khong_nem_exception(self):
         """Đổi 2026-10-17: trước đây ném ValueError, nên nếu chạy thật mà không proxy nào
         qua 80% thì mất luôn bảng số liệu (gặp ở đợt kiểm 24 lượt). Giờ đó là MỘT KẾT QUẢ:
-        trả về selected_proxy=None + no_proxy_passed_gate=True + số liệu đủ cả 3 proxy."""
+        no_proxy_passed_gate=True + số liệu đủ CẢ BA proxy + chọn theo luật dự phòng D13."""
         records = (make_records("proxyA", [], cost=0.01, latency=100)          # 0/12 đúng
                    + make_records("proxyB", CLOSED_QA_IDS[:3], cost=0.02, latency=200))  # 3/12
         result = apply_decision_rule(records, ["proxyA", "proxyB"])
 
-        self.assertIsNone(result["selected_proxy"])
         self.assertTrue(result["no_proxy_passed_gate"])
+        # proxyA sai het -> chi phi/cau dat khong xac dinh -> D13 chon proxyB
+        self.assertEqual(result["selected_proxy"], "proxyB")
+        self.assertTrue(result["selected_by_fallback"])
         self.assertEqual(result["candidates_after_qa_filter"], [])
         # So lieu phai co cho CA HAI proxy du ca hai deu bi loai
         self.assertEqual(set(result["pareto_data"]), {"proxyA", "proxyB"})
@@ -185,6 +187,46 @@ class DecisionRuleBranches(unittest.TestCase):
             self.assertFalse(row["passed_gate"], name)
             self.assertIn("avg_cost", row)
             self.assertIn("p95_latency_ms", row)
+
+    def test_D13_khong_ai_qua_cong_thi_chon_theo_chi_phi_moi_cau_dat(self):
+        """D13 (đăng ký trước 2026-10-17): không ai đạt 80% thì xếp theo chi phí/câu đạt.
+        Luật này chốt TRƯỚC khi thấy số nên vẫn khách quan."""
+        # proxyRe: 3/12 dat, re  -> 12*0.001/3 = 0.004/cau dat
+        # proxyDat: 6/12 dat, dat -> 12*0.010/6 = 0.020/cau dat
+        records = (make_records("proxyRe", CLOSED_QA_IDS[:3], cost=0.001, latency=100)
+                   + make_records("proxyDat", CLOSED_QA_IDS[:6], cost=0.010, latency=100))
+        result = apply_decision_rule(records, ["proxyRe", "proxyDat"])
+
+        self.assertTrue(result["no_proxy_passed_gate"])
+        self.assertTrue(result["selected_by_fallback"])
+        self.assertEqual(result["selected_proxy"], "proxyRe")
+        self.assertLess(result["fallback_ranking"]["proxyRe"],
+                        result["fallback_ranking"]["proxyDat"])
+
+    def test_D13_proxy_sai_HET_khong_duoc_chon_du_chi_phi_bang_0(self):
+        """Bẫy chia cho 0: proxy sai hết thì chi phí/câu đạt KHÔNG xác định, không được
+        coi là 0 rồi thành 'rẻ nhất'."""
+        records = (make_records("proxySaiHet", [], cost=0.001, latency=100)        # 0/12 dat
+                   + make_records("proxyCoDat", CLOSED_QA_IDS[:4], cost=0.010, latency=100))
+        result = apply_decision_rule(records, ["proxySaiHet", "proxyCoDat"])
+
+        self.assertTrue(result["no_proxy_passed_gate"])
+        self.assertIsNone(result["fallback_ranking"]["proxySaiHet"])
+        self.assertEqual(result["selected_proxy"], "proxyCoDat")
+
+    def test_D13_ca_hai_sai_het_thi_khong_chon_ai(self):
+        records = (make_records("a", [], cost=0.001, latency=100)
+                   + make_records("b", [], cost=0.002, latency=100))
+        result = apply_decision_rule(records, ["a", "b"])
+        self.assertIsNone(result["selected_proxy"])
+        self.assertFalse(result["selected_by_fallback"])
+
+    def test_qua_cong_thi_KHONG_dung_du_phong(self):
+        records = make_records("p", CLOSED_QA_IDS, cost=0.01, latency=100)  # 12/12
+        result = apply_decision_rule(records, ["p"])
+        self.assertEqual(result["selected_proxy"], "p")
+        self.assertFalse(result["selected_by_fallback"])
+        self.assertFalse(result["no_proxy_passed_gate"])
 
     def test_pareto_data_co_ca_proxy_bi_loai(self):
         """Phát hiện E của Khoa: trước đây chỉ in số liệu của proxy QUA cổng, nên báo cáo

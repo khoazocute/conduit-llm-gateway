@@ -148,6 +148,22 @@ def compute_consistency_rate(records: list[dict[str, Any]], proxy_name: str) -> 
     return consistent / len(by_prompt)
 
 
+def compute_cost_per_passing(records: list[dict[str, Any]], proxy_name: str) -> float | None:
+    """Chi phi tren moi CAU DAT = tong chi phi / so cau dat (y cua Khoa).
+
+    Gop ca hai ve muc tieu cua thay vao 1 so: re ma sai thi van bi tinh la dat. Dung lam
+    chi so dien giai chinh, va lam LUAT DU PHONG cua D13 khi khong proxy nao qua cong 80%.
+
+    Tra None khi khong co cau nao dat - khi do khong xac dinh duoc, va proxy do KHONG
+    duoc chon (chia cho 0 ma coi la 0 thi proxy sai het lai thanh "re nhat").
+    """
+    rows = [r for r in records if r["proxy_name"] == proxy_name and r.get("status") == "success"]
+    passed = sum(1 for r in rows if _grade_of(r))
+    if not passed:
+        return None
+    return sum(r.get("cost") or 0 for r in rows) / passed
+
+
 def _pareto(records: list[dict[str, Any]], names: list[str],
             costs: dict[str, float]) -> dict[str, dict[str, Any]]:
     """So lieu day du cho TUNG proxy. Dung cho ca proxy bi loai o buoc 1 - bao cao can
@@ -160,6 +176,7 @@ def _pareto(records: list[dict[str, Any]], names: list[str],
             "error_rate": compute_error_rate(records, name),
             "p95_latency_ms": compute_p95_latency(records, name),
             "consistency_rate": compute_consistency_rate(records, name),
+            "cost_per_passing": compute_cost_per_passing(records, name),
             "passed_gate": compute_quality_accuracy(records, name) >= QUALITY_PASS_THRESHOLD,
         }
         for name in names
@@ -178,12 +195,23 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
     ]
 
     if not candidates:
-        # KHONG nem exception nua (sua 2026-10-17): neu khong proxy nao qua cong thi do la
-        # MOT KET QUA, phai bao cao kem day du so lieu cua ca 3 proxy de biet vi sao - chu
-        # khong phai mot stack trace. Truoc day nem ValueError nen chay that ma khong ai
-        # qua 80% la mat luon bang so lieu.
+        # KHONG nem exception (sua 2026-10-17): khong proxy nao qua cong la MOT KET QUA,
+        # phai bao cao kem day du so lieu ca 3 proxy - khong phai mot stack trace.
+        #
+        # D13 (dang ky truoc 2026-10-17, TRUOC khi chay Phase 3): neu khong ai dat nguong
+        # thi xep theo CHI PHI TREN MOI CAU DAT = tong chi phi / so cau dat. Luat du phong
+        # nay duoc chot TRUOC khi thay so, nen van khach quan; chot sau khi thay so thi la
+        # dich muc tieu. Bao cao PHAI noi ro: luat 4 buoc khong phan giai duoc, ket qua
+        # dung luat du phong da dang ky truoc.
+        #
+        # Proxy khong co cau nao dat -> cost/cau dat khong xac dinh -> KHONG duoc chon.
+        ranking = [(name, compute_cost_per_passing(records, name)) for name in proxy_names]
+        eligible = sorted([(c, n) for n, c in ranking if c is not None])
         return {
-            "selected_proxy": None,
+            "selected_proxy": eligible[0][1] if eligible else None,
+            "selected_by_fallback": bool(eligible),
+            "fallback_rule": "D13: chi phi tren moi cau dat (thap nhat)",
+            "fallback_ranking": {n: c for n, c in ranking},
             "no_proxy_passed_gate": True,
             "gate_threshold": QUALITY_PASS_THRESHOLD,
             "tie_unresolved": False,
@@ -231,6 +259,7 @@ def apply_decision_rule(records: list[dict[str, Any]], proxy_names: list[str]) -
 
     return {
         "selected_proxy": selected,
+        "selected_by_fallback": False,
         "no_proxy_passed_gate": False,
         "gate_threshold": QUALITY_PASS_THRESHOLD,
         "tie_unresolved": tie_unresolved,

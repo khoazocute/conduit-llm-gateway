@@ -172,6 +172,19 @@ Luật này **vốn đúng** — nó chỉ vô nghĩa dưới D2. Dưới Design
 chưa chạy.** Sửa **thí nghiệm** bây giờ, có lý do ghi lại, là hợp lệ; sửa **luật** sau khi đã thấy
 kết quả thì mới là mất khách quan. Nhóm sửa thí nghiệm, **không sửa luật**.
 
+### 6.0. Luật dự phòng nếu không proxy nào qua cổng (D13, đăng ký trước 2026-10-17)
+
+Đợt kiểm 24 lượt cho **cả hai proxy đều 75%** → ngưỡng 80% nằm ngay giữa khoảng kết quả có thể
+xảy ra. Nên phải chốt **trước khi chạy**:
+
+> Nếu không proxy nào đạt 80% ở bước 1: xếp theo **chi phí trên mỗi câu trả lời đạt**, chọn thấp
+> nhất. Proxy không có câu nào đạt thì chỉ số này **không xác định** và **không được chọn**. Cả ba
+> sai hết thì không chọn ai.
+
+Báo cáo **phải nói rõ** rằng luật 4 bước không phân giải được và kết quả dùng luật dự phòng đã
+đăng ký trước. **Không hạ ngưỡng 80%** — hạ ngưỡng sau khi thấy số là dịch mục tiêu, và đó là chỗ
+dễ bị hỏi nhất khi bảo vệ.
+
 ### 6.1. Chỉ số diễn giải chính
 
 **Chi phí trên mỗi câu trả lời đạt** = tổng chi phí / số câu đạt. *(Ý của Khoa.)* Nó gộp đúng hai vế
