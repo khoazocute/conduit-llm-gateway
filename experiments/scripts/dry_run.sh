@@ -6,8 +6,8 @@
 #
 # CHỈ chạy khi đã xin xác nhận số lượt/model với Hùng (CLAUDE.md mục 2) - script này
 # TỰ NÓ không hỏi lại, kiểm tra kỹ PROMPT_LIMIT/RUNS/PROXIES trước khi Enter.
-# Test cơ chế an toàn (không tốn tiền): PROMPT_LIMIT=0 (bootstrap chạy nhưng
-# không lượt chat thật nào).
+# Test cơ chế an toàn (không tốn tiền): NO_CALLS=1 (bootstrap + restart backend chạy
+# nhưng KHÔNG gọi runner). PROMPT_LIMIT=0 KHÔNG còn là cách test an toàn — nó bị chặn.
 #
 # Cách dùng:
 #   PROMPT_LIMIT=3 RUNS=3 PROXIES="litellm bifrost portkey" bash experiments/scripts/dry_run.sh
@@ -26,12 +26,36 @@ BACKEND_DIR="$ROOT_DIR/backend-gateway"
 LOG_DIR="$ROOT_DIR/experiments/results/dry-run-logs"
 mkdir -p "$LOG_DIR"
 
-PROMPT_LIMIT="${PROMPT_LIMIT:-3}"
+PROMPT_LIMIT="${PROMPT_LIMIT:-}"    # trong = lay het (sau khi loc SETS/PER_SET)
+NO_CALLS="${NO_CALLS:-}"            # =1 -> chi bootstrap, KHONG goi runner (test khong ton tien)
+
+# CHAN mot cai bay that: truoc 2026-10-16, PROMPT_LIMIT=0 nghia la "khong chay luot nao"
+# (vi code cu cat bang [:0]) va header cua file nay ghi do la cach test khong ton tien.
+# Tu khi --limit 0 doi thanh "lay het", truyen 0 se chay TOAN BO bo de. Da dinh that
+# 2026-10-16: 57 luot ngoai y muon. Chan lai thay vi de no chay im lang.
+if [ "$PROMPT_LIMIT" = "0" ]; then
+  cat >&2 <<'WARN'
+PROMPT_LIMIT=0 KHONG con nghia la "khong chay luot nao".
+   Tu 2026-10-16, --limit 0 nghia la LAY HET item -> truyen 0 se chay TOAN BO bo de.
+   - Test khong ton tien:  NO_CALLS=1 bash experiments/scripts/dry_run.sh
+   - Chay het that su:     bo han PROMPT_LIMIT (de trong)
+WARN
+  exit 1
+fi
 RUNS="${RUNS:-3}"
 PROXIES="${PROXIES:-litellm bifrost portkey}"
+# Design Y (K5, Phase 3): SETS lọc bộ (VD "humaneval,ifeval"), PER_SET lấy N item đầu mỗi bộ.
+# Dry-run 36 lượt: PER_SET=1 PROMPT_LIMIT=40 RUNS=3. PROMPT_LIMIT cắt SAU khi lọc.
+SETS="${SETS:-}"
+PER_SET="${PER_SET:-0}"
 
-echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
-echo "Tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((PROMPT_LIMIT * RUNS * $(echo $PROXIES | wc -w)))"
+echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
+N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
+import run_experiment as r
+ps=r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)
+lim='$PROMPT_LIMIT'
+print(len(ps[:int(lim)] if lim else ps))")
+echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"
 
 set -a
 # .env soạn trên Windows có CRLF - không bỏ \r thì mọi giá trị dính \r ở cuối
@@ -89,9 +113,16 @@ for proxy in $PROXIES; do
   fi
   echo "  Backend sẵn sàng (active-proxy=$proxy). Chạy runner..."
 
+  if [ "$NO_CALLS" = "1" ]; then
+    echo "  NO_CALLS=1 -> bo qua runner cho $proxy (KHONG goi luot that nao)."
+    continue
+  fi
+
   # PYTHONIOENCODING: console Windows mac dinh cp1252, khong in duoc tieng Viet co dau.
   if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/run_experiment.py" \
-      --proxy-name "$proxy" --limit "$PROMPT_LIMIT" --runs "$RUNS"; then
+      --proxy-name "$proxy" --runs "$RUNS" \
+      ${PROMPT_LIMIT:+--limit "$PROMPT_LIMIT"} \
+      --sets "$SETS" --per-set "$PER_SET"; then
     echo "  Runner báo lỗi cho $proxy — xem log ở trên, kết quả đã chạy được vẫn giữ nguyên (ghi ngay từng lượt)." >&2
     FAILED_PROXIES+=("$proxy")
   fi
@@ -107,6 +138,14 @@ stop_backend
 echo ""
 echo "=== Xong ==="
 echo "Kết quả thô: $ROOT_DIR/experiments/results/run_*.json"
+
+# Chấm TRƯỚC khi gộp: runner chỉ thu output (passed=null). Gộp rồi áp luật ngay thì mọi
+# proxy có độ chính xác 0% và decision_rule.py báo "không proxy nào đạt" (gặp ở dry-run
+# 16/10). --db nạp luôn response_quality_score. Chấm lại sau được, không tốn tiền.
+if [ ${#RESULT_FILES[@]} -gt 0 ]; then
+  PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/grade_results.py" "${RESULT_FILES[@]}" --db \
+    || echo "grade_results.py báo lỗi — decision_rule.py bên dưới sẽ thấy lượt chưa chấm." >&2
+fi
 
 # Gộp kết quả + áp decision_rule.py ngay (roadmap.md Phase D: "một lệnh chạy hết
 # dry-run và cho ra file kết quả thô + bảng tổng hợp" - trước đây phải gộp tay).
@@ -125,7 +164,14 @@ PYEOF
       | tee "$MERGE_DIR/decision_rule_output.json"; then
     echo "Bảng quyết định: $MERGE_DIR/decision_rule_output.json"
   else
-    echo "decision_rule.py báo lỗi (có thể do chưa đủ proxy đạt ngưỡng closed-QA) — xem ở trên." >&2
+    echo "decision_rule.py báo lỗi — xem ở trên." >&2
+  fi
+
+  # Xuất CSV để đọc/vẽ biểu đồ. decision_rule_output.json lồng nhau, không mở Excel được.
+  echo ""
+  if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/analysis/export_tables.py" \
+      "$MERGE_DIR/merged.json" -o "$MERGE_DIR/tables"; then
+    echo "export_tables.py báo lỗi — chạy tay lại được, không tốn tiền." >&2
   fi
 fi
 

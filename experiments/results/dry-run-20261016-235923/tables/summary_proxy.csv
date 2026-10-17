@@ -1,0 +1,3 @@
+﻿proxy,n_runs,n_success,n_error,n_ungraded,n_passed,accuracy,error_rate,cost_total_usd,cost_per_run_usd,cost_per_passing_usd,p95_latency_ms,mean_latency_ms,consistency_rate
+bifrost,12,12,0,0,9,0.75,0.0,0.0403811,0.003365091666666667,0.004486788888888889,10389,5145.333333333333,0.75
+portkey,12,12,0,0,9,0.75,0.0,0.0098215,0.0008184583333333334,0.0010912777777777778,6573,2892.0833333333335,1.0

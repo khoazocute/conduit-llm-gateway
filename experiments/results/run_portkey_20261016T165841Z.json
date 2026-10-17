@@ -1,0 +1,284 @@
+[
+  {
+    "message_id": "8b2e92ba-374e-47df-b60a-df35747528cd",
+    "timestamp": "2026-10-16T16:58:44.075427+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 1,
+    "model_selected": "gpt-4o",
+    "cost": 0.00049,
+    "credit_charged": 290,
+    "latency_ms": 1890,
+    "latency_ms_runner": 2257.1027999983926,
+    "response": "C",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "e52493e7-e153-42b5-9b73-42caa1edfbf1",
+    "timestamp": "2026-10-16T16:58:45.361707+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 2,
+    "model_selected": "gpt-4o",
+    "cost": 0.00049,
+    "credit_charged": 290,
+    "latency_ms": 920,
+    "latency_ms_runner": 1197.7704000000813,
+    "response": "C",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "85cf5e8e-0e2f-447c-9d01-015a45e698ef",
+    "timestamp": "2026-10-16T16:58:46.476531+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 3,
+    "model_selected": "gpt-4o",
+    "cost": 0.0005,
+    "credit_charged": 291,
+    "latency_ms": 750,
+    "latency_ms_runner": 968.4147000007215,
+    "response": "C.",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "6b17ee23-6c20-4f28-b167-9608f0bae24c",
+    "timestamp": "2026-10-16T16:58:48.737779+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.685e-05,
+    "credit_charged": 275,
+    "latency_ms": 1934,
+    "latency_ms_runner": 2164.175099998829,
+    "response": "Let's break down the information given:\n\n1. Samantha is currently 31 years old.\n2. Raymond was born 6 years before Samantha, so Raymond's age is:\n   \\[\n   31 + 6 = 37 \\text{ years old}\n   \\]\n3. Raymond had a son when he was 23 years old. To find out how many years ago Raymond had his son, we need to determine how old Raymond is now compared to when he had his son:\n   \\[\n   37 - 23 = 14 \\text{ years ago}\n   \\]\n\nThus, Raymond's son was born **14 years ago**.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "d9f8fb7f-e92d-4854-8104-c3ad6e2da2c0",
+    "timestamp": "2026-10-16T16:58:51.179991+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.625e-05,
+    "credit_charged": 274,
+    "latency_ms": 2089,
+    "latency_ms_runner": 2347.4294999996346,
+    "response": "Let's break down the information given:\n\n1. Samantha is currently 31 years old.\n2. Raymond was born 6 years before Samantha, so Raymond's age is:\n   \\[\n   31 + 6 = 37 \\text{ years old}\n   \\]\n3. Raymond had a son when he was 23 years old. To find out how many years ago Raymond had his son, we need to determine how old Raymond is now compared to when he had his son:\n   \\[\n   37 - 23 = 14 \\text{ years ago}\n   \\]\n\nThus, Raymond's son was born 14 years ago.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "f0d37053-ecc4-4851-b7b0-411d47d0c72f",
+    "timestamp": "2026-10-16T16:58:54.183056+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00012825,
+    "credit_charged": 379,
+    "latency_ms": 2668,
+    "latency_ms_runner": 2896.4543999991292,
+    "response": "To find out how many years ago Raymond's son was born, we first need to determine Raymond's current age.\n\nSince Samantha is currently 31 years old and Raymond was born 6 years before her, we can calculate Raymond's age as follows:\n\n\\[\n\\text{Raymond's age} = \\text{Samantha's age} + 6 = 31 + 6 = 37\n\\]\n\nNext, we know that Raymond had a son when he was 23 years old. To find out how many years ago that was, we subtract Raymond's age at the time of his son's birth from his current age:\n\n\\[\n\\text{Years since son's birth} = \\text{Raymond's current age} - \\text{Raymond's age when son was born} = 37 - 23 = 14\n\\]\n\nThus, Raymond's son was born 14 years ago. \n\nTherefore, the answer is:\n\n\\[\n\\boxed{14}\n\\]",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "14a7c803-d367-4e86-b1b1-9489344a2a5d",
+    "timestamp": "2026-10-16T16:58:56.376608+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o",
+    "cost": 0.0026125,
+    "credit_charged": 551,
+    "latency_ms": 1821,
+    "latency_ms_runner": 2071.426499998779,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    \"\"\" Return list of prime factors of given integer in the order from smallest to largest.\n    Each of the factors should be listed number of times corresponding to how many times it appears in factorization.\n    Input number should be equal to the product of all factors\n    \"\"\"\n    factors = []\n    # Check for number of 2s that divide n\n    while n % 2 == 0:\n        factors.append(2)\n        n //= 2\n    # n must be odd at this point, so a skip of 2 (i.e., i = i + 2) can be used\n    for i in range(3, int(n**0.5) + 1, 2):\n        # While i divides n, append i and divide n\n        while n % i == 0:\n            factors.append(i)\n            n //= i\n    # Condition if n is a prime number greater than 2\n    if n > 2:\n        factors.append(n)\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "f7b226fa-0dad-491c-8338-5bc067986e78",
+    "timestamp": "2026-10-16T16:58:58.625030+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o",
+    "cost": 0.0026425,
+    "credit_charged": 556,
+    "latency_ms": 1920,
+    "latency_ms_runner": 2142.782000000807,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    \"\"\" Return list of prime factors of given integer in the order from smallest to largest.\n    Each of the factors should be listed number of times corresponding to how many times it appears in factorization.\n    Input number should be equal to the product of all factors\n    \"\"\"\n    factors = []\n    # Check for number of 2s that divide n\n    while n % 2 == 0:\n        factors.append(2)\n        n = n // 2\n    \n    # n must be odd at this point, so a skip of 2 (i.e., i = i + 2) can be used\n    for i in range(3, int(n**0.5) + 1, 2):\n        # While i divides n, append i and divide n\n        while n % i == 0:\n            factors.append(i)\n            n = n // i\n    \n    # Condition if n is a prime number greater than 2\n    if n > 2:\n        factors.append(n)\n    \n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "2c00dcac-f9b4-4d5f-949c-f010d875966d",
+    "timestamp": "2026-10-16T16:59:00.538593+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o",
+    "cost": 0.0015325,
+    "credit_charged": 389,
+    "latency_ms": 1556,
+    "latency_ms_runner": 1814.7364999986166,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    \"\"\" Return list of prime factors of given integer in the order from smallest to largest.\n    Each of the factors should be listed number of times corresponding to how many times it appears in factorization.\n    Input number should be equal to the product of all factors\n    \"\"\"\n    factors = []\n    divisor = 2\n    while n >= 2:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "48c33d55-5b3e-4a0d-aead-8f2f5a369a9f",
+    "timestamp": "2026-10-16T16:59:07.071968+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00043035,
+    "credit_charged": 1114,
+    "latency_ms": 6181,
+    "latency_ms_runner": 6406.057700000019,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਦਾ ਮੁਲਾਂਕਣ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n| ਮਾਪਦੰਡ                | ਵਿਆਖਿਆ                                                                 | 1 - ਬਹੁਤ ਹੀ ਕਮਜ਼ੋਰ | 2 - ਕਮਜ਼ੋਰ | 3 - ਠੀਕ | 4 - ਚੰਗਾ | 5 - ਬਹੁਤ ਚੰਗਾ |\n|-----------------------|------------------------------------------------------------------------|-------------------|-----------|---------|-----------|----------------|\n| ਕੋਡਿੰਗ ਦੀ ਸਮਰੱਥਾ    | ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ, ਸਾਫ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਕੋਡ ਬਣਾਉਣ ਦੀ ਯੋਗਤਾ।               |                   |           |         |           |                |\n| ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ | ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਨ ਅਤੇ ਉਨ੍ਹਾਂ ਦਾ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ।                     |                   |           |         |           |                |\n| ਤਕਨੀਕੀ ਗਿਆਨ         | ਭਾਸ਼ਾਵਾਂ, ਫਰੇਮਵਰਕਾਂ ਅਤੇ ਟੂਲਾਂ ਦਾ ਗਿਆਨ।                                   |                   |           |         |           |                |\n| ਸਾਫਟਵੇਅਰ ਡਿਵੈਲਪਮੈਂਟ ਪ੍ਰਕਿਰਿਆ | ਸਾਫਟਵੇਅਰ ਵਿਕਾਸ ਦੇ ਚੱਕਰ (SDLC) ਦੀ ਸਮਝ ਅਤੇ ਅਨੁਸਰਣ।                          |                   |           |         |           |                |\n| ਟੀਮ ਵਿੱਚ ਕੰਮ ਕਰਨ ਦੀ ਯੋਗਤਾ | ਟੀਮ ਦੇ ਮੈਂਬਰਾਂ ਨਾਲ ਸਹਿਯੋਗ ਅਤੇ ਸੰਚਾਰ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।                       |                   |           |         |           |                |\n| ਕੋਡ ਸਮੀਖਿਆ          | ਹੋਰਾਂ ਦੇ ਕੋਡ ਦੀ ਸਮੀਖਿਆ ਕਰਨ ਅਤੇ ਸੁਝਾਅ ਦੇਣ ਦੀ ਯੋਗਤਾ।                       |                   |           |         |           |                |\n| ਨਵੀਂ ਤਕਨੀਕਾਂ ਨੂੰ ਸਿੱਖਣ ਦੀ ਯੋਗਤਾ | ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਅਤੇ ਟੂਲਾਂ ਨੂੰ ਸਿੱਖਣ ਅਤੇ ਅਪਣਾਉਣ ਦੀ ਸਮਰੱਥਾ।                |                   |           |         |           |                |\n| ਪ੍ਰੋਜੈਕਟ ਪ੍ਰਬੰਧਨ     | ਪ੍ਰੋਜੈਕਟਾਂ ਨੂੰ ਯੋਜਨਾ ਬਣਾਉਣ, ਕਾਰਜਾਂ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਕਰਨ ਅਤੇ ਸਮਾਂ ਬੰਨ੍ਹਣ ਦੀ ਯੋਗਤਾ। |                   |           |         |           |                |\n\n### ਨਿਰਣਾਇਕ ਨੋਟਸ:\n- ਹਰ ਮਾਪਦੰਡ ਲਈ ਅੰਕਾਂ ਨੂੰ ਜੋੜ ਕੇ ਕੁੱਲ ਅੰਕ ਪ੍ਰਾਪਤ ਕਰੋ।\n- 40 ਤੋਂ ਵੱਧ ਅੰਕ ਪ੍ਰਾਪਤ ਕਰਨ ਵਾਲੇ ਇੰਜੀਨੀਅਰ ਨੂੰ ਉੱਚ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਵਾਲਾ ਮੰਨਿਆ ਜਾ ਸਕਦਾ ਹੈ।\n- 30-40 ਅੰਕਾਂ ਵਾਲੇ ਇੰਜੀਨੀਅਰਾਂ ਨੂੰ ਮੱਧਮ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਵਾਲਾ ਮੰਨਿਆ ਜਾ ਸਕਦਾ ਹੈ।\n- 30 ਤੋਂ ਘੱਟ ਅੰਕਾਂ ਵਾਲੇ ਇੰਜੀਨੀਅਰਾਂ ਨੂੰ ਕਮਜ਼ੋਰ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਵਾਲਾ ਮੰਨਿਆ ਜਾ ਸਕਦਾ ਹੈ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "41803671-a497-42de-a5cf-33002196428d",
+    "timestamp": "2026-10-16T16:59:13.821976+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00037815,
+    "credit_charged": 983,
+    "latency_ms": 6403,
+    "latency_ms_runner": 6646.461099999215,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਦਾ ਮੁਲਾਂਕਣ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n| ਮਾਪਦੰਡ                | ਵਿਆਖਿਆ                                                                 | 1 - ਬਹੁਤ ਖਰਾਬ | 2 - ਖਰਾਬ | 3 - ਠੀਕ | 4 - ਚੰਗਾ | 5 - ਬਹੁਤ ਚੰਗਾ |\n|-----------------------|------------------------------------------------------------------------|----------------|----------|---------|-----------|----------------|\n| **ਕੋਡਿੰਗ ਸਮਰੱਥਾ**    | ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ, ਸਾਫ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਕੋਡ ਬਣਾਉਣਾ।                     |                |          |         |           |                |\n| **ਅਲਗੋਰਿਦਮ ਅਤੇ ਡਾਟਾ ਸਟ੍ਰਕਚਰ** | ਅਲਗੋਰਿਦਮ ਦੀ ਸਮਝ ਅਤੇ ਡਾਟਾ ਸਟ੍ਰਕਚਰ ਦੀ ਵਰਤੋਂ।                             |                |          |         |           |                |\n| **ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ**    | ਸਿਸਟਮਾਂ ਨੂੰ ਡਿਜ਼ਾਈਨ ਕਰਨ ਦੀ ਸਮਰੱਥਾ, ਵੱਡੇ ਪ੍ਰੋਜੈਕਟਾਂ ਲਈ ਆਰਕੀਟੈਕਚਰ ਬਣਾਉਣਾ। |                |          |         |           |                |\n| **ਬੱਗ ਫਿਕਸਿੰਗ**      | ਬੱਗਾਂ ਨੂੰ ਪਛਾਣਨ ਅਤੇ ਠੀਕ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।                                   |                |          |         |           |                |\n| **ਵਰਤੋਂਕਾਰ ਇੰਟਰਫੇਸ** | ਵਰਤੋਂਕਾਰ ਇੰਟਰਫੇਸ ਨੂੰ ਡਿਜ਼ਾਈਨ ਕਰਨ ਅਤੇ ਵਿਕਸਿਤ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।             |                |          |         |           |                |\n| **ਟੀਮ ਕੰਮ**          | ਟੀਮ ਵਿੱਚ ਕੰਮ ਕਰਨ ਦੀ ਸਮਰੱਥਾ ਅਤੇ ਸਹਿਯੋਗ।                                   |                |          |         |           |                |\n| **ਸਿਖਣ ਦੀ ਸਮਰੱਥਾ**   | ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਅਤੇ ਟੂਲਾਂ ਨੂੰ ਸਿੱਖਣ ਦੀ ਸਮਰੱਥਾ।                             |                |          |         |           |                |\n| **ਕਮਿਊਨਿਕੇਸ਼ਨ**      | ਤਕਨੀਕੀ ਜਾਣਕਾਰੀ ਨੂੰ ਸਪਸ਼ਟ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਢੰਗ ਨਾਲ ਪ੍ਰਸਤੁਤ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।   |                |          |         |           |                |\n\n### ਨੋਟ:\n- ਹਰ ਮਾਪਦੰਡ ਲਈ ਅੰਕਾਂ ਨੂੰ 1 ਤੋਂ 5 ਤੱਕ ਦੇਣਾ ਹੈ, ਜਿੱਥੇ 1 ਸਭ ਤੋਂ ਖਰਾਬ ਅਤੇ 5 ਸਭ ਤੋਂ ਚੰਗਾ ਹੈ।\n- ਕੁੱਲ ਅੰਕਾਂ ਦਾ ਜੋੜ ਕਰਕੇ ਅੰਤਿਮ ਮੁਲਾਂਕਣ ਤਿਆਰ ਕੀਤਾ ਜਾਵੇਗਾ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "a7b9eaca-3b6b-46b5-b7e8-e1fe98181feb",
+    "timestamp": "2026-10-16T16:59:20.742324+00:00",
+    "proxy_name": "portkey",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00044415,
+    "credit_charged": 1148,
+    "latency_ms": 6573,
+    "latency_ms_runner": 6811.408400000801,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਦਾ ਮੁਲਾਂਕਣ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n| ਮਾਪਦੰਡ                | ਵਿਆਖਿਆ                                                                 | 1 - ਬਹੁਤ ਖਰਾਬ | 2 - ਖਰਾਬ | 3 - ਠੀਕ | 4 - ਚੰਗਾ | 5 - ਬਹੁਤ ਚੰਗਾ |\n|-----------------------|------------------------------------------------------------------------|----------------|----------|---------|-----------|----------------|\n| ਕੋਡਿੰਗ ਸਮਰੱਥਾ       | ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ, ਸਾਫ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਕੋਡ ਬਣਾਉਣਾ।                     |                |          |         |           |                |\n| ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ | ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਨ ਅਤੇ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ।                               |                |          |         |           |                |\n| ਤਕਨੀਕੀ ਗਿਆਨ         | ਭਾਸ਼ਾਵਾਂ, ਫਰੇਮਵਰਕਾਂ ਅਤੇ ਟੂਲਾਂ ਦਾ ਗਿਆਨ।                                   |                |          |         |           |                |\n| ਸਾਫਟਵੇਅਰ ਡਿਵੈਲਪਮੈਂਟ ਪ੍ਰਕਿਰਿਆ | ਸਾਫਟਵੇਅਰ ਵਿਕਾਸ ਦੇ ਚੱਕਰ (SDLC) ਦੀ ਸਮਝ।                                   |                |          |         |           |                |\n| ਟੀਮ ਕੰਮ ਕਰਨ ਦੀ ਯੋਗਤਾ | ਟੀਮ ਵਿੱਚ ਕੰਮ ਕਰਨ ਅਤੇ ਸਹਿਯੋਗ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।                             |                |          |         |           |                |\n| ਕੋਡ ਸਮੀਖਿਆ          | ਹੋਰਾਂ ਦੇ ਕੋਡ ਦੀ ਸਮੀਖਿਆ ਕਰਨ ਅਤੇ ਫੀਡਬੈਕ ਦੇਣ ਦੀ ਯੋਗਤਾ।                     |                |          |         |           |                |\n| ਡਿਬੱਗਿੰਗ ਸਮਰੱਥਾ     | ਕੋਡ ਵਿੱਚ ਗਲਤੀਆਂ ਪਛਾਣਨ ਅਤੇ ਠੀਕ ਕਰਨ ਦੀ ਸਮਰੱਥਾ।                           |                |          |         |           |                |\n| ਨਵੀਂ ਤਕਨੀਕਾਂ ਸਿੱਖਣ ਦੀ ਯੋਗਤਾ | ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਅਤੇ ਟੂਲਾਂ ਨੂੰ ਸਿੱਖਣ ਅਤੇ ਅਪਣਾਉਣ ਦੀ ਯੋਗਤਾ।               |                |          |         |           |                |\n| ਪ੍ਰੋਜੈਕਟ ਪ੍ਰਬੰਧਨ     | ਪ੍ਰੋਜੈਕਟਾਂ ਨੂੰ ਯੋਜਨਾ ਬਣਾਉਣ, ਕਾਰਜਾਂ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਕਰਨ ਅਤੇ ਸਮਾਂ ਬੰਨ੍ਹਣ ਦੀ ਯੋਗਤਾ। |                |          |         |           |                |\n| ਗਾਹਕ ਦੀ ਸੰਤੋਸ਼ੀ      | ਗਾਹਕ ਦੀਆਂ ਜਰੂਰਤਾਂ ਨੂੰ ਸਮਝਣ ਅਤੇ ਉਨ੍ਹਾਂ ਨੂੰ ਪੂਰਾ ਕਰਨ ਦੀ ਯੋਗਤਾ।             |                |          |         |           |                |\n\n### ਨਿਰਣਾਇਕ ਨੋਟਸ:\n- ਹਰ ਮਾਪਦੰਡ ਲਈ ਅੰਕ 1 ਤੋਂ 5 ਤੱਕ ਦਿੱਤੇ ਜਾਣਗੇ।\n- ਕੁੱਲ ਅੰਕਾਂ ਦਾ ਜੋੜ ਕਰਕੇ ਅੰਤਿਮ ਮੁਲਾਂਕਣ ਕੀਤਾ ਜਾਵੇਗਾ।\n- 40-50%: ਬਹੁਤ ਖਰਾਬ, 51-65%: ਖਰਾਬ, 66-75%: ਠੀਕ, 76-85%: ਚੰਗਾ, 86-100%: ਬਹੁਤ ਚੰਗਾ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,158 @@
+{
+ "built_on": "2026-10-14",
+ "seed": 20261014,
+ "n_per_set": 10,
+ "n_total": 40,
+ "shot": "0-shot (D10) — xem prompt_note của từng bộ để biết chỗ lệch khỏi protocol gốc",
+ "decoding": {
+  "max_tokens": 1024,
+  "temperature": 0,
+  "note": "temperature 0 la yeu cau cua pass@1; dung chung ca 4 bo cho nhat quan. max_tokens nang 512 -> 1024 ngay 2026-10-16 (D12 bo sung): o 512, claude-haiku bi cat truoc khi kip dua dap an cho mmlu_01 (855 token moi xong) => truot vi ngan sach chu khong phai vi sai. O 1024: 0/10 item MMLU bi cat. Chi phi khong tang dang ke vi model chi dung dung cai no can."
+ },
+ "sets": {
+  "mmlu": {
+   "url": "https://datasets-server.huggingface.co/rows?dataset=cais%2Fmmlu&config=all&split=test",
+   "paper": "Hendrycks et al. 2021, Measuring Massive Multitask Language Understanding (arXiv:2009.03300)",
+   "repo": "cais/mmlu (HuggingFace)",
+   "split": "all/test",
+   "metric": "accuracy_letter",
+   "license": "MIT",
+   "n_total": 14042,
+   "sha256": "5ac0c0f234510eeaaa2b1f117f83d19cc8cbbd042f62441e2dd3b10a1fb45bcd",
+   "indices": [
+    1044,
+    3291,
+    5397,
+    7492,
+    8230,
+    8929,
+    12795,
+    12829,
+    12962,
+    14037
+   ],
+   "n_sampled": 10,
+   "prompt_note": "0-shot thay vì 5-shot của paper gốc. Giữ layout Hendrycks (câu hỏi + 4 lựa chọn A-D) nhưng thêm 1 dòng chỉ thị 'Answer with the letter only' — cần cho chat model, vì protocol gốc thiết kế cho completion model có few-shot dẫn dắt định dạng."
+  },
+  "gsm8k": {
+   "url": "https://raw.githubusercontent.com/openai/grade-school-math/master/grade_school_math/data/test.jsonl",
+   "paper": "Cobbe et al. 2021, Training Verifiers to Solve Math Word Problems (arXiv:2110.14168)",
+   "repo": "openai/grade-school-math",
+   "split": "test",
+   "metric": "exact_match_number",
+   "license": "MIT",
+   "n_total": 1319,
+   "sha256": "3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14",
+   "indices": [
+    21,
+    61,
+    82,
+    397,
+    406,
+    432,
+    901,
+    985,
+    1075,
+    1249
+   ],
+   "n_sampled": 10,
+   "prompt_note": "0-shot thay vì 8-shot CoT của paper gốc. Prompt là câu hỏi NGUYÊN VĂN, không thêm chỉ thị nào. Chấm bằng cách trích số cuối cùng trong câu trả lời, so với số sau '####' trong đáp án gốc."
+  },
+  "humaneval": {
+   "url": "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz",
+   "paper": "Chen et al. 2021, Evaluating Large Language Models Trained on Code (arXiv:2107.03374)",
+   "repo": "openai/human-eval",
+   "split": "test (bộ duy nhất, 164 bài)",
+   "metric": "pass_at_1",
+   "license": "MIT",
+   "n_total": 164,
+   "sha256": "b796127e635a67f93fb35c04f4cb03cf06f38c8072ee7cee8833d7bee06979ef",
+   "indices": [
+    25,
+    34,
+    44,
+    75,
+    105,
+    113,
+    131,
+    140,
+    143,
+    150
+   ],
+   "n_sampled": 10,
+   "prompt_note": "Prompt gốc (signature + docstring) giữ nguyên, thêm 1 dòng chỉ thị trả về hàm hoàn chỉnh — cần cho chat model, vì protocol gốc là completion thuần. pass@1 chạy đúng bộ test gốc của từng bài, temperature 0."
+  },
+  "ifeval": {
+   "url": "https://raw.githubusercontent.com/google-research/google-research/master/instruction_following_eval/data/input_data.jsonl",
+   "paper": "Zhou et al. 2023, Instruction-Following Evaluation for Large Language Models (arXiv:2311.07911)",
+   "repo": "google-research/google-research (instruction_following_eval)",
+   "split": "input_data (bộ duy nhất)",
+   "metric": "ifeval_strict_prompt",
+   "license": "Apache-2.0",
+   "n_total": 541,
+   "sha256": "67ffeee0fcb87c317c5b08a2de85557b4a7e96ada6178aa645b4954fe4b53d49",
+   "indices": [
+    31,
+    124,
+    180,
+    187,
+    287,
+    337,
+    448,
+    496,
+    534,
+    536
+   ],
+   "n_sampled": 10,
+   "prompt_note": "Prompt NGUYÊN VĂN, tuyệt đối không thêm gì — IFEval kiểm tra chính việc tuân thủ chỉ thị, thêm chữ nào cũng có thể phá ràng buộc đang được kiểm (vd. ràng buộc về số từ, về từ bị cấm)."
+  }
+ },
+ "portkey_prompt_len_thresholds": {
+  "unit": "ký tự của prompt",
+  "cheap_below": 211,
+  "expensive_at_or_above": 385,
+  "tier_models": {
+   "cheap": "gpt-4o-mini",
+   "mid": "claude-haiku",
+   "expensive": "claude-sonnet"
+  },
+  "derivation": "tercile của phân bố độ dài 40 item (cùng seed) — xem docs/routing-policy.md mục 7",
+  "split": {
+   "cheap": 13,
+   "mid": 13,
+   "expensive": 14
+  },
+  "locked_on": "2026-10-14"
+ },
+ "prompt_length_chars": {
+  "per_set": {
+   "mmlu": {
+    "min": 170,
+    "median": 445,
+    "max": 1102
+   },
+   "gsm8k": {
+    "min": 103,
+    "median": 225,
+    "max": 510
+   },
+   "humaneval": {
+    "min": 233,
+    "median": 476,
+    "max": 893
+   },
+   "ifeval": {
+    "min": 93,
+    "median": 209,
+    "max": 510
+   }
+  },
+  "all_40": {
+   "min": 93,
+   "p25": 190,
+   "median": 315,
+   "p75": 500,
+   "max": 1102
+  }
+ }
+}

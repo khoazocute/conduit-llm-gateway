@@ -79,14 +79,16 @@ model_list:
     model_info:
       id: gpt-4o
 
-  - model_name: conduit-pool
-    litellm_params:
-      model: anthropic/claude-sonnet-5
-      api_key: os.environ/ANTHROPIC_API_KEY
-      input_cost_per_token: 0.000002
-      output_cost_per_token: 0.00001
-    model_info:
-      id: claude-sonnet
+  # claude-sonnet-5 ĐÃ BỊ BỎ khỏi conduit-pool (2026-10-16). Hai lý do đã đo được:
+  #   1. Nó bật thinking mặc định và nở phần suy nghĩ cho vừa HẾT max_tokens rồi trả về
+  #      RỖNG — thử trực tiếp Anthropic: 512 -> 512 thinking token, 2048 -> 2048 thinking
+  #      token, cả 2 lần text rỗng, stop_reason=max_tokens, vẫn bị tính tiền đầy đủ.
+  #   2. Nó từ chối tham số `temperature` (HTTP 400 "deprecated for this model"), nên không
+  #      áp được greedy decoding mà protocol pass@1 yêu cầu.
+  # Giữ nó trong pool là để lại mìn: cost-based-routing bình thường không chọn nó (luôn
+  # chọn rẻ nhất), nhưng nếu các model rẻ hơn lỗi thì nó leo tới sonnet -> 400 vì
+  # temperature. Tier đắt của thí nghiệm dùng gpt-4o (cũng thuộc tầng đắt, CLAUDE.md mục 2).
+  # Alias `claude-sonnet` độc lập ở trên vẫn giữ để gọi tay khi cần.
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

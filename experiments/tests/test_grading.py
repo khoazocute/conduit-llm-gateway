@@ -1,4 +1,9 @@
-"""Test luật chấm closed-QA: mỗi câu ≥2 đáp án đúng + ≥2 đáp án sai (gồm cả bẫy).
+"""Test luật chấm closed-QA của BỘ TIẾNG VIỆT (prompts-vi-30.json): mỗi câu ≥2 đáp án
+đúng + ≥2 đáp án sai (gồm cả bẫy).
+
+Từ 2026-10-14 (D10) bộ đánh giá chính là 4 bộ benchmark trong prompts.json, chấm bằng
+metric chuẩn — test cho 4 metric đó nằm riêng (việc H7, Phase 2). File này vẫn cần vì
+bộ tiếng Việt là phép thử nhạy ngôn ngữ của Bifrost (xem docs/experiment-design.md mục 9).
 Chạy: python -m unittest discover -s experiments/tests -v  (từ thư mục gốc repo)
 """
 import json
@@ -11,9 +16,9 @@ sys.path.insert(0, str(ROOT / "analysis"))
 sys.path.insert(0, str(ROOT / "prompts"))
 
 from grading import is_correct  # noqa: E402
-from validate_prompts import validate  # noqa: E402
+from validate_prompts import validate_vi  # noqa: E402
 
-PROMPTS = json.loads((ROOT / "prompts" / "prompts.json").read_text(encoding="utf-8"))
+PROMPTS = json.loads((ROOT / "prompts" / "prompts-vi-30.json").read_text(encoding="utf-8"))
 CLOSED_QA = {p["id"]: p for p in PROMPTS["closed_qa"]}
 
 # id -> (câu trả lời ĐÚNG, câu trả lời SAI). Sai gồm các bẫy: số chứa đáp án (15 vs 5),
@@ -103,7 +108,7 @@ class MatchTypes(unittest.TestCase):
 
 class PromptsFile(unittest.TestCase):
     def test_schema_valid(self):
-        self.assertEqual(validate(PROMPTS), [])
+        self.assertEqual(validate_vi(PROMPTS), [])
 
 
 if __name__ == "__main__":
