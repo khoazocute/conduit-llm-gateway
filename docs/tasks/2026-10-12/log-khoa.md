@@ -16,9 +16,13 @@ làm K1–K7 ngày 15–16/10. **Chưa chạy Phase 3** — có 1 vấn đề ph
 | Sửa bộ chấm HumanEval (file của Hùng) | ✅ Phát hiện B. Luôn đặt đề gốc trước code model, giống harness chính thức. Test mới tái hiện đúng ca lỗi; 45/45 test Python pass | `graders.py`, `test_graders.py` | **Review kỹ** — đổi cách chấm |
 | **K5** — dry-run 36 lượt | ✅ `mmlu_01`, `gsm8k_01`, `humaneval_01`, `ifeval_01` × 3 proxy × 3 lần, **36/36 thành công, 0 lỗi**. Chi phí **$0.0505** | `experiments/results/run_{litellm,bifrost,portkey}_20261015T17*.json`, gộp + luật: `experiments/results/dry-run-20261016-003021/` | — |
 | **K6** — kiểm `routing_decisions` | ✅ 36/36 dòng: model nào cũng có trong `model_pricing`, **0 dòng sai giá** khi tính lại (token × giá), `predicted_cost` = `cost_upstream`, 0 lỗi. Tier suy được từ model | — | — |
-| **K7** — `decision_rule.py` | ✅ Chạy ra bảng: chỉ Bifrost qua 80% → chọn Bifrost (4 item/proxy, **chỉ là kiểm hệ thống, không phải kết quả**) | `dry-run-20261016-003021/decision_rule_output.json` | — |
+| **K7** — `decision_rule.py` | ✅ Chạy ra bảng: chỉ Bifrost qua 80% → chọn Bifrost (⚠️ sai do bug chấm MMLU, xem dưới) (4 item/proxy, **chỉ là kiểm hệ thống, không phải kết quả**) | `dry-run-20261016-003021/decision_rule_output.json` | — |
 
 ### Kết quả dry-run (sau khi sửa bộ chấm HumanEval)
+
+> ⚠️ _Cập nhật 19/10:_ bảng này **đã lỗi thời**. Bifrost 11/12 là do bug chấm MMLU (thật ra 9/12 = 75%),
+> và lúc đó chưa gửi `temperature`, còn dùng Sonnet. Kết quả K7 "chỉ Bifrost qua 80%" vì vậy **không đúng**.
+> Số liệu dùng được: mục "Phase 3" bên dưới.
 
 | Proxy | Model đã chọn (12 lượt) | Đạt | Chi phí | Chi phí / câu đạt |
 |---|---|---|---|---|
@@ -28,9 +32,13 @@ làm K1–K7 ngày 15–16/10. **Chưa chạy Phase 3** — có 1 vấn đề ph
 
 Ba proxy giờ chọn model **khác nhau thật** — Design Y chạy đúng như thiết kế.
 
-## Phát hiện quan trọng
+## Phát hiện quan trọng (16/10)
 
-**A. ⛔ `claude-sonnet-5` mặc định có bước suy nghĩ (thinking) — với `max_tokens: 512` nó tiêu hết
+> Ghi ngày 16/10, trước Phase 3. Giữ nguyên để thấy quá trình; nhãn **Trạng thái** ở đầu mỗi mục
+> cho biết tình hình hiện tại (cập nhật 19/10).
+
+**A.** _Trạng thái: ✅ đã giải quyết 17/10 bằng **D12** (bỏ Sonnet, tier đắt → `gpt-4o`, `max_tokens` 1024)._
+**⛔ `claude-sonnet-5` mặc định có bước suy nghĩ (thinking) — với `max_tokens: 512` nó tiêu hết
 token vào suy nghĩ và trả lời RỖNG, mà vẫn bị tính tiền.** Portkey → `mmlu_01` → `claude-sonnet`: 3/3
 lượt 512 token ra, nội dung rỗng, chấm 0. Gọi **thẳng API Anthropic** cùng prompt: `stop_reason:
 max_tokens`, `output_tokens_details.thinking_tokens: 512`, chỉ có 1 khối `thinking` → **không phải lỗi
@@ -38,26 +46,34 @@ Portkey**, proxy nào gửi câu khó sang Sonnet cũng dính. Hệ quả: nhán
 model đắt (Bifrost COMPLEX, Portkey câu dài) bị **phạt oan** — vừa trả tiền 512 token vừa bị 0 điểm.
 Làm lệch đúng giả thuyết H2/H3. **Phải chốt trước Phase 3** (xem "Cần chốt").
 
-**B. Bộ chấm HumanEval chấm oan lời giải đúng (đã sửa).** `humaneval_01` (`factorize`): đề có `from
+**B.** _Trạng thái: ✅ Hùng đã duyệt bản sửa. ⚠️ Số "Bifrost 91.7%" ở dưới **sai** do bug chấm MMLU của
+Hùng (bắt chữ "A" trong `A[i]`); chấm lại đúng là 75%, bằng 2 proxy kia._
+**Bộ chấm HumanEval chấm oan lời giải đúng (đã sửa).** `humaneval_01` (`factorize`): đề có `from
 typing import List`, model viết lại cả hàm nhưng bỏ dòng import → bộ chấm chỉ chạy code của model →
 `NameError`. Harness chính thức chạy *đề + câu trả lời + test* nên có sẵn import. Trước khi sửa:
 LiteLLM 50% / Bifrost 66.7% / Portkey 75% và luật báo "không proxy nào đạt"; sau khi sửa: 75% / 91.7% /
 75%. Một bug chấm điểm đủ đổi kết luận.
 
-**C. Bifrost KHÔNG tất định ở `mmlu_01`:** lượt 1 → `gpt-4o-mini`, lượt 2–3 → `claude-haiku` (cùng
+**C.** _Trạng thái: ✅ đã tìm ra nguyên nhân (Hùng, 17/10): lượt đầu sau khi idle, embedding mất ~1.6 s, vượt
+hạn 1.5 s của analyzer → không có tier → rơi về `gpt-4o-mini`. Đã nâng hạn 8 s. Phase 3: Bifrost
+`consistency_rate` 1.00._
+**Bifrost KHÔNG tất định ở `mmlu_01`:** lượt 1 → `gpt-4o-mini`, lượt 2–3 → `claude-haiku` (cùng
 prompt). Trái với kết luận "phân loại tất định" ở đợt thử 09/10. `consistency_rate` Bifrost = 0.75. Có
 thể là lượt đầu (warmup/cache embedding) — cần xem thêm ở Phase 3, nhưng **không được viết "tất định"
 vào báo cáo** nếu chưa kiểm lại.
 
-**D. Bifrost hiếm khi ra MEDIUM.** 4 prompt dài thử thẳng (2 IFEval 385/510 ký tự, 1 blog 401 ký tự, 1
+**D.** _Trạng thái: vẫn đúng — Phase 3 chỉ 10% lượt Bifrost ra MEDIUM._
+**Bifrost hiếm khi ra MEDIUM.** 4 prompt dài thử thẳng (2 IFEval 385/510 ký tự, 1 blog 401 ký tự, 1
 câu shard DB) → toàn SIMPLE hoặc COMPLEX. Dry-run có 2 lượt MEDIUM (`mmlu_01`). Nên "cùng 1 prompt dài
 qua 3 proxy → 3 model khác nhau" (đạt khi Phase 1) **không tìm được prompt nào thỏa**; thay bằng bằng
 chứng từng proxy định tuyến đúng (bảng trên) — 3 proxy ra 3 **phân bố** model khác nhau.
 
-**E. `decision_rule.py` chỉ in `pareto_data` của proxy qua bước 1.** Proxy bị loại không hiện số liệu
+**E.** _Trạng thái: ✅ Hùng đã sửa — `pareto_data` giờ in đủ cả 3 proxy._
+**`decision_rule.py` chỉ in `pareto_data` của proxy qua bước 1.** Proxy bị loại không hiện số liệu
 → báo cáo Phase 3 phải tự lập bảng cho cả 3 proxy (như bảng trên), không chép nguyên output của luật.
 
-**F. Môi trường:**
+**F.** _Trạng thái: ✅ `punkt_tab` giờ được `preflight.py` kiểm tự động; lỗi `.class` hỏng là chuyện máy, `mvnw clean` là hết._
+**Môi trường:**
 - Bộ chấm IFEval cần dữ liệu NLTK `punkt_tab`, **không có trong `requirements.txt`**. Thiếu thì
   verifier trả `followed: False` kèm lỗi → có thể chấm trượt IFEval hàng loạt. Cài:
   `python -c "import nltk; nltk.download('punkt_tab')"`.
@@ -76,24 +92,13 @@ chứng từng proxy định tuyến đúng (bảng trên) — 3 proxy ra 3 **ph
 Vượt ước tính "~6 lượt" của Phase 1 vì thêm phép thử rủi ro "so sánh kiểu chuỗi" và tìm nguyên nhân
 phát hiện A; phần lớn là lượt 1 token. Khoa đã xác nhận phạm vi Phase 1 + dry-run 36 lượt trước khi chạy.
 
-## Cần chốt / bàn cùng nhau — TRƯỚC Phase 3 _(đã giải quyết 17/10, xem mục Phase 3 bên dưới)_
+## Cần chốt trước Phase 3 _(16/10 — ✅ đã chốt hết 17/10)_
 
-> **Kết quả:** mục 1 → Hùng thử cả (a) và (b), cả hai đều không dùng được (2048 token cũng bị Sonnet
-> suy nghĩ hết; tắt thinking cần tham số riêng của Anthropic mà backend không biết trước proxy chọn
-> model nào; Sonnet còn từ chối `temperature: 0`) → **D12: bỏ Sonnet, tier đắt dùng `gpt-4o`**,
-> `max_tokens` 1024. Mục 2 → Hùng duyệt. Mục 3 → nguyên nhân thật là analyzer quá hạn 1.5s, đã nâng 8s.
-
-1. **Phát hiện A — xử lý `max_tokens` với Sonnet thế nào** (đụng D7, phải hai người chốt):
-   - (a) Tăng `max_tokens` chung cho cả 3 proxy (VD 2048): công bằng, đơn giản; chi phí Sonnet tối đa
-     ~$0.02/lượt thay vì ~$0.005; ước lại ngân sách 360 lượt.
-   - (b) Tắt thinking cho Sonnet: tham số riêng của Anthropic, mỗi proxy chuyển tiếp khác nhau → phải
-     kiểm cả 3 nhánh, dễ lệch.
-   - (c) Giữ 512 và báo cáo như một giới hạn: kết quả chất lượng của các nhánh dùng Sonnet bị kéo thấp
-     giả tạo → giả thuyết H2/H3 khó đọc.
-   - Khoa nghiêng về **(a)**. Lưu ý thêm: `ifeval_08` đòi ≥ 350 từ (~460 token), sát 512 ngay cả với
-     model không suy nghĩ.
-2. **Bản sửa bộ chấm HumanEval (B)** — Hùng xác nhận đúng với harness chính thức.
-3. **Phát hiện C** — có cần thêm lượt warmup cho Bifrost trước khi đo không (lượt đầu có thể khác).
+| Đã nêu ngày 16/10 | Kết quả |
+|---|---|
+| 1. `max_tokens` với Sonnet: (a) tăng chung lên 2048 / (b) tắt thinking / (c) giữ 512 và báo cáo | Hùng thử thật (a) và (b): **cả hai không dùng được** (Sonnet suy nghĩ hết cả 2048 token; tắt thinking cần tham số riêng của Anthropic mà backend không biết trước proxy chọn model nào; Sonnet còn từ chối `temperature: 0`) → **D12**: bỏ Sonnet, tier đắt → `gpt-4o`, `max_tokens` 1024 |
+| 2. Bản sửa bộ chấm HumanEval | Hùng duyệt, tự tái hiện được lỗi |
+| 3. Có cần lượt warmup cho Bifrost | Không — nguyên nhân là analyzer quá hạn, đã nâng 8 s |
 
 ## Phase 3 — phần Khoa: HumanEval + IFEval, 180 lượt (19/10)
 
