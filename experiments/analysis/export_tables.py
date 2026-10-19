@@ -22,6 +22,15 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Dung CHUNG dung ham percentile cua decision_rule.py - khong tu tinh lai.
+# Truoc day file nay dung statistics.quantiles(n=20)[18] (method='exclusive') VA roi ve
+# max() khi co duoi 20 mau -> p95 cua Bifrost ra 9641 ms o day nhung 5831 ms o
+# decision_rule.py tren cung du lieu (Khoa phat hien khi review Phase 3, 19/10).
+# decision_rule.py la ban co tham quyen vi no thuc thi luat da khoa, nen bao cao phai
+# lay so cua no. Import thay vi copy de hai cho khong the lech tiep.
+from decision_rule import _percentile  # noqa: E402
+
 # Tier suy tu model: map tier -> model la 1:1 nen khong can ghi cot rieng trong DB
 # (docs/experiment-design.md muc 10).
 TIER_OF = {"gpt-4o-mini": "SIMPLE", "claude-haiku": "MEDIUM", "gpt-4o": "COMPLEX"}
@@ -100,8 +109,7 @@ def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
         # Chi so dien giai chinh (y cua Khoa): gop ca 2 ve muc tieu cua thay vao 1 so.
         # Re ma sai thi van bi tinh la dat. Rong neu khong co cau nao dat.
         "cost_per_passing_usd": (cost_total / n_passed) if n_passed else None,
-        "p95_latency_ms": (statistics.quantiles(lats, n=20)[18] if len(lats) >= 20
-                           else (max(lats) if lats else 0.0)),
+        "p95_latency_ms": _percentile(lats, 95),
         "mean_latency_ms": (statistics.mean(lats) if lats else 0.0),
     }
 

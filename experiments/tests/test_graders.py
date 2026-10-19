@@ -60,6 +60,27 @@ class MmluGrader(unittest.TestCase):
         self.assertFalse(grade_mmlu(truncated, item).passed,
                          "không có đáp án thì phải tính là KHÔNG đạt")
 
+    def test_mao_tu_a_KHONG_duoc_doc_thanh_dap_an_A(self):
+        """Khoa phát hiện khi review Phase 3 (19/10): "The answer is a bit tricky" bị đọc
+        thành đáp án A vì chữ "a" mạo từ khớp pattern. Chỉ 'a' gây nhầm — 'b'/'c'/'d'
+        thường không phải từ tiếng Anh nên vẫn nhận được."""
+        for text in ("The answer is a bit tricky.",
+                     "Well, the answer is a little complicated.",
+                     "The answer is a reasonable guess",
+                     "Honestly the answer is a toss-up"):
+            with self.subTest(text=text):
+                self.assertIsNone(extract_mmlu_letter(text), text)
+
+    def test_sua_mao_tu_KHONG_lam_cham_truot_oan_chieu_nguoc(self):
+        """Sửa thành 'chỉ nhận chữ in hoa' sẽ chấm trượt oan các ca hợp lệ này."""
+        for text, want in (("I think the answer is b", "B"),
+                           ("the answer is (a)", "A"),       # (a) la nhan lua chon
+                           ("  a  ", "A"),                    # ca response chi 1 chu cai
+                           ("The answer is A.", "A"),
+                           ("Final answer: A", "A")):
+            with self.subTest(text=text):
+                self.assertEqual(extract_mmlu_letter(text), want, text)
+
     def test_lay_dap_an_CHOT_o_cuoi_khong_phai_cai_dau(self):
         """Model lập luận rồi mới chốt — phải lấy đáp án cuối."""
         self.assertEqual(extract_mmlu_letter(

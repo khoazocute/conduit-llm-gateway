@@ -47,12 +47,34 @@ class GradeResult:
 # Bifrost 11/12 (92%) that ra chi la 9/12 (75%).
 # Gio khong co dap an ro rang thi tra None -> tinh la khong dat, dung hon la doan bua tu
 # text lap luan.
-_MMLU_PATTERNS = (
-    r"^\s*\(?([ABCD])\)?\s*[.):\-]?\s*$",                        # ca ly tuong: chi 1 chu cai
-    r"(?:final answer|answer|đáp án)\s*(?:is|:|là)?\s*\*{0,2}\(?([ABCD])\)?\b",
-    r"\A\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]",              # MO DAU bang "B." / "(B)"
-    r"(?:^|\n)\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]?\s*$",   # chu cai dung MOT MINH tren 1 dong
+# (pattern, co cho phep chu 'a' THUONG tran khong)
+# Thu tu uu tien. KHONG co pattern "chu cai o bat ky dau" - no tung cham DAT OAN:
+# claude-haiku tra loi mmlu_01 bi cat giua lap luan (max_tokens), CHUA HE dua ra dap an,
+# nhung text day `A[i]` va `Array A` (ten bien trong de bai ve cache) nen pattern cu bat
+# ra 'A' va trung dap an dung -> passed=True oan (Hung phat hien khi review dry-run 16/10).
+_MMLU_SPECS = (
+    # Ca response chi la 1 chu cai -> khong the nham, cho phep chu thuong.
+    (r"^\s*\(?([ABCD])\)?\s*[.):\-]?\s*$", True),
+    (r"(?:final answer|answer|đáp án)\s*(?:is|:|là)?\s*\*{0,2}\(?([ABCD])\)?\b", False),
+    (r"\A\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]", False),              # MO DAU "B." / "(B)"
+    (r"(?:^|\n)\s*\*{0,2}\(?([ABCD])\)?\*{0,2}\s*[.):\-]?\s*$", False),   # chu cai MOT MINH tren 1 dong
 )
+
+
+def _mmlu_match_ok(m: "re.Match[str]", allow_bare_lower_a: bool) -> bool:
+    """Loc bot match gia. Chi co DUNG MOT chu gay nham: 'a' thuong la mao tu tieng Anh.
+
+    "The answer is a bit tricky" tung bi doc thanh dap an A (Khoa phat hien khi review
+    Phase 3, 19/10). Nhung sua thanh "chi nhan chu IN HOA" thi lai cham TRUOT oan chieu
+    nguoc: "the answer is b" cung thanh None. Nen chi chan rieng 'a' thuong tran -
+    'b'/'c'/'d' thuong khong phai tu tieng Anh nen khong the nham.
+    """
+    letter = m.group(1)
+    if letter.isupper() or letter.lower() != "a":
+        return True
+    if allow_bare_lower_a:
+        return True
+    return "(" in m.group(0)  # "(a)" la nhan lua chon, khong phai mao tu
 
 
 def extract_mmlu_letter(response: str) -> str | None:
@@ -61,8 +83,9 @@ def extract_mmlu_letter(response: str) -> str | None:
     if not response:
         return None
     text = response.strip()
-    for pat in _MMLU_PATTERNS:
-        matches = list(re.finditer(pat, text, flags=re.IGNORECASE | re.MULTILINE))
+    for pat, allow_bare_lower_a in _MMLU_SPECS:
+        matches = [m for m in re.finditer(pat, text, flags=re.IGNORECASE | re.MULTILINE)
+                   if _mmlu_match_ok(m, allow_bare_lower_a)]
         if matches:
             return matches[-1].group(1).upper()  # lay cai CUOI: dap an chot thuong o cuoi
     return None

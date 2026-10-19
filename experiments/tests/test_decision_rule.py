@@ -228,6 +228,24 @@ class DecisionRuleBranches(unittest.TestCase):
         self.assertFalse(result["selected_by_fallback"])
         self.assertFalse(result["no_proxy_passed_gate"])
 
+    def test_p95_cua_export_tables_KHOP_decision_rule(self):
+        """Khoa phát hiện 19/10: Bifrost ra 5831 ms ở decision_rule.py nhưng 9641 ms ở
+        export_tables.py trên CÙNG dữ liệu — vì export_tables dùng method khác VÀ rơi về
+        max() khi có dưới 20 mẫu. decision_rule là bản có thẩm quyền (thực thi luật đã
+        khóa) nên export_tables phải lấy số của nó. Giờ hai bên dùng chung _percentile."""
+        import sys as _sys
+        _sys.path.insert(0, str(ROOT / "analysis"))
+        import export_tables
+
+        records = make_records("p", CLOSED_QA_IDS, cost=0.01, latency=100)
+        for i, lat in enumerate((50, 120, 300, 900, 5000), start=100):
+            records.append({"proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
+                            "run_index": i, "model_selected": "m", "cost": 0.01,
+                            "latency_ms": lat, "response": "Canberra", "status": "success",
+                            "passed": True})
+        self.assertAlmostEqual(export_tables.summarise(records)["p95_latency_ms"],
+                               compute_p95_latency(records, "p"), places=6)
+
     def test_pareto_data_co_ca_proxy_bi_loai(self):
         """Phát hiện E của Khoa: trước đây chỉ in số liệu của proxy QUA cổng, nên báo cáo
         không có số của proxy bị loại — không biết nó bị loại vì gì."""
