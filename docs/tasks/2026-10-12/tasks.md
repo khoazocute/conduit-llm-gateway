@@ -217,4 +217,4 @@ cấu hình đang chạy" trong bản nháp.
 | K1–K4 (Phase 1) | ✅ | 15–16/10, Khoa. e2e 43/43 cả 3 proxy. Portkey so `prompt_len` theo số (đã thử 93/300/1102). Xem `log-khoa.md` |
 | H7–H8 (Phase 2) | ✅ | 14/10, làm sớm 2 ngày. Xem `log-hung.md` |
 | K5–K7 (Phase 2) | ✅ | 16/10, Khoa. 36/36, $0.0505. Sửa bộ chấm HumanEval (thiếu import của đề). ⛔ Trước Phase 3 phải chốt `max_tokens` vì Sonnet dùng hết 512 token để suy nghĩ → trả lời rỗng |
-| Phase 3 | | |
+| Phase 3 | 🟨 | Khoa xong phần HumanEval + IFEval 19/10: 180/180, 0 lỗi, $0.1187, dữ liệu sạch (`verify_results.py`). Chờ phần MMLU + GSM8K của Hùng rồi gộp 360 lượt |

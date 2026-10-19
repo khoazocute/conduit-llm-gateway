@@ -12,6 +12,7 @@ không gọi LLM thì kiểm hết ở đây. Các rủi ro đã gặp thật v�
   - claude-sonnet-5 còn sót trong một đường định tuyến -> HTTP 400 vì temperature
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 EXP = ROOT / "experiments"
 sys.path.insert(0, str(EXP / "analysis"))
+
+# Máy remap port (docker-compose.override.yml, VD máy Khoa: Bifrost :18080) đặt BIFROST_URL,
+# giống complexity-setup.sh / setup.sh. Mặc định :8080.
+BIFROST_URL = os.environ.get("BIFROST_URL", "http://localhost:8080").rstrip("/")
 
 PG = ["docker", "exec", "-i", "conduit-postgres", "psql", "-U", "conduit", "-d", "conduit", "-tAc"]
 TIER_MODELS = {"SIMPLE": "gpt-4o-mini", "MEDIUM": "claude-haiku", "COMPLEX": "gpt-4o"}
@@ -94,9 +99,9 @@ def check_litellm():
 
 # ---------------------------------------------------------------- 3. Bifrost
 def check_bifrost():
-    st = http("http://localhost:8080/api/routing/complexity-analyzer-status")
+    st = http(f"{BIFROST_URL}/api/routing/complexity-analyzer-status")
     if not st:
-        bad("Bifrost analyzer", "không gọi được :8080")
+        bad("Bifrost analyzer", f"không gọi được {BIFROST_URL} (máy remap port thì đặt BIFROST_URL)")
         return
     s = json.loads(st)
     if s.get("state") != "ready":
@@ -110,7 +115,7 @@ def check_bifrost():
     # Han timeout cua analyzer: mac dinh 1.5s QUA CHAT - luot embedding dau tien sau idle
     # mat ~1650ms -> qua han -> tier TRONG -> khong rule nao khop -> roi ve model app xin,
     # ghi nhan nhu quyet dinh routing binh thuong ma KHONG bao loi (do that 2026-10-17).
-    cfgs = http("http://localhost:8080/api/routing/complexity-analyzer-config")
+    cfgs = http(f"{BIFROST_URL}/api/routing/complexity-analyzer-config")
     if cfgs:
         sem = json.loads(cfgs).get("semantic") or {}
         t = str(sem.get("timeout", ""))
@@ -127,7 +132,7 @@ def check_bifrost():
     else:
         warn("Bifrost timeout", "không đọc được complexity-analyzer-config")
 
-    rl = http("http://localhost:8080/api/routing/rules")
+    rl = http(f"{BIFROST_URL}/api/routing/rules")
     if not rl:
         bad("Bifrost CEL rule", "không đọc được")
         return

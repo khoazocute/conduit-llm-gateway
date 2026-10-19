@@ -76,7 +76,12 @@ chứng từng proxy định tuyến đúng (bảng trên) — 3 proxy ra 3 **ph
 Vượt ước tính "~6 lượt" của Phase 1 vì thêm phép thử rủi ro "so sánh kiểu chuỗi" và tìm nguyên nhân
 phát hiện A; phần lớn là lượt 1 token. Khoa đã xác nhận phạm vi Phase 1 + dry-run 36 lượt trước khi chạy.
 
-## Cần chốt / bàn cùng nhau — TRƯỚC Phase 3
+## Cần chốt / bàn cùng nhau — TRƯỚC Phase 3 _(đã giải quyết 17/10, xem mục Phase 3 bên dưới)_
+
+> **Kết quả:** mục 1 → Hùng thử cả (a) và (b), cả hai đều không dùng được (2048 token cũng bị Sonnet
+> suy nghĩ hết; tắt thinking cần tham số riêng của Anthropic mà backend không biết trước proxy chọn
+> model nào; Sonnet còn từ chối `temperature: 0`) → **D12: bỏ Sonnet, tier đắt dùng `gpt-4o`**,
+> `max_tokens` 1024. Mục 2 → Hùng duyệt. Mục 3 → nguyên nhân thật là analyzer quá hạn 1.5s, đã nâng 8s.
 
 1. **Phát hiện A — xử lý `max_tokens` với Sonnet thế nào** (đụng D7, phải hai người chốt):
    - (a) Tăng `max_tokens` chung cho cả 3 proxy (VD 2048): công bằng, đơn giản; chi phí Sonnet tối đa
@@ -90,9 +95,69 @@ phát hiện A; phần lớn là lượt 1 token. Khoa đã xác nhận phạm v
 2. **Bản sửa bộ chấm HumanEval (B)** — Hùng xác nhận đúng với harness chính thức.
 3. **Phát hiện C** — có cần thêm lượt warmup cho Bifrost trước khi đo không (lượt đầu có thể khác).
 
+## Phase 3 — phần Khoa: HumanEval + IFEval, 180 lượt (19/10)
+
+Chạy sau khi pull bản sửa của Hùng (D12, D13, `temperature: 0`, `max_tokens: 1024`, timeout analyzer
+8s). Khoa đồng ý D12 và D13.
+
+### Chuẩn bị (đúng 6 bước Hùng giao, chỉnh cho máy Khoa)
+
+| Bước | Kết quả |
+|---|---|
+| `git pull` (`lhung` → `dangkhoa`, fast-forward) | ✅ test Python 60/60, Java 9/9 |
+| `complexity-setup.sh` | ✅ với `BIFROST_URL=http://localhost:18080` (máy Khoa remap port; **`:8080` là Tomcat** chiếm sẵn). `semantic.timeout=8s`, COMPLEX → `gpt-4o` |
+| `docker compose up -d --force-recreate litellm` | ✅ `conduit-pool` 4 deployment, không còn Sonnet |
+| Xoá `.experiment_identity.json` | ✅ runner tạo user mới, ví 1.000.000 |
+| `requirements.txt` + `punkt_tab` | ✅ |
+| `preflight.py` | ✅ 15/16 xanh, 0 chặn. **Phải sửa trước:** `preflight.py` gán cứng `localhost:8080` cho 3 mục Bifrost → trên máy Khoa gọi nhầm Tomcat. Thêm đọc `BIFROST_URL` (mặc định vẫn `:8080`). 1 cảnh báo ví là **báo động giả**: preflight đọc ví cũ lớn nhất trong DB, không biết file danh tính đã xoá |
+
+Lệnh: `SPRING_DATASOURCE_URL=…5433… BIFROST_BASE_URL=http://localhost:18080/v1 PROXIES="litellm bifrost portkey" SETS="humaneval,ifeval" RUNS=3 bash experiments/scripts/dry_run.sh`
+
+### Kết quả (20 item × 3 proxy × 3 lần, **180/180 thành công, 0 lỗi**)
+
+| Proxy | Đạt | HumanEval | IFEval | Chi phí | Chi phí / câu đạt | p95 (luật) | Model đã chọn |
+|---|---|---|---|---|---|---|---|
+| LiteLLM | 53/60 (88.3%) | 30/30 | 23/30 | $0.00671 | $0.000127 | 6242 ms | `gpt-4o-mini` 100% |
+| Bifrost | 55/60 (91.7%) | 30/30 | 25/30 | $0.04229 | $0.000769 | 5831 ms | mini 80% · haiku 10% · `gpt-4o` 10% |
+| Portkey | 56/60 (93.3%) | 29/30 | 27/30 | $0.06969 | $0.001244 | 6887 ms | haiku 35% · `gpt-4o` 35% · mini 30% |
+
+`decision_rule.py` trên **riêng nửa này**: cả 3 qua cổng 80%, chọn **LiteLLM** (rẻ nhất, cách xa >5%).
+**Chưa phải kết luận** — phải gộp với 180 lượt MMLU + GSM8K của Hùng.
+
+Dữ liệu: `experiments/results/run_{litellm,bifrost,portkey}_20261019T13*.json`, gộp + luật + 4 CSV:
+`experiments/results/dry-run-20261019-210349/`.
+
+### Kiểm dữ liệu
+
+- `verify_results.py` từng file, `--expect 60`: ✅ cả 3 sạch. (Chạy trên `merged.json` thì báo 60 "trùng
+  lượt" — sai đầu vào, script thiết kế cho file 1 proxy; không phải lỗi dữ liệu.)
+- DB: 180 dòng `routing_decisions`, 0 model thiếu giá, **0 dòng sai giá** khi tính lại, 0 lỗi.
+  Tính tay: Bifrost `ifeval_01` → `gpt-4o`, 33 vào + 1024 ra = $0.0103225 = DB.
+- 1 lượt chạm trần 1024 token (Bifrost `ifeval_01` → `gpt-4o`) — vẫn đạt.
+
+### Quan sát
+
+1. **Ba proxy định tuyến khác nhau thật.** Portkey đẩy 70% sang haiku/4o vì HumanEval dài — đúng
+   giả thuyết H3 (định tuyến theo *bộ đề* chứ không theo độ khó): chi phí/câu đạt gấp ~10 lần LiteLLM
+   chỉ để thêm 3 câu đạt. Bifrost gửi 80% sang mini.
+2. **Bifrost xếp `ifeval_01` (33 token đầu vào) vào COMPLEX → `gpt-4o`, sinh 876–1024 token, 9.8–13.3 s**
+   — đúng giả thuyết H2 (xếp sai câu không khó lên COMPLEX, tốn tiền + chậm).
+3. **H1 (LiteLLM dễ trượt cổng 80%) chưa xảy ra ở nửa này** — 88.3%. IFEval là chỗ nó yếu (23/30).
+4. **⚠️ Hai script tính p95 khác nhau.** `decision_rule.py` nội suy tuyến tính (Bifrost 5831 ms),
+   `export_tables.py` dùng `statistics.quantiles(n=20)` mặc định `exclusive` (Bifrost **9641 ms**).
+   Lệch vì 3 lượt đột biến ở trên rơi đúng vùng p95 khi n=60. Lần này không ảnh hưởng (luật không tới
+   bước 3), nhưng **CSV để vẽ biểu đồ và luật phải dùng cùng 1 cách** — đề nghị `export_tables.py` theo
+   `decision_rule.py` (`method="inclusive"` cho ra đúng con số của luật).
+5. **`temperature: 0` không đảm bảo lặp lại kết quả.** Cùng model, cùng prompt mà đạt/trượt khác nhau
+   giữa 3 lần: Bifrost `ifeval_05` (trượt 1, 3), LiteLLM `ifeval_07` (trượt 1), Portkey `humaneval_08`
+   (trượt 3). Không ảnh hưởng `consistency_rate` (đo model được chọn — 1.00 cả 3) nhưng khi viết báo
+   cáo không được nói "temperature 0 → tất định".
+
+### Chi phí
+
+Phase 3 phần Khoa: **180 lượt, $0.1187**. Cả tuần (Khoa): 237 lượt, ~$0.19.
+
 ## Còn thiếu
 
-- Phase 3 (180 lượt HumanEval + IFEval) **chưa chạy** — chờ chốt mục 1.
-- Review chéo phần Hùng (đối chiếu metric với paper, ngưỡng `prompt_len`): đã đối chiếu 40/40 item
-  khớp nguyên văn với file gốc của MMLU / GSM8K / HumanEval / IFEval (15/10); ngưỡng `prompt_len` suy
-  từ tercile phân bố thật — hợp lý. Ghi review chính thức vào `log-hung.md` sau.
+- Gộp với 180 lượt của Hùng → `decision_rule.py` trên đủ 360 lượt → cùng viết `docs/experiment-results.md`.
+- Điền dòng Phase 3 trong bảng nhật ký `tasks.md` khi cả hai xong.

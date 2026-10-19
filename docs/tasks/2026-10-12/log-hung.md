@@ -381,3 +381,36 @@ PYTHONIOENCODING=utf-8 python experiments/scripts/preflight.py   # phải xanh h
 - **Giới hạn để ghi báo cáo:** `claude-haiku` chạm trần ngân sách trên một số item IFEval
   (`ifeval_01` chạm cả ở 1536) → **chi phí đo được của haiku trên IFEval bị quyết định bởi trần
   ta đặt**, không phải độ dài tự nhiên. Áp cùng trần cho cả 3 proxy nên vẫn công bằng.
+
+## Review — Khoa (2026-10-19)
+
+Đã pull bản `ef70d96`, kiểm lời trong tin nhắn với code, rồi chạy phần Phase 3 của Khoa (180 lượt,
+`log-khoa.md` mục "Phase 3").
+
+**Đồng ý:** D12 (bỏ Sonnet, tier đắt → `gpt-4o`) và D13 (luật dự phòng theo chi phí/câu đạt, đăng ký
+trước khi chạy, không hạ ngưỡng 80%). Đã kiểm: không còn đường định tuyến nào tới Sonnet (Bifrost
+COMPLEX → `gpt-4o`, Portkey `>=385` → `gpt-4o`, `conduit-pool` 4 deployment, fallbacks sạch); các chỗ còn
+chữ "sonnet" chỉ là chú thích / alias gọi tay. Timeout 8s, `max_tokens` 1024, `temperature` 0 đều có.
+Bộ đề: đối chiếu 40/40 item khớp nguyên văn với file gốc (MMLU qua `cais/mmlu`, GSM8K / HumanEval /
+IFEval qua repo chính thức). Ngưỡng `prompt_len` suy từ tercile phân bố thật — hợp lý.
+
+**Cần sửa / lưu ý:**
+
+1. **Bộ chấm MMLU mới vẫn còn 1 kiểu chấm đạt oan** (nhẹ hơn lỗi cũ nhiều). Pattern
+   `(?:final answer|answer|đáp án)\s*(?:is|:|là)?\s*…\(?([ABCD])\)?\b` chạy với `IGNORECASE`, nên chữ
+   `a` thường bị bắt làm đáp án: `"To find the answer is a bit tricky…"` → **`A`**. Thử trên bản
+   `lhung`. Rủi ro thấp vì đề bắt "letter only", nhưng là phần MMLU của Hùng — đề xuất chỉ nhận chữ in
+   hoa (bỏ `IGNORECASE` cho nhóm chữ cái, vd. `(?i:final answer|answer|đáp án)…([ABCD])`) + 1 test.
+2. **`preflight.py` gán cứng `localhost:8080` cho Bifrost** → máy remap port (máy Khoa: Bifrost
+   `:18080`, `:8080` là Tomcat) thì 3 mục Bifrost kiểm nhầm dịch vụ. Khoa đã sửa: đọc `BIFROST_URL`,
+   mặc định vẫn `:8080` (commit kèm).
+3. **Hai cách tính p95 khác nhau.** `decision_rule.py` nội suy tuyến tính, `export_tables.py` dùng
+   `statistics.quantiles(n=20)` mặc định `exclusive`. Nửa của Khoa: Bifrost **5831 ms vs 9641 ms**
+   (3 lượt đột biến 9.8–13.3 s rơi đúng vùng p95 khi n=60). Đề nghị `export_tables.py` dùng
+   `method="inclusive"` (ra đúng số của luật) để CSV vẽ biểu đồ khớp với luật quyết định.
+4. **`temperature: 0` không cho kết quả lặp lại hoàn toàn**: Bifrost `ifeval_05`, LiteLLM `ifeval_07`,
+   Portkey `humaneval_08` cùng model + cùng prompt mà đạt/trượt khác nhau giữa 3 lần. "17/17 nhất quán"
+   ở đợt 17/10 không giữ ở quy mô 60 item/proxy — đừng viết "temperature 0 → tất định" vào báo cáo.
+5. Nhỏ: `verify_results.py` chạy trên `merged.json` báo mọi lượt "trùng" (thiết kế cho file 1 proxy)
+   — nên ghi rõ trong docstring hoặc gom theo `(proxy_name, prompt_id, run_index)`. `preflight.py` cảnh
+   báo ví đọc ví lớn nhất của user `exp.buyer.*` cũ, không biết file danh tính đã xoá → báo động giả.

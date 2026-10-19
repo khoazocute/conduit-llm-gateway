@@ -1,0 +1,1562 @@
+[
+  {
+    "message_id": "4c56a444-24b4-4d7b-842c-0c1841b322b4",
+    "timestamp": "2026-10-19T13:55:41.482382+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 3648,
+    "latency_ms_runner": 4213.453800010029,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "7f484cef-5550-4872-926e-3f3b473f63fc",
+    "timestamp": "2026-10-19T13:55:44.126298+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1864,
+    "latency_ms_runner": 2258.0114000011235,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "6ab794f7-7cbe-48ef-8a04-28c3549cbb30",
+    "timestamp": "2026-10-19T13:55:46.793480+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 2106,
+    "latency_ms_runner": 2443.5504999710247,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "eefa901e-d288-481e-92f2-aeaa08857c01",
+    "timestamp": "2026-10-19T13:55:49.351880+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_02",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.955e-05,
+    "credit_charged": 250,
+    "latency_ms": 2028,
+    "latency_ms_runner": 2329.9077000119723,
+    "response": "```python\ndef unique(l: list):\n    \"\"\"Return sorted unique elements in a list\n    >>> unique([5, 3, 5, 2, 3, 3, 9, 0, 123])\n    [0, 2, 3, 5, 9, 123]\n    \"\"\"\n    return sorted(set(l))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "d3891a02-01d2-47c8-8fd3-d673f719a11e",
+    "timestamp": "2026-10-19T13:55:51.817085+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_02",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.955e-05,
+    "credit_charged": 250,
+    "latency_ms": 1817,
+    "latency_ms_runner": 2235.250400030054,
+    "response": "```python\ndef unique(l: list):\n    \"\"\"Return sorted unique elements in a list\n    >>> unique([5, 3, 5, 2, 3, 3, 9, 0, 123])\n    [0, 2, 3, 5, 9, 123]\n    \"\"\"\n    return sorted(set(l))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "66aa43f2-547e-497b-877f-4d4cfb8d88eb",
+    "timestamp": "2026-10-19T13:55:54.186557+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_02",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.955e-05,
+    "credit_charged": 250,
+    "latency_ms": 1871,
+    "latency_ms_runner": 2194.1690999665298,
+    "response": "```python\ndef unique(l: list):\n    \"\"\"Return sorted unique elements in a list\n    >>> unique([5, 3, 5, 2, 3, 3, 9, 0, 123])\n    [0, 2, 3, 5, 9, 123]\n    \"\"\"\n    return sorted(set(l))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "cd428c95-4be5-4e40-a367-8d5f76d0bf3c",
+    "timestamp": "2026-10-19T13:55:56.448310+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_03",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.505e-05,
+    "credit_charged": 259,
+    "latency_ms": 1666,
+    "latency_ms_runner": 2019.7337999707088,
+    "response": "```python\ndef change_base(x: int, base: int) -> str:\n    if x == 0:\n        return '0'\n    \n    digits = []\n    while x > 0:\n        digits.append(str(x % base))\n        x //= base\n    \n    return ''.join(reversed(digits))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "9348bf2c-e110-413b-8ec1-6a7fdcc0161d",
+    "timestamp": "2026-10-19T13:55:58.537268+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_03",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.505e-05,
+    "credit_charged": 259,
+    "latency_ms": 1590,
+    "latency_ms_runner": 1902.6640999945812,
+    "response": "```python\ndef change_base(x: int, base: int) -> str:\n    if x == 0:\n        return '0'\n    \n    digits = []\n    while x > 0:\n        digits.append(str(x % base))\n        x //= base\n    \n    return ''.join(reversed(digits))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "ab498605-4c31-4c6a-b865-33e6d0922e8d",
+    "timestamp": "2026-10-19T13:56:00.768897+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_03",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.505e-05,
+    "credit_charged": 259,
+    "latency_ms": 1715,
+    "latency_ms_runner": 2014.7993999999017,
+    "response": "```python\ndef change_base(x: int, base: int) -> str:\n    if x == 0:\n        return '0'\n    \n    digits = []\n    while x > 0:\n        digits.append(str(x % base))\n        x //= base\n    \n    return ''.join(reversed(digits))\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "63792f0d-97a3-469e-aa1a-338f9a4b901c",
+    "timestamp": "2026-10-19T13:56:03.758652+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_04",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 9.855e-05,
+    "credit_charged": 356,
+    "latency_ms": 2468,
+    "latency_ms_runner": 2754.4714999967255,
+    "response": "```python\ndef is_multiply_prime(a):\n    def is_prime(n):\n        if n <= 1:\n            return False\n        for i in range(2, int(n**0.5) + 1):\n            if n % i == 0:\n                return False\n        return True\n\n    primes = [i for i in range(2, 100) if is_prime(i)]\n    \n    for i in range(len(primes)):\n        for j in range(i, len(primes)):\n            for k in range(j, len(primes)):\n                if primes[i] * primes[j] * primes[k] == a:\n                    return True\n    return False\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "32f296e0-ceed-4f1b-b648-3972f797d9d6",
+    "timestamp": "2026-10-19T13:56:06.691778+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_04",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 9.855e-05,
+    "credit_charged": 356,
+    "latency_ms": 2413,
+    "latency_ms_runner": 2718.3822999941185,
+    "response": "```python\ndef is_multiply_prime(a):\n    def is_prime(n):\n        if n <= 1:\n            return False\n        for i in range(2, int(n**0.5) + 1):\n            if n % i == 0:\n                return False\n        return True\n\n    primes = [i for i in range(2, 100) if is_prime(i)]\n    \n    for i in range(len(primes)):\n        for j in range(i, len(primes)):\n            for k in range(j, len(primes)):\n                if primes[i] * primes[j] * primes[k] == a:\n                    return True\n    return False\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "b1bce872-e65a-4b45-8503-ec0a696c014c",
+    "timestamp": "2026-10-19T13:56:09.734690+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_04",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 9.855e-05,
+    "credit_charged": 356,
+    "latency_ms": 2513,
+    "latency_ms_runner": 2824.433300003875,
+    "response": "```python\ndef is_multiply_prime(a):\n    def is_prime(n):\n        if n <= 1:\n            return False\n        for i in range(2, int(n**0.5) + 1):\n            if n % i == 0:\n                return False\n        return True\n\n    primes = [i for i in range(2, 100) if is_prime(i)]\n    \n    for i in range(len(primes)):\n        for j in range(i, len(primes)):\n            for k in range(j, len(primes)):\n                if primes[i] * primes[j] * primes[k] == a:\n                    return True\n    return False\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "52f493b7-6c4c-4720-9efb-f4dde869b92e",
+    "timestamp": "2026-10-19T13:56:13.104582+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_05",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0001716,
+    "credit_charged": 758,
+    "latency_ms": 2827,
+    "latency_ms_runner": 3149.351799977012,
+    "response": "```python\ndef by_length(arr):\n    \"\"\"\n    Given an array of integers, sort the integers that are between 1 and 9 inclusive,\n    reverse the resulting array, and then replace each digit by its corresponding name from\n    \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\".\n    \"\"\"\n    # Mapping of digits to their corresponding names\n    digit_names = [\"\", \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\"]\n    \n    # Filter the array to include only integers between 1 and 9\n    filtered_arr = [num for num in arr if 1 <= num <= 9]\n    \n    # Sort the filtered array\n    filtered_arr.sort()\n    \n    # Reverse the sorted array\n    filtered_arr.reverse()\n    \n    # Replace each digit with its corresponding name\n    result = [digit_names[num] for num in filtered_arr]\n    \n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "2e5ac231-a9f5-49db-9f4d-d0b57650c025",
+    "timestamp": "2026-10-19T13:56:16.479700+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_05",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0001908,
+    "credit_charged": 806,
+    "latency_ms": 2851,
+    "latency_ms_runner": 3150.617700011935,
+    "response": "```python\ndef by_length(arr):\n    \"\"\"\n    Given an array of integers, sort the integers that are between 1 and 9 inclusive,\n    reverse the resulting array, and then replace each digit by its corresponding name from\n    \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\".\n    \"\"\"\n    # Mapping of digits to their corresponding names\n    digit_to_name = {\n        1: \"One\", 2: \"Two\", 3: \"Three\", 4: \"Four\",\n        5: \"Five\", 6: \"Six\", 7: \"Seven\", 8: \"Eight\", 9: \"Nine\"\n    }\n    \n    # Filter the array to include only numbers between 1 and 9\n    filtered_arr = [num for num in arr if 1 <= num <= 9]\n    \n    # Sort the filtered array\n    filtered_arr.sort()\n    \n    # Reverse the sorted array\n    filtered_arr.reverse()\n    \n    # Replace each digit with its corresponding name\n    result = [digit_to_name[num] for num in filtered_arr]\n    \n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "ba3c4166-4b35-4b3e-87e8-0c8b5ff8301f",
+    "timestamp": "2026-10-19T13:56:21.683461+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_05",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0003102,
+    "credit_charged": 1104,
+    "latency_ms": 4626,
+    "latency_ms_runner": 4977.690400031861,
+    "response": "```python\ndef by_length(arr):\n    \"\"\"\n    Given an array of integers, sort the integers that are between 1 and 9 inclusive,\n    reverse the resulting array, and then replace each digit by its corresponding name from\n    \"One\", \"Two\", \"Three\", \"Four\", \"Five\", \"Six\", \"Seven\", \"Eight\", \"Nine\".\n\n    For example:\n      arr = [2, 1, 1, 4, 5, 8, 2, 3]   \n            -> sort arr -> [1, 1, 2, 2, 3, 4, 5, 8] \n            -> reverse arr -> [8, 5, 4, 3, 2, 2, 1, 1]\n      return [\"Eight\", \"Five\", \"Four\", \"Three\", \"Two\", \"Two\", \"One\", \"One\"]\n    \n      If the array is empty, return an empty array:\n      arr = []\n      return []\n    \n      If the array has any strange number ignore it:\n      arr = [1, -1 , 55] \n            -> sort arr -> [-1, 1, 55]\n            -> reverse arr -> [55, 1, -1]\n      return = ['One']\n    \"\"\"\n    if not arr:\n        return []\n    \n    # Filter the array to include only numbers between 1 and 9\n    filtered = [num for num in arr if 1 <= num <= 9]\n    \n    # Sort the filtered array\n    filtered.sort()\n    \n    # Reverse the sorted array\n    filtered.reverse()\n    \n    # Mapping from numbers to their corresponding names\n    number_names = {\n        1: \"One\", 2: \"Two\", 3: \"Three\", 4: \"Four\",\n        5: \"Five\", 6: \"Six\", 7: \"Seven\", 8: \"Eight\", 9: \"Nine\"\n    }\n    \n    # Replace each digit by its corresponding name\n    result = [number_names[num] for num in filtered]\n    \n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "6ab26b3e-9bce-4211-bcf6-4b31abb98c11",
+    "timestamp": "2026-10-19T13:56:25.493422+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_06",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00017355,
+    "credit_charged": 647,
+    "latency_ms": 3328,
+    "latency_ms_runner": 3650.9464000118896,
+    "response": "```python\ndef odd_count(lst):\n    \"\"\"Given a list of strings, where each string consists of only digits, return a list.\n    Each element i of the output should be \"the number of odd elements in the\n    string i of the input.\" where all the i's should be replaced by the number\n    of odd digits in the i'th string of the input.\n\n    >>> odd_count(['1234567'])\n    [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"]\n    >>> odd_count(['3',\"11111111\"])\n    [\"the number of odd elements 1n the str1ng 1 of the 1nput.\",\n     \"the number of odd elements 8n the str8ng 8 of the 8nput.\"]\n    \"\"\"\n    result = []\n    for s in lst:\n        odd_count = sum(1 for char in s if int(char) % 2 != 0)\n        result.append(f\"the number of odd elements {odd_count}n the str{odd_count}ng {odd_count} of the {odd_count}nput.\")\n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "7fc41d5b-a1cf-404e-a09a-42acc99c50cd",
+    "timestamp": "2026-10-19T13:56:28.781794+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_06",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00017355,
+    "credit_charged": 647,
+    "latency_ms": 2836,
+    "latency_ms_runner": 3122.3398000001907,
+    "response": "```python\ndef odd_count(lst):\n    \"\"\"Given a list of strings, where each string consists of only digits, return a list.\n    Each element i of the output should be \"the number of odd elements in the\n    string i of the input.\" where all the i's should be replaced by the number\n    of odd digits in the i'th string of the input.\n\n    >>> odd_count(['1234567'])\n    [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"]\n    >>> odd_count(['3',\"11111111\"])\n    [\"the number of odd elements 1n the str1ng 1 of the 1nput.\",\n     \"the number of odd elements 8n the str8ng 8 of the 8nput.\"]\n    \"\"\"\n    result = []\n    for s in lst:\n        odd_count = sum(1 for char in s if int(char) % 2 != 0)\n        result.append(f\"the number of odd elements {odd_count}n the str{odd_count}ng {odd_count} of the {odd_count}nput.\")\n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "fd8254b2-4409-4bb9-9ee1-ce667974bd02",
+    "timestamp": "2026-10-19T13:56:32.623600+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_06",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00017355,
+    "credit_charged": 647,
+    "latency_ms": 3323,
+    "latency_ms_runner": 3616.0461000399664,
+    "response": "```python\ndef odd_count(lst):\n    \"\"\"Given a list of strings, where each string consists of only digits, return a list.\n    Each element i of the output should be \"the number of odd elements in the\n    string i of the input.\" where all the i's should be replaced by the number\n    of odd digits in the i'th string of the input.\n\n    >>> odd_count(['1234567'])\n    [\"the number of odd elements 4n the str4ng 4 of the 4nput.\"]\n    >>> odd_count(['3',\"11111111\"])\n    [\"the number of odd elements 1n the str1ng 1 of the 1nput.\",\n     \"the number of odd elements 8n the str8ng 8 of the 8nput.\"]\n    \"\"\"\n    result = []\n    for s in lst:\n        odd_count = sum(1 for char in s if int(char) % 2 != 0)\n        result.append(f\"the number of odd elements {odd_count}n the str{odd_count}ng {odd_count} of the {odd_count}nput.\")\n    return result\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "f79c8ca5-9234-4b6d-9ba8-2c7b114cc3af",
+    "timestamp": "2026-10-19T13:56:34.693450+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_07",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.925e-05,
+    "credit_charged": 247,
+    "latency_ms": 1632,
+    "latency_ms_runner": 1899.4504999718629,
+    "response": "```python\ndef digits(n):\n    product = 1\n    has_odd = False\n    \n    for digit in str(n):\n        d = int(digit)\n        if d % 2 != 0:  # Check if the digit is odd\n            product *= d\n            has_odd = True\n            \n    return product if has_odd else 0\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "7f2a42f1-c06d-41f3-8e5a-81ad8d635c0e",
+    "timestamp": "2026-10-19T13:56:36.803063+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_07",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.925e-05,
+    "credit_charged": 247,
+    "latency_ms": 1562,
+    "latency_ms_runner": 1848.0627000099048,
+    "response": "```python\ndef digits(n):\n    product = 1\n    has_odd = False\n    \n    for digit in str(n):\n        d = int(digit)\n        if d % 2 != 0:  # Check if the digit is odd\n            product *= d\n            has_odd = True\n            \n    return product if has_odd else 0\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "4bb6f76f-df1a-471c-9911-6a08234f5af9",
+    "timestamp": "2026-10-19T13:56:38.873259+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_07",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.925e-05,
+    "credit_charged": 247,
+    "latency_ms": 1499,
+    "latency_ms_runner": 1904.7325000283308,
+    "response": "```python\ndef digits(n):\n    product = 1\n    has_odd = False\n    \n    for digit in str(n):\n        d = int(digit)\n        if d % 2 != 0:  # Check if the digit is odd\n            product *= d\n            has_odd = True\n            \n    return product if has_odd else 0\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "1e84d3db-85cc-40eb-9262-d014588355e2",
+    "timestamp": "2026-10-19T13:56:42.771882+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_08",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "claude-haiku",
+    "cost": 0.001582,
+    "credit_charged": 645,
+    "latency_ms": 3401,
+    "latency_ms_runner": 3678.107700019609,
+    "response": "```python\ndef fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n    result = []\n    i = 0\n    while i < len(text):\n        if text[i] == ' ':\n            # Count consecutive spaces\n            space_count = 0\n            j = i\n            while j < len(text) and text[j] == ' ':\n                space_count += 1\n                j += 1\n            \n            # Replace based on count\n            if space_count > 2:\n                result.append('-')\n            else:\n                result.append('_' * space_count)\n            \n            i = j\n        else:\n            result.append(text[i])\n            i += 1\n    \n    return ''.join(result)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "8848c1b2-2fd6-4602-b587-bbf8b76b4973",
+    "timestamp": "2026-10-19T13:56:46.342780+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_08",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "claude-haiku",
+    "cost": 0.001582,
+    "credit_charged": 645,
+    "latency_ms": 3129,
+    "latency_ms_runner": 3409.070599998813,
+    "response": "```python\ndef fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n    result = []\n    i = 0\n    while i < len(text):\n        if text[i] == ' ':\n            # Count consecutive spaces\n            space_count = 0\n            j = i\n            while j < len(text) and text[j] == ' ':\n                space_count += 1\n                j += 1\n            \n            # Replace based on count\n            if space_count > 2:\n                result.append('-')\n            else:\n                result.append('_' * space_count)\n            \n            i = j\n        else:\n            result.append(text[i])\n            i += 1\n    \n    return ''.join(result)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "f4c73b7d-5dd6-4db5-82c9-217d65a2bb2f",
+    "timestamp": "2026-10-19T13:56:50.450278+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_08",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "claude-haiku",
+    "cost": 0.001582,
+    "credit_charged": 645,
+    "latency_ms": 3574,
+    "latency_ms_runner": 3893.5645000310615,
+    "response": "```python\ndef fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n    result = []\n    i = 0\n    while i < len(text):\n        if text[i] == ' ':\n            # Count consecutive spaces\n            space_count = 0\n            j = i\n            while j < len(text) and text[j] == ' ':\n                space_count += 1\n                j += 1\n            \n            # Replace based on count\n            if space_count > 2:\n                result.append('-')\n            else:\n                result.append('_' * space_count)\n            \n            i = j\n        else:\n            result.append(text[i])\n            i += 1\n    \n    return ''.join(result)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "4f3159a2-5a8f-4edb-b787-9fd421b0dc3c",
+    "timestamp": "2026-10-19T13:56:52.901560+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_09",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.145e-05,
+    "credit_charged": 388,
+    "latency_ms": 1975,
+    "latency_ms_runner": 2267.143399978522,
+    "response": "```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n\ndef words_in_sentence(sentence):\n    words = sentence.split()\n    prime_length_words = [word for word in words if is_prime(len(word))]\n    return ' '.join(prime_length_words)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "4883b2f2-b21f-4454-ad11-0b7b15767e07",
+    "timestamp": "2026-10-19T13:56:55.367060+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_09",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.145e-05,
+    "credit_charged": 388,
+    "latency_ms": 1851,
+    "latency_ms_runner": 2243.158700002823,
+    "response": "```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n\ndef words_in_sentence(sentence):\n    words = sentence.split()\n    prime_length_words = [word for word in words if is_prime(len(word))]\n    return ' '.join(prime_length_words)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "e41e13ea-3268-49ec-8084-8fec52876788",
+    "timestamp": "2026-10-19T13:56:57.640785+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_09",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.145e-05,
+    "credit_charged": 388,
+    "latency_ms": 1831,
+    "latency_ms_runner": 2087.5323000364006,
+    "response": "```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n\ndef words_in_sentence(sentence):\n    words = sentence.split()\n    prime_length_words = [word for word in words if is_prime(len(word))]\n    return ' '.join(prime_length_words)\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "2f21fb2f-5d66-4d0c-a0a6-266ebc8851e5",
+    "timestamp": "2026-10-19T13:57:00.418959+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_10",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.05e-05,
+    "credit_charged": 291,
+    "latency_ms": 2265,
+    "latency_ms_runner": 2593.591300013941,
+    "response": "```python\ndef x_or_y(n, x, y):\n    \"\"\"A simple program which should return the value of x if n is \n    a prime number and should return the value of y otherwise.\n    \"\"\"\n    if n < 2:\n        return y\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return y\n    return x\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "e7cc37b2-ef65-42e2-ba05-d1f64cfe2975",
+    "timestamp": "2026-10-19T13:57:03.027663+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_10",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.05e-05,
+    "credit_charged": 291,
+    "latency_ms": 2140,
+    "latency_ms_runner": 2406.2778999796137,
+    "response": "```python\ndef x_or_y(n, x, y):\n    \"\"\"A simple program which should return the value of x if n is \n    a prime number and should return the value of y otherwise.\n    \"\"\"\n    if n < 2:\n        return y\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return y\n    return x\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "f765fc39-fe2e-4cfc-b11f-4b4912086dc0",
+    "timestamp": "2026-10-19T13:57:05.508795+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_10",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.05e-05,
+    "credit_charged": 291,
+    "latency_ms": 1928,
+    "latency_ms_runner": 2254.9219999928027,
+    "response": "```python\ndef x_or_y(n, x, y):\n    \"\"\"A simple program which should return the value of x if n is \n    a prime number and should return the value of y otherwise.\n    \"\"\"\n    if n < 2:\n        return y\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return y\n    return x\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "30a23ff7-cb74-428d-b756-df4c475516ae",
+    "timestamp": "2026-10-19T13:57:19.282693+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o",
+    "cost": 0.0103225,
+    "credit_charged": 1586,
+    "latency_ms": 13269,
+    "latency_ms_runner": 13580.990999995265,
+    "response": "ਨਰਮ ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀਆਂ ਤਕਨੀਕੀ ਕੌਸ਼ਲਾਂ ਦਾ ਮੁਲਾਂਕਣ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ:\n\n1. **ਕੋਡਿੰਗ ਦੱਖਲ**  \n   - **ਉਤਕ੍ਰਿਸ਼ਟ (5 ਅੰਕ):** ਕੋਡ ਸਾਫ਼, ਸੁਧਾਰਿਆ ਹੋਇਆ ਅਤੇ ਵਿਆਪਕ ਹੈ। ਸਾਰੇ ਕਮੈਂਟ ਅਤੇ ਡਾਕੂਮੈਂਟੇਸ਼ਨ ਮੌਜੂਦ ਹਨ।\n   - **ਵਧੀਆ (4 ਅੰਕ):** ਕੋਡ ਸਾਫ਼ ਅਤੇ ਵਿਆਪਕ ਹੈ ਪਰ ਕੁਝ ਕਮੈਂਟ ਦੀ ਘਾਟ ਹੈ।\n   - **ਠੀਕ (3 ਅੰਕ):** ਕੋਡ ਸਮਝਣ ਯੋਗ ਹੈ ਪਰ ਕੁਝ ਭਾਗ ਗੁੰਝਲਦਾਰ ਹਨ।\n   - **ਸੰਤੋਸ਼ਜਨਕ (2 ਅੰਕ):** ਕੋਡ ਵਿੱਚ ਕਈ ਗਲਤੀਆਂ ਹਨ ਅਤੇ ਸਮਝਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੈ।\n   - **ਅਸੰਤੋਸ਼ਜਨਕ (1 ਅੰਕ):** ਕੋਡ ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਸਪਸ਼ਟ ਹੈ ਅਤੇ ਸਮਝਣ ਯੋਗ ਨਹੀਂ।\n\n2. **ਡਿਬੱਗਿੰਗ ਅਤੇ ਸਮੱਸਿਆ ਹੱਲ**  \n   - **ਉਤਕ੍ਰਿਸ਼ਟ (5 ਅੰਕ):** ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਪਛਾਣਦਾ ਅਤੇ ਹੱਲ ਕਰਦਾ ਹੈ। \n   - **ਵਧੀਆ (4 ਅੰਕ):** ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਦਾ ਹੈ ਅਤੇ ਹੱਲ ਕਰਦਾ ਹੈ ਪਰ ਕੁਝ ਸਮਾਂ ਲਗਦਾ ਹੈ।\n   - **ਠੀਕ (3 ਅੰਕ):** ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਣ ਵਿੱਚ ਸਮਾਂ ਲਗਦਾ ਹੈ ਪਰ ਹੱਲ ਕਰ ਲੈਂਦਾ ਹੈ।\n   - **ਸੰਤੋਸ਼ਜਨਕ (2 ਅੰਕ):** ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਣ ਅਤੇ ਹੱਲ ਕਰਨ ਵਿੱਚ ਕਾਫ਼ੀ ਸਮਾਂ ਲਗਦਾ ਹੈ।\n   - **ਅਸੰਤੋਸ਼ਜਨਕ (1 ਅੰਕ):** ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪਛਾਣਣ ਅਤੇ ਹੱਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।\n\n3. **ਡਾਟਾਬੇਸ ਪ੍ਰਬੰਧਨ**  \n   - **ਉਤਕ੍ਰਿਸ਼ਟ (5 ਅੰਕ):** ਡਾਟਾਬੇਸ ਡਿਜ਼ਾਈਨ ਅਤੇ ਪ੍ਰਬੰਧਨ ਵਿੱਚ ਮਹਾਰਤ। ਕੁਸ਼ਲਤਾ ਨਾਲ ਕੈਰੀਅਰ ਆਪਰੇਸ਼ਨ ਕਰਦਾ ਹੈ।\n   - **ਵਧੀਆ (4 ਅੰਕ):** ਡਾਟਾਬੇਸ ਡਿਜ਼ਾਈਨ ਅਤੇ ਪ੍ਰਬੰਧਨ ਵਿੱਚ ਵਧੀਆ ਹੈ ਪਰ ਕੁਝ ਸੁਧਾਰ ਦੀ ਗੁੰਜਾਇਸ਼ ਹੈ।\n   - **ਠੀਕ (3 ਅੰਕ):** ਡਾਟਾਬੇਸ ਨਾਲ ਕੰਮ ਕਰ ਸਕਦਾ ਹੈ ਪਰ ਕੁਝ ਸਮੱਸਿਆਵਾਂ ਦਾ ਸਾਹਮਣਾ ਕਰਦਾ ਹੈ।\n   - **ਸੰਤੋਸ਼ਜਨਕ (2 ਅੰਕ):** ਡਾਟਾਬੇਸ ਪ੍ਰਬੰਧਨ ਵਿੱਚ ਕਾਫ਼ੀ ਮੁਸ਼ਕਲਾਂ ਦਾ ਸਾਹਮਣਾ ਕਰਦਾ ਹੈ।\n   - **ਅਸੰਤੋਸ਼ਜਨਕ (1 ਅੰਕ):** ਡਾਟਾਬੇਸ ਪ੍ਰਬੰਧਨ ਵਿੱਚ ਅਸਫਲ।\n\n4. **ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਅਤੇ ਆਰਕੀਟੈਕਚਰ**  \n   - **ਉਤਕ੍ਰਿਸ਼ਟ (5 ਅੰਕ):** ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਵਿੱਚ ਨਵੀਂ ਸੋਚ ਅਤੇ ਮਜ਼ਬੂਤ ਆਰਕੀਟੈਕਚਰ।\n   - **ਵਧੀਆ (4 ਅੰਕ):** ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਵਧੀਆ ਹੈ ਪਰ ਕੁਝ ਸੁਧਾਰ ਦੀ ਲੋੜ ਹੈ।\n   - **ਠੀਕ (3 ਅੰਕ):** ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਠੀਕ ਹੈ ਪਰ ਕੁਝ ਕਮਜ਼ੋਰੀਆਂ ਹਨ।\n   - **ਸੰਤੋਸ਼ਜਨਕ (2 ਅੰਕ):** ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਵਿੱਚ ਕਾਫ਼ੀ ਕਮਜ਼ੋਰੀਆਂ ਹਨ।\n   - **ਅਸੰਤੋਸ਼ਜਨਕ (1 ਅੰਕ):** ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਸਫਲ।\n\n5. **ਟੀਮ ਵਰਕ ਅਤੇ ਸੰਚਾਰ**  \n   - **ਉਤਕ੍ਰਿਸ਼ਟ (5 ਅੰਕ):** ਟੀਮ ਨਾਲ ਬਹੁਤ ਵਧੀਆ ਸੰਚਾਰ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "6241ea12-7dd0-4169-8a95-2f70fc3467d0",
+    "timestamp": "2026-10-19T13:57:32.215948+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o",
+    "cost": 0.0088425,
+    "credit_charged": 1364,
+    "latency_ms": 12441,
+    "latency_ms_runner": 12770.567399973515,
+    "response": "ਨਰਮਾਤਾ ਦੇ ਤਕਨੀਕੀ ਹੁਨਰਾਂ ਦੀ ਮੁਲਾਂਕਣ ਲਈ ਰੂਬ੍ਰਿਕ:\n\n1. **ਕੋਡਿੰਗ ਦੇ ਮੂਲ ਸਿਧਾਂਤ (10/10)**\n   - ਸਾਫ ਅਤੇ ਸੁਚੱਜਾ ਕੋਡ ਲਿਖਣਾ\n   - ਕੋਡਿੰਗ ਦੇ ਮੂਲ ਸਿਧਾਂਤਾਂ ਦੀ ਸਮਝ\n   - ਅਲਗੋਰਿਥਮਿਕ ਸੋਚ\n\n2. **ਪ੍ਰੋਗ੍ਰਾਮਿੰਗ ਭਾਸ਼ਾਵਾਂ ਦੀ ਜਾਣਕਾਰੀ (10/10)**\n   - ਕਈ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਦੱਖਲ\n   - ਭਾਸ਼ਾ-ਵਿਸ਼ੇਸ਼ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਦੀ ਸਮਝ\n   - ਨਵੀਆਂ ਭਾਸ਼ਾਵਾਂ ਸਿੱਖਣ ਦੀ ਯੋਗਤਾ\n\n3. **ਡਾਟਾ ਸਟ੍ਰਕਚਰ ਅਤੇ ਐਲਗੋਰਿਥਮ (10/10)**\n   - ਡਾਟਾ ਸਟ੍ਰਕਚਰ ਦੀ ਸਮਝ\n   - ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਲਈ ਸਹੀ ਐਲਗੋਰਿਥਮ ਦੀ ਚੋਣ\n   - ਸਮਾਂ ਅਤੇ ਸਥਾਨ ਦੀ ਜਟਿਲਤਾ ਦੀ ਸਮਝ\n\n4. **ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਅਤੇ ਆਰਕੀਟੈਕਚਰ (10/10)**\n   - ਡਿਜ਼ਾਈਨ ਪੈਟਰਨ ਦੀ ਜਾਣਕਾਰੀ\n   - ਮਾਡਿਊਲਰ ਅਤੇ ਸਕੇਲਬਲ ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ\n   - ਸਿਸਟਮ ਆਰਕੀਟੈਕਚਰ ਦੀ ਸਮਝ\n\n5. **ਡਿਬੱਗਿੰਗ ਅਤੇ ਟੈਸਟਿੰਗ (10/10)**\n   - ਡਿਬੱਗਿੰਗ ਤਕਨੀਕਾਂ ਦੀ ਸਮਝ\n   - ਯੂਨਿਟ ਅਤੇ ਇੰਟੀਗ੍ਰੇਸ਼ਨ ਟੈਸਟ ਲਿਖਣਾ\n   - ਟੈਸਟਿੰਗ ਫਰੇਮਵਰਕ ਦੀ ਜਾਣਕਾਰੀ\n\n6. **ਵਰਕਫਲੋ ਅਤੇ ਵਰਕ ਮੈਨੇਜਮੈਂਟ (10/10)**\n   - ਵਰਜਨ ਕੰਟਰੋਲ ਸਿਸਟਮ ਦੀ ਸਮਝ\n   - ਅਜਾਈਲ ਅਤੇ ਸਕ੍ਰਮ ਮੈਥਡੋਲੋਜੀ ਦੀ ਜਾਣਕਾਰੀ\n   - ਪ੍ਰੋਜੈਕਟ ਮੈਨੇਜਮੈਂਟ ਟੂਲ ਦੀ ਵਰਤੋਂ\n\n7. **ਸੁਰੱਖਿਆ ਅਤੇ ਬੇਹਤਰੀ (10/10)**\n   - ਸੁਰੱਖਿਆ ਪ੍ਰਥਾਵਾਂ ਦੀ ਸਮਝ\n   - ਕੋਡ ਦੀ ਬੇਹਤਰੀ ਲਈ ਤਕਨੀਕਾਂ\n   - ਸੁਰੱਖਿਆ ਖਤਰੇ ਅਤੇ ਹੱਲ\n\n8. **ਨਵੀਨਤਮ ਤਕਨੀਕਾਂ ਅਤੇ ਟੂਲਸ (10/10)**\n   - ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਦੀ ਜਾਣਕਾਰੀ\n   - ਨਵੇਂ ਟੂਲਸ ਦੀ ਵਰਤੋਂ\n   - ਉਦਯੋਗ ਦੇ ਰੁਝਾਨਾਂ ਨਾਲ ਅਪਡੇਟ ਰਹਿਣਾ\n\n9. **ਸਹਿਯੋਗ ਅਤੇ ਕਮਿਊਨਿਕੇਸ਼ਨ (10/10)**\n   - ਟੀਮ ਵਿੱਚ ਕੰਮ ਕਰਨ ਦੀ ਯੋਗਤਾ\n   - ਸਪਸ਼ਟ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਕਮਿਊਨਿਕੇਸ਼ਨ\n   - ਫੀਡਬੈਕ ਦੇਣ ਅਤੇ ਲੈਣ ਦੀ ਯੋਗਤਾ\n\n10. **ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ (10/10)**\n    - ਰਚਨਾਤਮਕ ਅਤੇ ਵਿਚਾਰਸ਼ੀਲ ਸਮੱਸਿਆ ਹੱਲ\n    - ਤਕਨੀਕੀ ਚੁਣੌਤੀਆਂ ਦਾ ਮੁਕਾਬਲਾ\n    - ਨਵੀਂ ਸਮੱਸਿਆਵਾਂ ਲਈ ਨਵੇਂ ਹੱਲ\n\nਕੁੱਲ ਅੰਕ: 100/100\n\nਇਸ ਰੂਬ੍ਰਿਕ ਦੇ ਅਧਾਰ 'ਤੇ, ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੇ ਤਕਨੀਕੀ ਹੁਨਰਾਂ ਦੀ ਵਿਸਤ੍ਰਿਤ ਅਤੇ ਨਿਰਪੱਖ ਮੁਲਾਂਕਣ ਕੀਤੀ ਜਾ ਸਕਦੀ ਹੈ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "deaf56e6-bcee-44e0-95f9-685eed2da653",
+    "timestamp": "2026-10-19T13:57:42.565123+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o",
+    "cost": 0.0081525,
+    "credit_charged": 1261,
+    "latency_ms": 9853,
+    "latency_ms_runner": 10138.84249998955,
+    "response": "ਨਰਮਾਤਾ ਦੇ ਤਕਨੀਕੀ ਹੁਨਰਾਂ ਦੀ ਮੁਲਾਂਕਣ ਲਈ ਰੂਬ੍ਰਿਕ:\n\n1. **ਕੋਡਿੰਗ ਦੇ ਮੂਲ ਸਿਧਾਂਤ (10/10):**\n   - ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੇ ਕੋਡ ਦੀ ਪੜ੍ਹਨਯੋਗਤਾ ਅਤੇ ਸਪੱਸ਼ਟਤਾ।\n   - ਕੋਡਿੰਗ ਦੇ ਮੂਲ ਸਿਧਾਂਤਾਂ ਦੀ ਸਮਝ ਅਤੇ ਲਾਗੂ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਕੋਡ ਵਿੱਚ ਕਮੈਂਟਿੰਗ ਅਤੇ ਡਾਕੂਮੈਂਟੇਸ਼ਨ ਦੀ ਗੁਣਵੱਤਾ।\n\n2. **ਅਲਗੋਰਿਦਮ ਅਤੇ ਡਾਟਾ ਸਟ੍ਰਕਚਰ (10/10):**\n   - ਅਲਗੋਰਿਦਮ ਦੀ ਡਿਜ਼ਾਈਨ ਅਤੇ ਅਨਾਲਿਸਿਸ ਦੀ ਸਮਝ।\n   - ਡਾਟਾ ਸਟ੍ਰਕਚਰ ਦੀ ਚੋਣ ਅਤੇ ਲਾਗੂ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਲਈ ਅਲਗੋਰਿਦਮਿਕ ਸੋਚ ਦੀ ਪ੍ਰਦਰਸ਼ਨ।\n\n3. **ਡਿਬੱਗਿੰਗ ਅਤੇ ਟ੍ਰਬਲਸ਼ੂਟਿੰਗ (10/10):**\n   - ਕੋਡ ਵਿੱਚ ਗਲਤੀਆਂ ਦੀ ਪਛਾਣ ਅਤੇ ਠੀਕ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਡਿਬੱਗਿੰਗ ਟੂਲਜ਼ ਦੀ ਵਰਤੋਂ ਦੀ ਸਮਝ।\n   - ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਸਿਸਟਮੈਟਿਕ ਤਰੀਕੇ ਨਾਲ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n\n4. **ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਅਤੇ ਆਰਕੀਟੈਕਚਰ (10/10):**\n   - ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਪੈਟਰਨਜ਼ ਦੀ ਸਮਝ।\n   - ਮਾਡਿਊਲਰ ਅਤੇ ਸਕੇਲਬਲ ਸਿਸਟਮ ਡਿਜ਼ਾਈਨ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਸਾਫਟਵੇਅਰ ਆਰਕੀਟੈਕਚਰ ਦੇ ਸਿਧਾਂਤਾਂ ਦੀ ਪਛਾਣ।\n\n5. **ਵਿਕਾਸਕ ਟੂਲਜ਼ ਅਤੇ ਪ੍ਰਕਿਰਿਆਵਾਂ (10/10):**\n   - ਵਰਜਨ ਕੰਟਰੋਲ ਸਿਸਟਮਾਂ ਦੀ ਵਰਤੋਂ ਦੀ ਸਮਝ।\n   - ਸਾਫਟਵੇਅਰ ਵਿਕਾਸ ਪ੍ਰਕਿਰਿਆਵਾਂ (ਜਿਵੇਂ ਕਿ ਐਜਾਈਲ, ਸਕ੍ਰਮ) ਦੀ ਪਾਲਣਾ।\n   - ਆਟੋਮੇਟਡ ਟੈਸਟਿੰਗ ਅਤੇ ਕੰਟਿਨਿਊਅਸ ਇੰਟੀਗ੍ਰੇਸ਼ਨ ਦੀ ਸਮਝ।\n\n6. **ਸੁਰੱਖਿਆ ਅਤੇ ਪ੍ਰਦਰਸ਼ਨ (10/10):**\n   - ਸਾਫਟਵੇਅਰ ਸੁਰੱਖਿਆ ਦੇ ਮੂਲ ਸਿਧਾਂਤਾਂ ਦੀ ਸਮਝ।\n   - ਕੋਡ ਦੇ ਪ੍ਰਦਰਸ਼ਨ ਨੂੰ ਅਪਟਿਮਾਈਜ਼ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਸੁਰੱਖਿਆ ਖਤਰੇ ਅਤੇ ਉਨ੍ਹਾਂ ਦੇ ਹੱਲ ਦੀ ਪਛਾਣ।\n\n7. **ਸਹਿਯੋਗ ਅਤੇ ਕਮਿਊਨਿਕੇਸ਼ਨ (10/10):**\n   - ਟੀਮ ਵਿੱਚ ਕੰਮ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਤਕਨੀਕੀ ਵਿਚਾਰਾਂ ਨੂੰ ਸਪੱਸ਼ਟ ਤਰੀਕੇ ਨਾਲ ਪ੍ਰਸਤੁਤ ਕਰਨ ਦੀ ਯੋਗਤਾ।\n   - ਫੀਡਬੈਕ ਦੇਣ ਅਤੇ ਲੈਣ ਦੀ ਸਮਰੱਥਾ।\n\nਕੁੱਲ ਸਕੋਰ: 70/70\n\nਇਸ ਰੂਬ੍ਰਿਕ ਦੇ ਅਧਾਰ 'ਤੇ, ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੇ ਤਕਨੀਕੀ ਹੁਨਰਾਂ ਦੀ ਵਿਸਤ੍ਰਿਤ ਮੁਲਾਂਕਣ ਕੀਤੀ ਜਾ ਸਕਦੀ ਹੈ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "47ad3ebb-c5ee-4757-abc8-b5f174b33d2f",
+    "timestamp": "2026-10-19T13:57:48.137910+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_02",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "claude-haiku",
+    "cost": 0.001633,
+    "credit_charged": 578,
+    "latency_ms": 5089,
+    "latency_ms_runner": 5351.149699999951,
+    "response": "# Portable Camera Advertisement Template\n\nIntroducing the revolutionary new SnapGo portable camera, designed for modern adventurers and content creators who refuse to compromise on quality. This sleek, lightweight device fits perfectly in your pocket, making it the ULTIMATE companion for capturing life's most precious moments. Whether you're traveling across continents or exploring your local neighborhood, the SnapGo delivers professional-grade photography in an incredibly compact form factor.\n\nThe advanced lens technology ensures crystal-clear images even in challenging lighting conditions, while the intuitive touchscreen interface makes operation effortless for both beginners and experienced photographers. With its impressive battery life, you can shoot for an entire day without needing to recharge, keeping you focused on what matters most. The INNOVATIVE stabilization system eliminates blur and shake, guaranteeing smooth video footage every single time you press record.\n\nStorage is no longer a concern thanks to the expandable memory options that allow you to capture thousands of photos and hours of video. Connectivity features enable instant sharing to your social media platforms, so your followers can experience your adventures in real-time. The durable construction withstands drops, water exposure, and extreme temperatures, making it reliable in any environment you encounter.\n\nDon't let another moment slip away—upgrade to the SnapGo portable camera today and discover why thousands of satisfied customers are already calling it ESSENTIAL for their lifestyle. Experience the difference that true portability and exceptional quality can make in your creative journey.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "change_case:capital_word_frequency",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_sentences",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "e3ce2480-8212-406d-b923-71dd0d1e6647",
+    "timestamp": "2026-10-19T13:57:53.490364+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_02",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "claude-haiku",
+    "cost": 0.001633,
+    "credit_charged": 578,
+    "latency_ms": 4910,
+    "latency_ms_runner": 5163.364199979696,
+    "response": "# Portable Camera Advertisement Template\n\nIntroducing the revolutionary new SnapGo portable camera, designed for modern adventurers and content creators who refuse to compromise on quality. This sleek, lightweight device fits perfectly in your pocket, making it the ULTIMATE companion for capturing life's most precious moments. Whether you're traveling across continents or exploring your local neighborhood, the SnapGo delivers professional-grade photography in an incredibly compact form factor.\n\nThe advanced lens technology ensures crystal-clear images even in challenging lighting conditions, while the intuitive touchscreen interface makes operation effortless for both beginners and experienced photographers. With its impressive battery life, you can shoot for an entire day without needing to recharge, keeping you focused on what matters most. The INNOVATIVE stabilization system eliminates blur and shake, guaranteeing smooth video footage every single time you press record.\n\nStorage is no longer a concern thanks to the expandable memory options that allow you to capture thousands of photos and hours of video. Connectivity features enable instant sharing to your social media platforms, so your followers can experience your adventures in real-time. The durable construction withstands drops, water exposure, and extreme temperatures, making it reliable in any environment you encounter.\n\nDon't let another moment slip away—upgrade to the SnapGo portable camera today and discover why thousands of satisfied customers are already calling it ESSENTIAL for their lifestyle. Experience the difference that true portability and exceptional quality can make in your creative journey.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "change_case:capital_word_frequency",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_sentences",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "74209d19-f4df-4359-b0ae-5ab6ae58a5a1",
+    "timestamp": "2026-10-19T13:57:58.741549+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_02",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "claude-haiku",
+    "cost": 0.001633,
+    "credit_charged": 578,
+    "latency_ms": 4805,
+    "latency_ms_runner": 5086.92540001357,
+    "response": "# Portable Camera Advertisement Template\n\nIntroducing the revolutionary new SnapGo portable camera, designed for modern adventurers and content creators who refuse to compromise on quality. This sleek, lightweight device fits perfectly in your pocket, making it the ULTIMATE companion for capturing life's most precious moments. Whether you're traveling across continents or exploring your local neighborhood, the SnapGo delivers professional-grade photography in an incredibly compact form factor.\n\nThe advanced lens technology ensures crystal-clear images even in challenging lighting conditions, while the intuitive touchscreen interface makes operation effortless for both beginners and experienced photographers. With its impressive battery life, you can shoot for an entire day without needing to recharge, keeping you focused on what matters most. The INNOVATIVE stabilization system eliminates blur and shake, guaranteeing smooth video footage every single time you press record.\n\nStorage is no longer a concern thanks to the expandable memory options that allow you to capture thousands of photos and hours of video. Connectivity features enable instant sharing to your social media platforms, so your followers can experience your adventures in real-time. The durable construction withstands drops, water exposure, and extreme temperatures, making it reliable in any environment you encounter.\n\nDon't let another moment slip away—upgrade to the SnapGo portable camera today and discover why thousands of satisfied customers are already calling it ESSENTIAL for their lifestyle. Experience the difference that true portability and exceptional quality can make in your creative journey.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "change_case:capital_word_frequency",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_sentences",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "444f2bf2-3855-40e2-a0c1-a8faa5ec69df",
+    "timestamp": "2026-10-19T13:58:01.790697+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_03",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.725e-05,
+    "credit_charged": 233,
+    "latency_ms": 2531,
+    "latency_ms_runner": 2814.4840000313707,
+    "response": "Rev up your engines at Drags and Races! Join us for thrilling events that will get your adrenaline racing. Whether you’re a fan of fast cars or a racer at heart, our venue offers an electrifying atmosphere for all. Enjoy exciting races, meet fellow enthusiasts, and witness the ultimate showdown on our track. With state-of-the-art facilities and a vibrant community, Drags and Races is the ideal destination for thrill-seekers. Don’t miss out on the action—come and feel the roar of engines and the thrill of victory! Visit us today and unleash your inner racer!",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.5,
+    "grade_detail": {
+      "instruction_level": 0.5,
+      "followed": 1,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": false
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "cf7b40c8-ec27-4a83-abc7-77800f69b587",
+    "timestamp": "2026-10-19T13:58:04.999410+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_03",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.665e-05,
+    "credit_charged": 232,
+    "latency_ms": 2681,
+    "latency_ms_runner": 2983.7488000048324,
+    "response": "Rev up your engines at Drags and Races! Join us for thrilling events that will get your adrenaline racing. Experience the thrill of high-speed action, where skilled drivers showcase their talent on our state-of-the-art track. Whether you’re a fan or a racer, our venue offers excitement for all. Enjoy food, music, and a vibrant atmosphere as you cheer on your favorite racers. Don’t miss out on the ultimate racing adventure! Visit us today and feel the rush of the race. Drags and Races: Where speed meets thrill! Get ready to ignite your passion for racing!",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.5,
+    "grade_detail": {
+      "instruction_level": 0.5,
+      "followed": 1,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": false
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "306aae40-2a43-40b1-883b-07228ee8ad3e",
+    "timestamp": "2026-10-19T13:58:07.940685+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_03",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.145e-05,
+    "credit_charged": 244,
+    "latency_ms": 2463,
+    "latency_ms_runner": 2753.232500050217,
+    "response": "Rev up your engines at Drags and Races! Join us for thrilling events that will get your adrenaline racing. Whether you’re a fan of fast cars or a racer at heart, our venue offers an electrifying atmosphere for all. Enjoy exciting races, meet fellow enthusiasts, and witness the ultimate showdown on our track. With state-of-the-art facilities and a vibrant community, Drags and Races is the ideal destination for thrill-seekers. Don’t miss out on the action—mark your calendar and gear u for an unforgettable day! Visit our site for details and tickets. Feel the rush at Drags and Races!",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.5,
+    "grade_detail": {
+      "instruction_level": 0.5,
+      "followed": 1,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": false
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "70f2f2ea-d188-4a21-94af-5114f418209c",
+    "timestamp": "2026-10-19T13:58:09.801997+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_04",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 1.71e-05,
+    "credit_charged": 72,
+    "latency_ms": 1384,
+    "latency_ms_runner": 1664.3092999584042,
+    "response": "\"Get ready to laugh until your sides hurt—because our jokes are cheaper than therapy and twice as effective!\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "startend:quotation",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "292998c1-0ac0-412d-9626-ff41fafbd284",
+    "timestamp": "2026-10-19T13:58:11.857516+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_04",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.19e-05,
+    "credit_charged": 84,
+    "latency_ms": 1515,
+    "latency_ms_runner": 1804.6581999515183,
+    "response": "\"Join us for a night of laughter where the only thing funnier than our jokes is the fact that we still think we can make it big!\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "startend:quotation",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "600ffd1d-b282-4df7-8e3c-8784660a1047",
+    "timestamp": "2026-10-19T13:58:13.549974+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_04",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.07e-05,
+    "credit_charged": 81,
+    "latency_ms": 1206,
+    "latency_ms_runner": 1494.5928999804892,
+    "response": "\"Join us for a night of laughter where the only thing funnier than our jokes is the fact that we still think we can dance!\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "startend:quotation",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "c13341d3-5cc4-461a-b7f4-146b2c0d72ab",
+    "timestamp": "2026-10-19T13:58:16.487682+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_05",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 6.825e-05,
+    "credit_charged": 296,
+    "latency_ms": 2420,
+    "latency_ms_runner": 2727.9907999909483,
+    "response": "As we reflect on the current economic landscape, it is imperative to acknowledge the following key considerations: First, the European Central Bank's forecasts, which presently exhibit a notable upward bias, require careful reassessment and adjustment. Second, the ECB must remain steadfast and not permit itself to be swayed by the inflation alarmism that is being circulated in certain circles, as we document these critical insights in our economic memoirs for future reference.",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "instruction_level": 0.0,
+      "followed": 0,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:existence",
+          "followed": false
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "65c17e0c-0ce3-409d-9189-cb5b468e6e7b",
+    "timestamp": "2026-10-19T13:58:19.045234+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_05",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 6.705e-05,
+    "credit_charged": 293,
+    "latency_ms": 2065,
+    "latency_ms_runner": 2323.723000008613,
+    "response": "As we reflect on the current economic landscape, it is imperative to acknowledge two critical considerations: First, the European Central Bank's forecasts, which presently exhibit a notable upward bias, require careful reassessment and revision. Second, the ECB must remain steadfast and not permit itself to be swayed by the inflation alarmism that is being circulated in certain circles, as we document these insights in the ink of our collective memoirs.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:existence",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "36e2e293-e2ac-436b-944e-981ce1e9f45c",
+    "timestamp": "2026-10-19T13:58:21.826802+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_05",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 6.825e-05,
+    "credit_charged": 296,
+    "latency_ms": 2281,
+    "latency_ms_runner": 2552.607000048738,
+    "response": "As we reflect on the current economic landscape, it is imperative to acknowledge the following key considerations: First, the European Central Bank's forecasts, which presently exhibit a notable upward bias, require careful reassessment and adjustment. Second, the ECB must remain steadfast and not permit itself to be swayed by the inflation alarmism that is being circulated in certain circles, as we document these critical insights in our economic memoirs for future reference.",
+    "passed": false,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "instruction_level": 0.0,
+      "followed": 0,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:existence",
+          "followed": false
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "6b607bd5-4d1b-46ac-944b-76cfb2aafcf3",
+    "timestamp": "2026-10-19T13:58:24.420888+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_06",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.77e-05,
+    "credit_charged": 255,
+    "latency_ms": 2085,
+    "latency_ms_runner": 2380.9595000348054,
+    "response": "Here are several professional alternatives to your sentence:\n\n1. \"Hello Bautista, please feel free to reach out if you require assistance with the graphs.\"\n2. \"Dear Bautista, should you need any support with the graphs, do not hesitate to contact me.\"\n3. \"Hi Bautista, I am available to assist you with the graphs if needed.\"\n4. \"Bautista, if you find yourself needing help with the graphs, please let me know.\"\n5. \"Greetings Bautista, I would be happy to help you with the graphs if you need it.\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "aa24597a-f03e-4a6e-a85f-276f7d3797a0",
+    "timestamp": "2026-10-19T13:58:26.905925+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_06",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0001029,
+    "credit_charged": 318,
+    "latency_ms": 2055,
+    "latency_ms_runner": 2312.9324999754317,
+    "response": "Here are several professional alternatives to your sentence:\n\n1. \"Hello Bautista, please feel free to reach out if you require any assistance with the graphs.\"\n2. \"Dear Bautista, should you need any support with the graphs, do not hesitate to contact me.\"\n3. \"Hi Bautista, I am available to assist you with the graphs if needed.\"\n4. \"Bautista, if you find yourself needing help with the graphs, please let me know.\"\n5. \"Greetings Bautista, I would be happy to help you with the graphs if you need it.\"\n6. \"Hello Bautista, please inform me if you require any guidance regarding the graphs.\"\n7. \"Dear Bautista, I am here to assist you with the graphs should you need any help.\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "eaeba71d-ea30-45ef-af48-ab6108c48e39",
+    "timestamp": "2026-10-19T13:58:29.725638+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_06",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 7.71e-05,
+    "credit_charged": 254,
+    "latency_ms": 2234,
+    "latency_ms_runner": 2568.9490999793634,
+    "response": "Here are several professional alternatives to your sentence:\n\n1. \"Hello Bautista, please feel free to reach out if you require any assistance with the graphs.\"\n2. \"Dear Bautista, should you need any support with the graphs, do not hesitate to contact me.\"\n3. \"Hi Bautista, I am available to assist you with the graphs if needed.\"\n4. \"Bautista, please let me know if you would like any help regarding the graphs.\"\n5. \"Hello Bautista, I’m here to help if you need any guidance with the graphs.\"",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "keywords:letter_frequency",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "4d195468-84d8-476f-878b-bf9a59473bd2",
+    "timestamp": "2026-10-19T13:58:33.479600+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_07",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00013245,
+    "credit_charged": 448,
+    "latency_ms": 3180,
+    "latency_ms_runner": 3498.9309000084177,
+    "response": "In the land of Oz where the kangaroos bounce,  \nThey dream of a journey, but never renounce,  \nWhy don’t they hop over to the U.S. shores?  \nPerhaps they’re too busy with their own outdoor chores.  \n\nWith a pouch full of dreams and a spring in their feet,  \nThey ponder the highways, the cities, the heat.  \nBut alas, dear Steve, let’s unravel this riddle,  \nFor kangaroos know how to stay out of the middle.  \n\n* Point 1: They fear the tall buildings, the concrete so stark,  \n* Point 2: And the robbers who lurk in the shadows, so dark.  \n\nSo they stay in the sun, where the gumtrees sway,  \nWhile the robbers of dreams keep the wanderlust at bay.  \nIn the land of the free, they’ll just watch from afar,  \nContent with their hopping beneath the Southern Star.  ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 3,
+      "total": 3,
+      "per_instruction": [
+        {
+          "id": "keywords:frequency",
+          "followed": true
+        },
+        {
+          "id": "detectable_format:number_bullet_lists",
+          "followed": true
+        },
+        {
+          "id": "keywords:forbidden_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "c6050098-fd31-4ee5-869a-f6b7dad772d8",
+    "timestamp": "2026-10-19T13:58:39.282360+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_07",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00012825,
+    "credit_charged": 437,
+    "latency_ms": 5209,
+    "latency_ms_runner": 5577.6456000166945,
+    "response": "In the land of Oz where the kangaroos bounce,  \nThey dream of a journey, but never renounce,  \nFor hopping to America, they ponder and scheme,  \nYet something keeps them from that wild dream.  \n\n* Point 1: They fear the robbers with their sneaky schemes,  \n* Point 2: Who’d steal their pouches and shatter their dreams.  \n\nWith boomerangs flying and surfboards in tow,  \nThey’d face off with squirrels, a curious show.  \nBut the robbers of nature, those crafty raccoons,  \nWould swipe all their snacks under the light of the moons.  \n\nSo they stay in the outback, where the sun shines so bright,  \nAvoiding the chaos of a foreign night.  \nFor in the land of the free, they’d rather not roam,  \nWhen the grass is still greener, and the sky feels like home.  ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 3,
+      "total": 3,
+      "per_instruction": [
+        {
+          "id": "keywords:frequency",
+          "followed": true
+        },
+        {
+          "id": "detectable_format:number_bullet_lists",
+          "followed": true
+        },
+        {
+          "id": "keywords:forbidden_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "faeb5056-4fdd-4412-9ff9-788ff71b0e54",
+    "timestamp": "2026-10-19T13:58:43.731838+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_07",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00015285,
+    "credit_charged": 499,
+    "latency_ms": 3920,
+    "latency_ms_runner": 4233.96679997677,
+    "response": "In the land of Oz where the kangaroos bounce,  \nThey dream of a journey, a curious pounce.  \nBut why don’t they hop to the U.S. so grand?  \nLet’s unravel this mystery, hand in hand.  \n\n* Point 1:  \nThe kangaroo’s passport is lost in the sand,  \nRobbers of time stole it, oh isn’t that bland?  \nThey’d leap through the skies, but alas, they’re stuck,  \nIn a pouch of confusion, oh what rotten luck!  \n\n* Point 2:  \nAnd Steve, my dear mate, with a grin on his face,  \nKnows that the roos love their own special space.  \nRobbers of dreams, they just can’t break free,  \nFrom the outback’s embrace, where they’re wild and carefree.  \n\nSo let’s raise a toast to the kangaroo crew,  \nIn Australia they thrive, while the U.S. bids adieu!  \nWith a hop and a skip, they’ll stay where they roam,  \nIn the heart of the bush, they’ve found their true home.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 3,
+      "total": 3,
+      "per_instruction": [
+        {
+          "id": "keywords:frequency",
+          "followed": true
+        },
+        {
+          "id": "detectable_format:number_bullet_lists",
+          "followed": true
+        },
+        {
+          "id": "keywords:forbidden_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "848e1174-b554-4088-8e9d-e3d9c048933c",
+    "timestamp": "2026-10-19T13:58:49.810620+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_08",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0002793,
+    "credit_charged": 764,
+    "latency_ms": 5619,
+    "latency_ms_runner": 5928.822899993975,
+    "response": "**Introducing the Ultimate Teen Style: The VibeStep Sneakers!**\n\nStep into a world of comfort and style with the all-new VibeStep Sneakers, designed specifically for the trendsetting teenager who wants to make a statement. Whether you’re hitting the skate park, hanging out with friends, or just strolling through the mall, these shoes are the perfect blend of fashion and functionality.\n\nCrafted with a lightweight, breathable mesh upper, the VibeStep Sneakers keep your feet cool and comfortable all day long. The innovative cushioning technology provides exceptional support, making them ideal for those long days filled with activities. Plus, the durable rubber outsole ensures you’ll have the grip you need, whether you’re running to catch the bus or showing off your moves on the basketball court.\n\n*But it’s not just about comfort—style is key!* The VibeStep Sneakers come in a variety of vibrant colors and eye-catching patterns that allow you to express your unique personality. From bold neon hues to classic monochrome designs, there’s a pair for every teen’s taste. The sleek silhouette and modern design make these sneakers the perfect accessory to elevate any outfit, whether you’re rocking jeans, shorts, or even a casual dress.\n\nOne of the standout features of the VibeStep Sneakers is the customizable lace system. With interchangeable laces in different colors, you can easily switch up your look to match your mood or outfit. Want to stand out? Go for the electric blue laces. Feeling chill? Opt for the classic black. The possibilities are endless, allowing you to truly make these sneakers your own.\n\n*But wait, there’s more!* Each pair of VibeStep Sneakers comes with a limited-edition sticker pack, perfect for personalizing your gear or sharing with friends. Show off your style and creativity by decorating your sneakers, phone case, or school supplies with these fun designs.\n\nDon’t miss out on the chance to own the coolest sneakers of the season. The VibeStep Sneakers are not just shoes; they’re a lifestyle. Grab your pair today and step into a world where comfort meets style, and every step you take is a statement. Get ready to vibe with confidence and flair—because with VibeStep, you’re always one step ahead!",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "detectable_format:number_highlighted_sections",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "1e6eaa76-06f1-4945-96de-dc4f61f915a4",
+    "timestamp": "2026-10-19T13:58:55.374890+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_08",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0002943,
+    "credit_charged": 801,
+    "latency_ms": 5127,
+    "latency_ms_runner": 5417.598800035194,
+    "response": "**Introducing the Ultimate Teen Style: The VibeStep Sneakers!**\n\nStep into a world of comfort and style with the all-new VibeStep Sneakers, designed specifically for the trendsetting teenager who wants to make a statement. Whether you’re hitting the skate park, hanging out with friends, or strutting through the school hallways, these shoes are your perfect companion. \n\nCrafted with a sleek, modern silhouette, the VibeStep Sneakers come in a variety of vibrant colors and eye-catching patterns that reflect your unique personality. Choose from classic black and white for a timeless look, or go bold with neon hues and graphic designs that scream individuality. *With VibeStep, you don’t just wear shoes; you wear your vibe!*\n\nComfort is key, and we’ve got you covered. The VibeStep Sneakers feature a cushioned insole and lightweight construction, ensuring that your feet stay happy all day long. The breathable mesh upper keeps your feet cool during those hot summer days, while the durable rubber outsole provides excellent traction for all your adventures. Whether you’re running to catch the bus or dancing at a party, these sneakers will keep you feeling light on your feet.\n\nBut that’s not all! The VibeStep Sneakers are designed with versatility in mind. Pair them with your favorite jeans for a casual look, or dress them up with joggers and a stylish hoodie for a sporty vibe. *No matter how you style them, you’ll always be on-trend and ready to turn heads!*\n\nWe know that teens love to express themselves, which is why the VibeStep Sneakers come with customizable patches and laces. Mix and match to create a look that’s uniquely yours! Want to add a pop of color? Swap out the laces for something bright and fun. Feeling artsy? Attach a patch that showcases your favorite band or hobby. The possibilities are endless!\n\nFinally, we believe in sustainability. The VibeStep Sneakers are made from eco-friendly materials, so you can feel good about your purchase while looking great. Join the movement towards a greener planet without sacrificing style.\n\nDon’t miss out on the chance to elevate your footwear game. Grab your pair of VibeStep Sneakers today and step into a world where comfort meets creativity! Your feet will thank you, and your friends will be asking where you got them. Get ready to vibe!",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "detectable_format:number_highlighted_sections",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "32b15510-f597-43bb-8c3e-9948e269e4f3",
+    "timestamp": "2026-10-19T13:59:00.589763+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_08",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.0002901,
+    "credit_charged": 791,
+    "latency_ms": 4770,
+    "latency_ms_runner": 5039.58350000903,
+    "response": "**Introducing the Ultimate Teen Style: The VibeStep Sneakers!**\n\nStep into a world of comfort and style with the all-new VibeStep Sneakers, designed specifically for the trendsetting teenager who wants to make a statement. Whether you’re hitting the school hallways, hanging out with friends, or just chilling at home, these sneakers are the perfect blend of fashion and functionality.\n\n**Unmatched Comfort and Support**\n\nThe VibeStep Sneakers feature a lightweight, breathable mesh upper that keeps your feet cool and comfortable all day long. With a cushioned insole and responsive midsole, these shoes provide the support you need for those long days filled with activities. Say goodbye to sore feet and hello to all-day comfort! The durable rubber outsole ensures excellent traction, making them perfect for everything from skateboarding to casual strolls in the park. \n\n*But that’s not all! The VibeStep Sneakers come with a unique shock-absorbing technology that adapts to your movements, giving you the freedom to express yourself without any limitations. Whether you’re jumping, running, or just hanging out, these shoes will keep up with your active lifestyle.*\n\n**Express Your Unique Style**\n\nAvailable in a variety of vibrant colors and eye-catching patterns, the VibeStep Sneakers allow you to showcase your individuality. From bold neon hues to classic monochrome designs, there’s a pair for every personality. The customizable lace options let you mix and match to create a look that’s uniquely yours. Pair them with your favorite jeans, shorts, or even a casual dress, and you’ll be turning heads wherever you go!\n\n*Plus, the VibeStep Sneakers are designed with a sleek silhouette that fits seamlessly into any outfit. Whether you’re going for a sporty look or something more laid-back, these shoes will elevate your style game to the next level.*\n\n**Eco-Friendly and Sustainable**\n\nWe know that today’s teens care about the planet, which is why the VibeStep Sneakers are made from eco-friendly materials. Our commitment to sustainability means you can look good while doing good for the environment. With every step you take, you’re making a positive impact!\n\nSo why wait? Step up your shoe game with the VibeStep Sneakers and experience the perfect combination of comfort, style, and sustainability. Grab your pair today and let your feet do the talking!",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 2,
+      "total": 2,
+      "per_instruction": [
+        {
+          "id": "detectable_format:number_highlighted_sections",
+          "followed": true
+        },
+        {
+          "id": "length_constraints:number_words",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "45a0fbdd-517b-4f8a-af0d-5eb655345f7a",
+    "timestamp": "2026-10-19T13:59:02.503818+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_09",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 3.015e-05,
+    "credit_charged": 131,
+    "latency_ms": 1455,
+    "latency_ms_runner": 1703.6927999579348,
+    "response": "My answer is yes. The first song sung in outer space was indeed \"Happy Birthday,\" which was performed by astronaut crew members during a birthday celebration for a colleague aboard the International Space Station.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "6457dc83-651f-40cd-9279-a9b173c1f068",
+    "timestamp": "2026-10-19T13:59:04.444900+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_09",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 3.495e-05,
+    "credit_charged": 143,
+    "latency_ms": 1422,
+    "latency_ms_runner": 1698.9555999753065,
+    "response": "My answer is yes. The first song ever sung in outer space was indeed \"Happy Birthday,\" performed by astronaut Frank Borman for the birthday of his crewmate Bill Anders during the Apollo 8 mission in 1968.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "886204b4-aae6-489f-b009-a1ce386599d7",
+    "timestamp": "2026-10-19T13:59:06.709679+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_09",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 3.435e-05,
+    "credit_charged": 142,
+    "latency_ms": 1747,
+    "latency_ms_runner": 2026.8935000058264,
+    "response": "My answer is yes. The first song ever sung in outer space was indeed \"Happy Birthday,\" performed by astronaut Frank Borman during the Gemini 7 mission in 1965 to celebrate the birthday of fellow astronaut William Anders.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "f182aadf-ea5a-4ad7-9987-4deceb229601",
+    "timestamp": "2026-10-19T13:59:08.284819+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_10",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o",
+    "cost": 0.000185,
+    "credit_charged": 89,
+    "latency_ms": 1099,
+    "latency_ms_runner": 1353.0788000207394,
+    "response": "My answer is yes.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "84fde675-0994-46b9-80cf-62abe0fb9b1f",
+    "timestamp": "2026-10-19T13:59:10.000023+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_10",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o",
+    "cost": 0.000185,
+    "credit_charged": 89,
+    "latency_ms": 1177,
+    "latency_ms_runner": 1477.5017999927513,
+    "response": "My answer is yes.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "e3ae9370-934f-4f2e-a017-b4a27f048e85",
+    "timestamp": "2026-10-19T13:59:11.959471+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_10",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o",
+    "cost": 0.000185,
+    "credit_charged": 89,
+    "latency_ms": 1424,
+    "latency_ms_runner": 1715.8545999554917,
+    "response": "My answer is yes.",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "detectable_format:constrained_response",
+          "followed": true
+        }
+      ]
+    }
+  }
+]
