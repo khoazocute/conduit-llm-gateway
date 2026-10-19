@@ -79,7 +79,8 @@ def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> li
     return selected
 
 
-def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str]) -> list[dict[str, Any]]:
+def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str],
+                   quiet: bool = False) -> list[dict[str, Any]]:
     """Bỏ item đã có trong các file kết quả cũ (đợt mở rộng cỡ mẫu — D14).
 
     Lọc theo **item**, không theo lượt: item nào đã chạy (dù 1 lượt) thì bỏ hẳn, vì đợt
@@ -88,13 +89,22 @@ def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str]) -> list[d
 
     Không khớp file nào thì NỔ, không âm thầm chạy lại hết — gõ sai đường dẫn mà vẫn chạy
     thì trả tiền hai lần cho toàn bộ bộ đề.
+
+    `quiet=True` cho chỗ gọi mà stdout bị bắt làm giá trị (khối đếm số item trong
+    dry_run.sh dùng `$(... python -c ...)`) — in thêm 1 dòng là hỏng biến đếm.
     """
     if not patterns:
         raise SystemExit("--skip-ran: phải cho ít nhất 1 file kết quả")
     ran: set[str] = set()
     n_files = 0
+    # Giai duong dan tuong doi theo GOC REPO, khong theo cwd: khoi dem so item trong
+    # dry_run.sh `cd` sang experiments/scripts truoc khi goi, nen "experiments/results/..."
+    # tinh theo cwd se truot va bao "khong file nao khop".
+    repo_root = EXPERIMENTS_DIR.parent
     for pattern in patterns:
         pp = Path(pattern)
+        if not pp.is_absolute():
+            pp = repo_root / pp
         matches = sorted(pp.parent.glob(pp.name)) if any(c in pattern for c in "*?[") else [pp]
         for path in matches:
             if not path.exists():
@@ -106,7 +116,9 @@ def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str]) -> list[d
     if not n_files:
         raise SystemExit(f"--skip-ran: khong file nao khop {patterns} - kiem lai duong dan")
     kept = [p for p in prompts if p["id"] not in ran]
-    print(f"--skip-ran: {n_files} file, {len(ran)} item da chay -> con {len(kept)}/{len(prompts)} item moi")
+    if not quiet:
+        print(f"--skip-ran: {n_files} file, {len(ran)} item da chay "
+              f"-> con {len(kept)}/{len(prompts)} item moi")
     if not kept:
         raise SystemExit("--skip-ran: khong con item nao de chay")
     return kept

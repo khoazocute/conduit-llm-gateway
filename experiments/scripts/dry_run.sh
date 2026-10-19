@@ -48,11 +48,18 @@ PROXIES="${PROXIES:-litellm bifrost portkey}"
 # Dry-run 36 lượt: PER_SET=1 PROMPT_LIMIT=40 RUNS=3. PROMPT_LIMIT cắt SAU khi lọc.
 SETS="${SETS:-}"
 PER_SET="${PER_SET:-0}"
+# D14 (dot mo rong co mau 10 -> 20 item/bo): chi chay item CHUA tung chay, de khong tra
+# tien lai cho 40 item cu. VD:
+#   SKIP_RAN="experiments/results/run_*_20261019T1*.json"
+# De trong = chay het (hanh vi cu, khong doi).
+SKIP_RAN="${SKIP_RAN:-}"
 
 echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
 N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
 import run_experiment as r
 ps=r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)
+skip='$SKIP_RAN'
+if skip: ps=r.skip_ran_items(ps, skip.split(), quiet=True)
 lim='$PROMPT_LIMIT'
 print(len(ps[:int(lim)] if lim else ps))")
 echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"
@@ -122,6 +129,7 @@ for proxy in $PROXIES; do
   if ! PYTHONIOENCODING=utf-8 python "$ROOT_DIR/experiments/scripts/run_experiment.py" \
       --proxy-name "$proxy" --runs "$RUNS" \
       ${PROMPT_LIMIT:+--limit "$PROMPT_LIMIT"} \
+      ${SKIP_RAN:+--skip-ran $SKIP_RAN} \
       --sets "$SETS" --per-set "$PER_SET"; then
     echo "  Runner báo lỗi cho $proxy — xem log ở trên, kết quả đã chạy được vẫn giữ nguyên (ghi ngay từng lượt)." >&2
     FAILED_PROXIES+=("$proxy")
