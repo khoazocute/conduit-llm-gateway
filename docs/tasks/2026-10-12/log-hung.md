@@ -414,3 +414,66 @@ IFEval qua repo chính thức). Ngưỡng `prompt_len` suy từ tercile phân b�
 5. Nhỏ: `verify_results.py` chạy trên `merged.json` báo mọi lượt "trùng" (thiết kế cho file 1 proxy)
    — nên ghi rõ trong docstring hoặc gom theo `(proxy_name, prompt_id, run_index)`. `preflight.py` cảnh
    báo ví đọc ví lớn nhất của user `exp.buyer.*` cũ, không biết file danh tính đã xoá → báo động giả.
+
+---
+
+## Hùng — 19–20/10: chạy nửa còn lại, gộp 360, áp luật quyết định
+
+| Việc | Kết quả | File |
+|---|---|---|
+| Chạy 180 lượt (MMLU + GSM8K × 3 proxy × 3 lần) | **180/180 thành công, 0 lỗi**, $0,07051 | `run_*_20261019T16*.json` |
+| Chấm lại **cả 360** bằng `graders.py` mới nhất | 317/360 đạt (88,1%) | — |
+| Gộp 360 + xuất bảng + áp luật quyết định | **chọn `litellm`**, quyết ở **bước 2** | `experiments/results/phase3-full-360/` |
+| Viết báo cáo kết quả | 10 mục, có đối chiếu H1–H3 | **`docs/experiment-results.md`** |
+| Sửa `verify_results.py` (lỗi Khoa nêu ở mục 5 review) | gom theo `(proxy_name, prompt_id, run_index)` | `experiments/scripts/verify_results.py` |
+| Sửa `manifest.json` còn ghi `expensive: claude-sonnet` | → `gpt-4o`, khớp D12 và khớp dữ liệu đã chạy | `experiments/prompts/manifest.json` |
+
+**Số chốt (360 lượt, 0 lỗi, tổng $0,18920):**
+
+| Proxy | Độ chính xác | Chi phí TB/lượt | Chi phí/câu đạt | p95 | Nhất quán |
+|---|---|---|---|---|---|
+| `litellm` | 81,7% | **$0,000097** | **$0,000119** | 5001 ms | 1,00 |
+| `bifrost` | 88,3% | $0,000601 | $0,000680 | 5629 ms | 1,00 |
+| `portkey` | 94,2% | $0,000879 | $0,000933 | 5819 ms | 1,00 |
+
+### Phát hiện quan trọng
+
+1. **Luật 4 bước và chỉ số "chi phí/câu đạt" cho cùng một kết luận** — không có chỗ lệch phải giải
+   trình. LiteLLM rẻ hơn 5,7–7,8× ngay cả khi đã phạt nó vì 22 câu làm sai.
+2. **LiteLLM chọn `gpt-4o-mini` 120/120 lượt, không đổi model lần nào.** Nhánh này thực chất là
+   **đường cơ sở `gpt-4o-mini`**, không đo được cơ chế định tuyến nào đang hoạt động.
+3. **Chênh lệch độ chính xác là do định tuyến, nhân quả sạch.** 4 câu GSM8K mà mini làm sai thì sai
+   **0/3 (tất định)**; mỗi lần proxy nâng model thì câu đó **đạt 3/3**. Portkey nâng 4/4 → 30/30,
+   Bifrost 2/4 → 24/30, LiteLLM 0/4 → 18/30.
+4. **Lợi thế của Portkey một phần là trùng hợp.** Cả 4 câu mini trượt đều dài ≥ 225 ký tự, mọi câu
+   mini làm được mà Portkey để SIMPLE đều ≤ 177 — trên GSM8K độ dài câu đố tình cờ tỷ lệ với độ khó,
+   nên ngưỡng `prompt_len` thuần cú pháp hoạt động như bộ phân loại độ khó. Không bảo đảm còn đúng
+   trên dữ liệu thật.
+5. **Bifrost đẩy 24/30 câu MMLU lên `gpt-4o` mà vẫn chỉ 27/30 — bằng đúng LiteLLM chạy toàn mini.**
+   Tiền trả thêm cho MMLU không mua được điểm nào. Xác nhận phân loại lệch đo ở smoke test 09/10.
+6. **Mục 4 review của Khoa (`temperature: 0` không tất định) đã được kiểm lại trên 360 lượt:** đúng
+   3/120 nhóm = **2,5%**, và cả 3 nhóm đều dùng **cùng một model** → bất định phía provider, không
+   phải định tuyến bất ổn. Đã đưa vào báo cáo thành **sàn nhiễu 2,5%**, kèm hệ quả: chênh lệch dưới
+   ~2,5 đpt thì không kết luận được.
+7. **Chấm lại 180 lượt của Khoa trên máy mình ra đúng từng con số** (88,3 / 91,7 / 93,3) — khác biệt
+   duy nhất trong file là đường dẫn thư mục tạm của 2 máy. Tức 2 bản sửa bộ chấm ở `871e756` không
+   làm lệch kết quả nửa của Khoa, và phép chấm **tái lập được độc lập**.
+
+### Cần bàn cùng nhau
+
+**Kết luận nhạy với thành phần bộ đề — đây là chỗ cần thống nhất trước khi báo cáo.** LiteLLM qua
+cổng 80% **chỉ hơn 1,7 đpt**, mà 1,7 đpt **nằm trong sàn nhiễu 2,5%**. Chi tiết:
+
+| Nửa bộ đề | LiteLLM | Qua cổng? |
+|---|---|---|
+| MMLU + GSM8K (Hùng) | **75,0%** | **KHÔNG** |
+| HumanEval + IFEval (Khoa) | 88,3% | Có |
+| Gộp cả 4 bộ | **81,7%** | Có (sát sàn) |
+
+Nguyên nhân là **HumanEval bão hòa** (mini đạt 30/30 kéo điểm lên). Bỏ HumanEval thì LiteLLM còn
+75,6% → **bị loại ở bước 1**, và proxy được chọn đổi thành **`bifrost`**.
+
+**Quan điểm của mình:** **không sửa luật, không sửa bộ đề** — sửa sau khi đã thấy số là mất tính
+khách quan, đúng nguyên tắc đã ghi ở `CLAUDE.md` mục 2. Kết luận chính thức vẫn là LiteLLM. Nhưng
+phải **ghi thẳng độ nhạy này vào giới hạn** (đã làm, mục 9 của báo cáo) và **giữ `fallbacks`** khi
+tích hợp thật, vì LiteLLM không bao giờ tự nâng model khi gặp prompt khó. Khoa phản biện giúp chỗ này.

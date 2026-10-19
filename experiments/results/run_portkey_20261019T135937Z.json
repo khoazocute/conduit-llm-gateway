@@ -501,7 +501,7 @@
     "score": 0.0,
     "grade_detail": {
       "returncode": 1,
-      "stderr_tail": "^^^^\n  File \"C:\\Users\\KHOAZO\\AppData\\Local\\Temp\\tmpe2c6d_z6\\candidate.py\", line 28, in check\n    assert candidate(\"Yellow Yellow  Dirty  Fellow\") == \"Yellow_Yellow__Dirty__Fellow\", \"This prints if this assert fails 3 (good for debugging!)\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: This prints if this assert fails 3 (good for debugging!)\n"
+      "stderr_tail": "^^\n  File \"C:\\Users\\HPVICT~1\\AppData\\Local\\Temp\\tmp0syadam9\\candidate.py\", line 28, in check\n    assert candidate(\"Yellow Yellow  Dirty  Fellow\") == \"Yellow_Yellow__Dirty__Fellow\", \"This prints if this assert fails 3 (good for debugging!)\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: This prints if this assert fails 3 (good for debugging!)\n"
     }
   },
   {

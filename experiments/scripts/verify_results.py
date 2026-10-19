@@ -49,10 +49,14 @@ def check(path: Path, models: set[str], expect: int | None) -> list[str]:
     if expect is not None and len(records) != expect:
         problems.append(f"có {len(records)} lượt, kỳ vọng {expect}")
 
-    seen = Counter((r.get("prompt_id"), r.get("run_index")) for r in records)
+    # Khoa PHAI gom ca proxy_name: 1 item x 1 lan lap xuat hien DUNG 1 lan TREN MOI PROXY.
+    # Thieu proxy_name thi file da gop 3 proxy bi bao "trung 3 lan" oan het 120 item (gap
+    # that khi gop 360 luot Phase 3, 19/10). File 1 proxy khong doi hanh vi vi proxy_name
+    # la hang so trong do.
+    seen = Counter((r.get("proxy_name"), r.get("prompt_id"), r.get("run_index")) for r in records)
     for key, n in seen.items():
         if n > 1:
-            problems.append(f"{key[0]} run{key[1]} xuất hiện {n} lần (trùng lượt)")
+            problems.append(f"{key[0]}/{key[1]} run{key[2]} xuất hiện {n} lần (trùng lượt)")
 
     for i, r in enumerate(records):
         tag = f"{r.get('prompt_id')} run{r.get('run_index')}"
