@@ -160,11 +160,46 @@ H1 đoán LiteLLM sẽ trượt cổng 80%. Nó **không trượt — nhưng ch�
 | **Gộp cả 4 bộ** | **81,7%** | **Có (hơn 1,7 đpt)** |
 
 Nguyên nhân: **HumanEval bão hòa** — `gpt-4o-mini` đạt 30/30, kéo điểm trung bình của LiteLLM lên.
-Nếu bỏ HumanEval khỏi bộ đánh giá, LiteLLM còn 68/90 = **75,6%** và **bị loại ở bước 1**, khi đó
-proxy được chọn sẽ là **`bifrost`** (rẻ hơn Portkey). Nghĩa là **kết luận của thí nghiệm này nhạy
-với thành phần bộ đề** — phải ghi vào giới hạn, không được che. Luật quyết định **không được sửa sau
-khi đã thấy số**, nên kết luận chính thức vẫn là LiteLLM; nhưng đây là lý do mục 9 đề nghị
-**giữ cơ chế dự phòng** thay vì coi LiteLLM là lựa chọn an toàn tuyệt đối.
+
+### Phân tích độ nhạy: bỏ lần lượt từng bộ đề
+
+Phép thử thẳng nhất cho câu "kết luận có vững không": bỏ từng bộ ra, áp lại đúng luật 4 bước.
+
+| Bỏ bộ | litellm | bifrost | portkey | Proxy được chọn |
+|---|---|---|---|---|
+| — (cả 4 bộ) | 81,7% / $0,000097 | 88,3% / $0,000601 | 94,2% / $0,000879 | **`litellm`** |
+| MMLU | **78,9% → loại** | 87,8% / $0,000605 | 95,6% / $0,001096 | `bifrost` |
+| GSM8K | 88,9% / $0,000080 | 91,1% / $0,000666 | 92,2% / $0,000849 | **`litellm`** |
+| HumanEval | **75,6% → loại** | 84,4% / $0,000719 | 93,3% / $0,000682 | `portkey` |
+| IFEval | 83,3% / $0,000088 | 90,0% / $0,000413 | 95,6% / $0,000887 | **`litellm`** |
+
+**2 trong 4 biến thể giữ LiteLLM, 2 biến thể loại nó.** Và khi LiteLLM bị loại thì proxy thay thế
+**không cố định**: bỏ MMLU thì Bifrost thắng, bỏ HumanEval thì **Portkey** thắng. Lý do Portkey vượt
+lên ở biến thể đó: HumanEval là bộ **đắt nhất của Portkey** ($0,001468/lượt — nó không gửi câu nào
+sang tầng SIMPLE) nhưng lại là bộ **rẻ nhất của Bifrost** ($0,000246/lượt — 27/30 câu ở SIMPLE), nên
+bỏ HumanEval **làm Bifrost đắt lên và Portkey rẻ đi**, đủ để đảo thứ tự.
+
+Nghĩa là **kết luận của thí nghiệm này nhạy với thành phần bộ đề** — phải ghi vào giới hạn, không
+được che. Luật quyết định **không được sửa sau khi đã thấy số**, nên kết luận chính thức vẫn là
+LiteLLM; nhưng đây là lý do mục 9 đề nghị **giữ cơ chế dự phòng** thay vì coi LiteLLM là lựa chọn an
+toàn tuyệt đối, và là lý do mục 9 đề nghị **tăng cỡ mẫu** nếu còn thời gian.
+
+### Khoảng tin cậy: chỗ yếu thật nằm ở cỡ mẫu, không phải ở nhiễu
+
+Hai nguồn bất định **khác nhau**, không được gộp:
+
+- **Nhiễu phía provider _không_ đủ để làm LiteLLM trượt cổng.** LiteLLM đạt 98/120; cổng 80% cần
+  ≥ 96/120, tức còn **dư 2 lượt** — phải có **3 lượt** đổi từ đạt sang trượt mới bị loại. Mà trong
+  120 lượt của LiteLLM chỉ có **1/40 item** bất định (`ifeval_07`, 2/3), ảnh hưởng tối đa ~1 lượt.
+  Đổi cách gộp sang **đa số 2/3 mỗi item** thì LiteLLM được **33/40 = 82,5%**, vẫn qua cổng (Bifrost
+  87,5%, Portkey 95,0%) — kết luận **không đổi**.
+- **Cỡ mẫu thì mới là chỗ yếu.** Khoảng tin cậy 95% của độ chính xác LiteLLM là **[74,7%; 88,6%]**
+  nếu tính theo 120 lượt, và **[69,7%; 93,7%]** nếu lấy **item** làm đơn vị (đúng hơn, vì 3 lần lặp
+  trên cùng một item **không độc lập**). Cả hai khoảng **đều chứa 80%**. Nói đúng là: với 40 item,
+  **không phân biệt được** độ chính xác thật của LiteLLM với ngưỡng 80% ở mức tin cậy 95%.
+
+Vậy phát biểu đúng là *"khoảng cách tới cổng nằm trong sai số lấy mẫu của cỡ mẫu 40 item"*, **không**
+phải *"nằm trong sàn nhiễu 2,5%"* — hai đại lượng đó đo hai thứ khác nhau.
 
 ---
 
@@ -181,8 +216,12 @@ Ba nhóm đổi đáp án: `bifrost/ifeval_05` (1/3), `litellm/ifeval_07` (2/3),
 ổn mà là **tính bất định phía provider** (`temperature=0` chỉ là "nỗ lực tối đa", không bảo đảm).
 Hệ quả: mọi chênh lệch **nhỏ hơn ~2,5 điểm phần trăm** giữa 2 proxy thì **không kết luận được**.
 Khoảng cách litellm↔bifrost (6,6 đpt) và bifrost↔portkey (5,9 đpt) đều **lớn hơn** sàn này nên vẫn
-đọc được; nhưng khoảng cách **1,7 đpt** giữa LiteLLM và cổng 80% thì **nằm trong sàn nhiễu** — xem
-mục 7.
+đọc được.
+
+⚠️ **Đừng dùng sàn nhiễu này để nói về khoảng cách 1,7 đpt giữa LiteLLM và cổng 80%** — đó là hai
+đại lượng khác nhau (sàn nhiễu là tỷ lệ **item** bất định; 1,7 đpt là **biên của một tỷ lệ tổng
+hợp**). Nhiễu thực tế chỉ ảnh hưởng ~1 lượt của LiteLLM trong khi cần 3 lượt mới đổi được kết luận.
+Chỗ yếu thật là **sai số lấy mẫu của cỡ mẫu 40 item** — xem mục 7.
 
 Bản chấm được **tái lập độc lập**: Hùng chấm lại toàn bộ 180 lượt của Khoa trên máy mình bằng bản
 `graders.py` mới nhất (sau 2 bản sửa ở commit `871e756`) và ra **đúng từng con số** Khoa báo
@@ -192,8 +231,9 @@ Bản chấm được **tái lập độc lập**: Hùng chấm lại toàn bộ
 
 ## 9. Giới hạn (bổ sung cho `docs/experiment-design.md` mục 9)
 
-1. **Kết luận nhạy với thành phần bộ đề.** Bỏ HumanEval thì LiteLLM bị loại và proxy được chọn đổi
-   thành Bifrost (mục 7). 10 item/bộ là cỡ mẫu nhỏ.
+1. **Kết luận nhạy với thành phần bộ đề, và cỡ mẫu chưa đủ để chốt cổng 80%.** 2/4 biến thể
+   leave-one-out đổi proxy được chọn (mục 7), và khoảng tin cậy 95% của LiteLLM **chứa ngưỡng 80%**
+   ở cả hai cách tính. 10 item/bộ là cỡ mẫu nhỏ. Đây là **giới hạn nặng nhất** của đợt này.
 2. **Nhánh LiteLLM không đo được cơ chế định tuyến** vì nó chọn cùng một model 120/120 lượt — nhánh
    này thực chất là **đường cơ sở `gpt-4o-mini`**. Đó là một kết quả, nhưng nó làm so sánh "3 cơ chế
    định tuyến" trở thành so sánh "1 model cố định vs 2 cơ chế".
@@ -213,6 +253,18 @@ Chọn `litellm` theo đúng luật, **nhưng** không bỏ cơ chế dự phòn
 và (c) giới hạn 4–5 ở trên. Cụ thể nên cấu hình `fallbacks` cho `conduit-pool` (hiện log còn báo
 `Available Model Group Fallbacks=None`) — việc này trước đây **cố ý** chưa làm để không ảnh hưởng
 tính công bằng của thí nghiệm, giờ thí nghiệm đã xong thì làm được.
+
+### Nếu còn thời gian: tăng cỡ mẫu (chi phí gần như bằng 0)
+
+Cả 360 lượt chỉ tốn **$0,189**. Nâng từ 10 lên **20 item/bộ** là thêm 360 lượt ≈ **$0,19 nữa**, và sẽ
+**thu hẹp khoảng tin cậy khoảng 1,4 lần** — đủ để biết LiteLLM thật sự trên hay dưới ngưỡng 80%. Đây
+là cách duy nhất xử lý được giới hạn 1 mà **không** cần sửa luật hay sửa bộ đề.
+
+⚠️ **Điều kiện để việc này còn hợp lệ về phương pháp:** phải **đăng ký trước khi chạy** (một quyết
+định D14) rằng *"mở rộng lên N item/bộ theo đúng quy trình lấy mẫu và đúng luật 4 bước đã khóa, và
+lấy kết quả trên toàn bộ mẫu mở rộng làm kết luận cuối, bất kể nó nói gì"*. Nếu chạy thêm rồi mới
+chọn công bố bộ số nào có lợi thì thành **chạy tới khi ra kết quả mình thích** — còn tệ hơn là giữ
+nguyên 40 item và báo cáo trung thực độ nhạy như hiện tại.
 
 ---
 

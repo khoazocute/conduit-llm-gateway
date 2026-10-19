@@ -462,7 +462,7 @@ IFEval qua repo chính thức). Ngưỡng `prompt_len` suy từ tercile phân b�
 ### Cần bàn cùng nhau
 
 **Kết luận nhạy với thành phần bộ đề — đây là chỗ cần thống nhất trước khi báo cáo.** LiteLLM qua
-cổng 80% **chỉ hơn 1,7 đpt**, mà 1,7 đpt **nằm trong sàn nhiễu 2,5%**. Chi tiết:
+cổng 80% **chỉ hơn 1,7 đpt**. Chi tiết:
 
 | Nửa bộ đề | LiteLLM | Qua cổng? |
 |---|---|---|
@@ -470,10 +470,27 @@ cổng 80% **chỉ hơn 1,7 đpt**, mà 1,7 đpt **nằm trong sàn nhiễu 2,5%
 | HumanEval + IFEval (Khoa) | 88,3% | Có |
 | Gộp cả 4 bộ | **81,7%** | Có (sát sàn) |
 
-Nguyên nhân là **HumanEval bão hòa** (mini đạt 30/30 kéo điểm lên). Bỏ HumanEval thì LiteLLM còn
-75,6% → **bị loại ở bước 1**, và proxy được chọn đổi thành **`bifrost`**.
+Nguyên nhân là **HumanEval bão hòa** (mini đạt 30/30 kéo điểm lên). Phân tích leave-one-out:
+**2/4 biến thể giữ LiteLLM, 2/4 loại nó** — bỏ MMLU → `bifrost` thắng, bỏ HumanEval → **`portkey`**
+thắng (vì HumanEval là bộ đắt nhất của Portkey nhưng rẻ nhất của Bifrost, bỏ nó ra là đảo thứ tự
+chi phí). Bảng đầy đủ ở mục 7 báo cáo.
+
+⚠️ **Tự đính chính 2 chỗ mình nói sai lúc đầu, Khoa đọc bản đã sửa:**
+1. Mình từng viết "bỏ HumanEval → bifrost". **Sai** — là **portkey**, lý do ở trên.
+2. Mình từng gộp "1,7 đpt" với "sàn nhiễu 2,5%". **Không so được** — sàn nhiễu là tỷ lệ *item* bất
+   định, 1,7 đpt là biên của một *tỷ lệ tổng hợp*. Thực tế **nhiễu không đủ làm LiteLLM trượt cổng**:
+   nó dư 2 lượt (98 vs 96/120), cần **3 lượt** flip, mà chỉ có **1/40 item** bất định. Gộp theo
+   **đa số 2/3** thì LiteLLM được 33/40 = **82,5%**, vẫn qua. Chỗ yếu thật là **cỡ mẫu**: CI95 =
+   [74,7%; 88,6%] theo lượt, [69,7%; 93,7%] theo item — **đều chứa 80%**.
 
 **Quan điểm của mình:** **không sửa luật, không sửa bộ đề** — sửa sau khi đã thấy số là mất tính
 khách quan, đúng nguyên tắc đã ghi ở `CLAUDE.md` mục 2. Kết luận chính thức vẫn là LiteLLM. Nhưng
 phải **ghi thẳng độ nhạy này vào giới hạn** (đã làm, mục 9 của báo cáo) và **giữ `fallbacks`** khi
 tích hợp thật, vì LiteLLM không bao giờ tự nâng model khi gặp prompt khó. Khoa phản biện giúp chỗ này.
+
+**Đề xuất D14 để bàn:** cả 360 lượt chỉ tốn **$0,189**, nên nâng lên **20 item/bộ** chỉ thêm ~$0,19
+mà **thu hẹp CI ~1,4 lần** — đủ để biết LiteLLM thật sự trên hay dưới 80%. Đây là cách duy nhất xử lý
+giới hạn cỡ mẫu mà không phải sửa luật hay sửa bộ đề. **Nhưng phải đăng ký D14 TRƯỚC khi chạy**:
+"mở rộng lên 20 item/bộ theo đúng quy trình lấy mẫu + đúng luật 4 bước, lấy kết quả trên toàn mẫu mở
+rộng làm kết luận cuối, bất kể nó nói gì". Chạy thêm rồi mới chọn bộ số có lợi thì thành "chạy tới
+khi ra kết quả mình thích", tệ hơn là giữ 40 item và báo cáo trung thực.
