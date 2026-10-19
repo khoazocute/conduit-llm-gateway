@@ -13,23 +13,65 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from run_experiment import load_prompts, plan_runs, select_prompts  # noqa: E402
+from run_experiment import (  # noqa: E402
+    load_prompts,
+    plan_runs,
+    select_prompts,
+    skip_ran_items,
+)
 
 PROMPTS = load_prompts()
+# Suy tu prompts.json thay vi ghi cung 40 - cho mo rong co mau (D14: 40 -> 80) khong lam
+# test bao sai oan, nhung van kiem duoc cac TY LE quan trong (chia doi phai bang nhau,
+# hai nua khong trung item nao).
+N_TOTAL = len(PROMPTS)
+N_HALF = N_TOTAL // 2
+
+
+class SkipRanItems(unittest.TestCase):
+    """--skip-ran (D14): dot mo rong chi chay item MOI, khong tra tien lai cho item cu."""
+
+    def _file(self, tmp, ids):
+        f = Path(tmp) / "ran.json"
+        f.write_text(json.dumps([{"prompt_id": i, "run_index": 1} for i in ids]),
+                     encoding="utf-8")
+        return str(f)
+
+    def test_bo_dung_item_da_chay(self):
+        ps = select_prompts(PROMPTS, "mmlu", 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            ran = [p["id"] for p in ps[:3]]
+            kept = skip_ran_items(ps, [self._file(tmp, ran)])
+        self.assertEqual([p["id"] for p in kept], [p["id"] for p in ps[3:]])
+
+    def test_go_sai_duong_dan_thi_NO_chu_khong_chay_lai_het(self):
+        """Neu am tham chay lai thi tra tien hai lan cho TOAN BO bo de."""
+        with self.assertRaises(SystemExit):
+            skip_ran_items(PROMPTS, ["khong/ton/tai/abc.json"])
+
+    def test_khong_truyen_file_thi_NO(self):
+        with self.assertRaises(SystemExit):
+            skip_ran_items(PROMPTS, [])
+
+    def test_moi_item_da_chay_het_thi_NO(self):
+        ps = select_prompts(PROMPTS, "mmlu", 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(SystemExit):
+                skip_ran_items(ps, [self._file(tmp, [p["id"] for p in ps])])
 
 
 class SelectPrompts(unittest.TestCase):
-    def test_khong_loc_thi_lay_het_40_item(self):
-        self.assertEqual(len(select_prompts(PROMPTS, "", 0)), 40)
+    def test_khong_loc_thi_lay_het_moi_item(self):
+        self.assertEqual(len(select_prompts(PROMPTS, "", 0)), N_TOTAL)
 
-    def test_chia_doi_theo_bo_dung_20_20(self):
+    def test_chia_doi_theo_bo_dung_mot_nua_moi_nguoi(self):
         a = select_prompts(PROMPTS, "mmlu,gsm8k", 0)
         b = select_prompts(PROMPTS, "humaneval,ifeval", 0)
-        self.assertEqual(len(a), 20)
-        self.assertEqual(len(b), 20)
+        self.assertEqual(len(a), N_HALF)
+        self.assertEqual(len(b), N_HALF)
         # Hai nua KHONG duoc trung item nao - neu trung thi co item chay 6 lan, item khac 0 lan
         self.assertEqual(set(p["id"] for p in a) & set(p["id"] for p in b), set())
-        self.assertEqual(len(a) + len(b), 40)
+        self.assertEqual(len(a) + len(b), N_TOTAL)
 
     def test_per_set_1_cho_dry_run(self):
         ps = select_prompts(PROMPTS, "", 1)

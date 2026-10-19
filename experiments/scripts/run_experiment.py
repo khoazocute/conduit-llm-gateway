@@ -79,6 +79,39 @@ def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> li
     return selected
 
 
+def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str]) -> list[dict[str, Any]]:
+    """Bỏ item đã có trong các file kết quả cũ (đợt mở rộng cỡ mẫu — D14).
+
+    Lọc theo **item**, không theo lượt: item nào đã chạy (dù 1 lượt) thì bỏ hẳn, vì đợt
+    mở rộng chỉ cần chạy item MỚI. Lấy chính dữ liệu đã chạy làm nguồn đúng, an toàn hơn
+    lọc theo số thứ tự trong ID (ID chỉ là quy ước đặt tên, đổi quy ước là lọc sai).
+
+    Không khớp file nào thì NỔ, không âm thầm chạy lại hết — gõ sai đường dẫn mà vẫn chạy
+    thì trả tiền hai lần cho toàn bộ bộ đề.
+    """
+    if not patterns:
+        raise SystemExit("--skip-ran: phải cho ít nhất 1 file kết quả")
+    ran: set[str] = set()
+    n_files = 0
+    for pattern in patterns:
+        pp = Path(pattern)
+        matches = sorted(pp.parent.glob(pp.name)) if any(c in pattern for c in "*?[") else [pp]
+        for path in matches:
+            if not path.exists():
+                continue
+            for r in json.loads(path.read_text(encoding="utf-8")):
+                if r.get("prompt_id"):
+                    ran.add(r["prompt_id"])
+            n_files += 1
+    if not n_files:
+        raise SystemExit(f"--skip-ran: khong file nao khop {patterns} - kiem lai duong dan")
+    kept = [p for p in prompts if p["id"] not in ran]
+    print(f"--skip-ran: {n_files} file, {len(ran)} item da chay -> con {len(kept)}/{len(prompts)} item moi")
+    if not kept:
+        raise SystemExit("--skip-ran: khong con item nao de chay")
+    return kept
+
+
 # Credit uoc can cho MOI luot, dung de kiem so du truoc khi chay. Do that tu dot 24 luot
 # 16/10: trung binh 692 credit/luot, cao nhat 1.595. Lay 1.600 cho du bien an toan.
 CREDIT_PER_RUN_ESTIMATE = 1600
@@ -349,9 +382,16 @@ def main() -> None:
                               "(không trả tiền hai lần khi đợt chạy bị dứt giữa chừng).")
     parser.add_argument("--per-set", type=int, default=0,
                          help="Lấy N item đầu của MỖI bộ (VD dry-run 1/bộ). 0 = lấy hết.")
+    parser.add_argument("--skip-ran", nargs="*", metavar="FILE", default=None,
+                         help="Bỏ các item ĐÃ chạy trong các file kết quả này (dùng cho đợt "
+                              "mở rộng cỡ mẫu D14: chỉ chạy item mới, không trả tiền lại "
+                              "cho item cũ). Khác --resume: --resume lọc theo từng LƯỢT và "
+                              "ghi tiếp vào file cũ, --skip-ran lọc theo ITEM và ghi file mới.")
     args = parser.parse_args()
 
     prompts = select_prompts(load_prompts(), args.sets, args.per_set)
+    if args.skip_ran is not None:
+        prompts = skip_ran_items(prompts, args.skip_ran)
     if args.limit:
         prompts = prompts[: args.limit]
     identity = ensure_experiment_identity()

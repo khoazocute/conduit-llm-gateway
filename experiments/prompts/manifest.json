@@ -1,8 +1,8 @@
 {
   "built_on": "2026-10-14",
   "seed": 20261014,
-  "n_per_set": 10,
-  "n_total": 40,
+  "n_per_set": 20,
+  "n_total": 80,
   "shot": "0-shot (D10) — xem prompt_note của từng bộ để biết chỗ lệch khỏi protocol gốc",
   "decoding": {
     "max_tokens": 1024,
@@ -20,6 +20,30 @@
       "n_total": 14042,
       "sha256": "5ac0c0f234510eeaaa2b1f117f83d19cc8cbbd042f62441e2dd3b10a1fb45bcd",
       "indices": [
+        917,
+        1044,
+        1893,
+        3042,
+        3291,
+        3617,
+        4196,
+        4466,
+        5397,
+        7492,
+        8230,
+        8929,
+        9433,
+        10116,
+        12795,
+        12829,
+        12962,
+        13647,
+        13939,
+        14037
+      ],
+      "n_sampled": 20,
+      "prompt_note": "0-shot thay vì 5-shot của paper gốc. Giữ layout Hendrycks (câu hỏi + 4 lựa chọn A-D) nhưng thêm 1 dòng chỉ thị 'Answer with the letter only' — cần cho chat model, vì protocol gốc thiết kế cho completion model có few-shot dẫn dắt định dạng.",
+      "indices_phase3": [
         1044,
         3291,
         5397,
@@ -31,8 +55,18 @@
         12962,
         14037
       ],
-      "n_sampled": 10,
-      "prompt_note": "0-shot thay vì 5-shot của paper gốc. Giữ layout Hendrycks (câu hỏi + 4 lựa chọn A-D) nhưng thêm 1 dòng chỉ thị 'Answer with the letter only' — cần cho chat model, vì protocol gốc thiết kế cho completion model có few-shot dẫn dắt định dạng."
+      "indices_extension": [
+        917,
+        1893,
+        3042,
+        3617,
+        4196,
+        4466,
+        9433,
+        10116,
+        13647,
+        13939
+      ]
     },
     "gsm8k": {
       "url": "https://raw.githubusercontent.com/openai/grade-school-math/master/grade_school_math/data/test.jsonl",
@@ -47,6 +81,30 @@
         21,
         61,
         82,
+        118,
+        397,
+        406,
+        432,
+        476,
+        479,
+        804,
+        810,
+        865,
+        901,
+        985,
+        1019,
+        1075,
+        1130,
+        1172,
+        1249,
+        1292
+      ],
+      "n_sampled": 20,
+      "prompt_note": "0-shot thay vì 8-shot CoT của paper gốc. Prompt là câu hỏi NGUYÊN VĂN, không thêm chỉ thị nào. Chấm bằng cách trích số cuối cùng trong câu trả lời, so với số sau '####' trong đáp án gốc.",
+      "indices_phase3": [
+        21,
+        61,
+        82,
         397,
         406,
         432,
@@ -55,8 +113,18 @@
         1075,
         1249
       ],
-      "n_sampled": 10,
-      "prompt_note": "0-shot thay vì 8-shot CoT của paper gốc. Prompt là câu hỏi NGUYÊN VĂN, không thêm chỉ thị nào. Chấm bằng cách trích số cuối cùng trong câu trả lời, so với số sau '####' trong đáp án gốc."
+      "indices_extension": [
+        118,
+        476,
+        479,
+        804,
+        810,
+        865,
+        1019,
+        1130,
+        1172,
+        1292
+      ]
     },
     "humaneval": {
       "url": "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz",
@@ -68,6 +136,30 @@
       "n_total": 164,
       "sha256": "b796127e635a67f93fb35c04f4cb03cf06f38c8072ee7cee8833d7bee06979ef",
       "indices": [
+        0,
+        13,
+        15,
+        25,
+        34,
+        42,
+        44,
+        59,
+        68,
+        75,
+        105,
+        113,
+        131,
+        134,
+        135,
+        140,
+        143,
+        150,
+        160,
+        162
+      ],
+      "n_sampled": 20,
+      "prompt_note": "Prompt gốc (signature + docstring) giữ nguyên, thêm 1 dòng chỉ thị trả về hàm hoàn chỉnh — cần cho chat model, vì protocol gốc là completion thuần. pass@1 chạy đúng bộ test gốc của từng bài, temperature 0.",
+      "indices_phase3": [
         25,
         34,
         44,
@@ -79,8 +171,18 @@
         143,
         150
       ],
-      "n_sampled": 10,
-      "prompt_note": "Prompt gốc (signature + docstring) giữ nguyên, thêm 1 dòng chỉ thị trả về hàm hoàn chỉnh — cần cho chat model, vì protocol gốc là completion thuần. pass@1 chạy đúng bộ test gốc của từng bài, temperature 0."
+      "indices_extension": [
+        0,
+        13,
+        15,
+        42,
+        59,
+        68,
+        134,
+        135,
+        160,
+        162
+      ]
     },
     "ifeval": {
       "url": "https://raw.githubusercontent.com/google-research/google-research/master/instruction_following_eval/data/input_data.jsonl",
@@ -93,6 +195,30 @@
       "sha256": "67ffeee0fcb87c317c5b08a2de85557b4a7e96ada6178aa645b4954fe4b53d49",
       "indices": [
         31,
+        88,
+        124,
+        167,
+        180,
+        182,
+        187,
+        189,
+        258,
+        287,
+        322,
+        337,
+        406,
+        448,
+        460,
+        489,
+        496,
+        525,
+        534,
+        536
+      ],
+      "n_sampled": 20,
+      "prompt_note": "Prompt NGUYÊN VĂN, tuyệt đối không thêm gì — IFEval kiểm tra chính việc tuân thủ chỉ thị, thêm chữ nào cũng có thể phá ràng buộc đang được kiểm (vd. ràng buộc về số từ, về từ bị cấm).",
+      "indices_phase3": [
+        31,
         124,
         180,
         187,
@@ -103,8 +229,18 @@
         534,
         536
       ],
-      "n_sampled": 10,
-      "prompt_note": "Prompt NGUYÊN VĂN, tuyệt đối không thêm gì — IFEval kiểm tra chính việc tuân thủ chỉ thị, thêm chữ nào cũng có thể phá ràng buộc đang được kiểm (vd. ràng buộc về số từ, về từ bị cấm)."
+      "indices_extension": [
+        88,
+        167,
+        182,
+        189,
+        258,
+        322,
+        406,
+        460,
+        489,
+        525
+      ]
     }
   },
   "portkey_prompt_len_thresholds": {
@@ -155,5 +291,19 @@
       "p75": 500,
       "max": 1102
     }
+  },
+  "extension_d14": {
+    "decided_on": "2026-10-20",
+    "why": "cổng 80% không phân giải được ở cỡ mẫu 40 item: LiteLLM 81,7%, CI95 [74,7%; 88,6%] theo lượt và [69,7%; 93,7%] theo item, đều chứa 80%",
+    "method": "cùng seed 20261014 và cùng seed_offset, chỉ đổi k từ 10 sang 20",
+    "old_items_still_valid": "10 index cũ của cả 4 bộ là tập con thật của mẫu k=20, đã kiểm; 360 lượt đã chạy không phải chạy lại",
+    "ids_not_reassigned": "40 item cũ giữ nguyên ID; item mới đánh *_11..*_20. Sinh lại thẳng với N_PER_SET=20 sẽ dịch 36/40 ID và ghép sai dữ liệu cũ một cách âm thầm",
+    "portkey_thresholds_unchanged": "giữ 211/385 khóa 14/10 — ngưỡng là cấu hình của nhánh Portkey, tính lại là đổi nhánh giữa thí nghiệm nên 2 đợt không gộp được"
+  },
+  "prompt_length_chars_80_items": {
+    "note": "CHỈ để truy vết. Ngưỡng prompt_len của Portkey KHÔNG tính lại (D14).",
+    "min": 93,
+    "median": 296,
+    "max": 1251
   }
 }

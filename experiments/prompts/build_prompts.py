@@ -27,6 +27,13 @@ HERE = Path(__file__).parent
 CACHE = HERE / ".cache"
 SEED = 20261014  # ngày chốt bộ đề
 N_PER_SET = 10
+
+# extend_prompts.py (D14) ghi de 2 bien nay de dung LAI dung code dung item o duoi cho
+# dot mo rong, thay vi viet lai -> khong the lech dinh dang giua 2 dot.
+#   INDEX_OVERRIDE[ten_bo] = [index can dung]  (bo qua pick())
+#   ID_START                = so bat dau danh ID (dot mo rong dung 11)
+INDEX_OVERRIDE: dict[str, list[int]] = {}
+ID_START = 1
 TIMEOUT = 60
 
 SOURCES = {
@@ -113,8 +120,10 @@ def read_jsonl(raw: bytes, gz: bool = False) -> list[dict]:
     return [json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
 
 
-def pick(n_total: int, seed_offset: int) -> list[int]:
+def pick(n_total: int, seed_offset: int, name: str) -> list[int]:
     """Index đã chọn, sắp tăng dần để dễ đối chiếu tay."""
+    if name in INDEX_OVERRIDE:
+        return sorted(INDEX_OVERRIDE[name])
     rng = random.Random(SEED + seed_offset)
     return sorted(rng.sample(range(n_total), N_PER_SET))
 
@@ -122,9 +131,9 @@ def pick(n_total: int, seed_offset: int) -> list[int]:
 def build_gsm8k() -> tuple[list[dict], dict]:
     raw = fetch("gsm8k", SOURCES["gsm8k"]["url"])
     rows = read_jsonl(raw)
-    idx = pick(len(rows), 1)
+    idx = pick(len(rows), 1, "gsm8k")
     items = []
-    for i, k in enumerate(idx, 1):
+    for i, k in enumerate(idx, ID_START):
         row = rows[k]
         answer = row["answer"].split("####")[-1].strip().replace(",", "")
         items.append({
@@ -140,10 +149,10 @@ def build_gsm8k() -> tuple[list[dict], dict]:
 def build_humaneval() -> tuple[list[dict], dict]:
     raw = fetch("humaneval", SOURCES["humaneval"]["url"])
     rows = read_jsonl(raw, gz=True)
-    idx = pick(len(rows), 2)
+    idx = pick(len(rows), 2, "humaneval")
     instr = "\n\nComplete the function above. Reply with the complete function implementation only."
     items = []
-    for i, k in enumerate(idx, 1):
+    for i, k in enumerate(idx, ID_START):
         row = rows[k]
         items.append({
             "id": f"humaneval_{i:02d}",
@@ -161,9 +170,9 @@ def build_humaneval() -> tuple[list[dict], dict]:
 def build_ifeval() -> tuple[list[dict], dict]:
     raw = fetch("ifeval", SOURCES["ifeval"]["url"])
     rows = read_jsonl(raw)
-    idx = pick(len(rows), 3)
+    idx = pick(len(rows), 3, "ifeval")
     items = []
-    for i, k in enumerate(idx, 1):
+    for i, k in enumerate(idx, ID_START):
         row = rows[k]
         items.append({
             "id": f"ifeval_{i:02d}",
@@ -181,9 +190,9 @@ def build_mmlu() -> tuple[list[dict], dict]:
     base = SOURCES["mmlu"]["url"]
     head = json.loads(fetch("mmlu", f"{base}&offset=0&length=1").decode("utf-8"))
     n_total = head["num_rows_total"]
-    idx = pick(n_total, 4)
+    idx = pick(n_total, 4, "mmlu")
     items, digest = [], hashlib.sha256()
-    for i, k in enumerate(idx, 1):
+    for i, k in enumerate(idx, ID_START):
         r = requests.get(f"{base}&offset={k}&length=1", timeout=TIMEOUT)
         r.raise_for_status()
         digest.update(r.content)

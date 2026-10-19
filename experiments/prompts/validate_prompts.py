@@ -2,7 +2,8 @@
     PYTHONIOENCODING=utf-8 python experiments/prompts/validate_prompts.py
 Thoát mã 1 nếu có lỗi (dùng được trong CI).
 
-Bộ đề mới (D10, 2026-10-14): 4 bộ benchmark công khai, 10 item/bộ = 40 item, 0-shot.
+Bộ đề (D10 2026-10-14, mở rộng D14 2026-10-20): 4 bộ benchmark công khai, 0-shot.
+Số item/bộ đọc từ manifest.json (`n_per_set`) — hiện 20/bộ = 80 item.
 Bộ 30 prompt tiếng Việt cũ nằm ở prompts-vi-30.json (phép thử nhạy ngôn ngữ, validate
 bằng --vi).
 """
@@ -15,7 +16,21 @@ HERE = Path(__file__).parent
 PROMPTS_FILE = HERE / "prompts.json"
 VI_FILE = HERE / "prompts-vi-30.json"
 
-EXPECTED_COUNTS = {"mmlu": 10, "gsm8k": 10, "humaneval": 10, "ifeval": 10}
+# So item/bo DOC TU manifest.json (khoa "n_per_set") thay vi ghi cung - truoc day cung 10
+# nen dot mo rong len 20 (D14) lam validator bao sai oan. Doc tu manifest thi 2 file khong
+# the lech nhau nua.
+GROUPS = ("mmlu", "gsm8k", "humaneval", "ifeval")
+
+
+def _expected_counts() -> dict[str, int]:
+    manifest = Path(__file__).resolve().parent / "manifest.json"
+    n = 10
+    if manifest.exists():
+        n = int(json.loads(manifest.read_text(encoding="utf-8")).get("n_per_set", 10))
+    return {g: n for g in GROUPS}
+
+
+EXPECTED_COUNTS = _expected_counts()
 METRIC_OF = {
     "mmlu": "accuracy_letter",
     "gsm8k": "exact_match_number",
@@ -87,8 +102,9 @@ def validate(data: dict) -> list[str]:
                     errors.append(f"{pid}: kwargs phải là list (có thể rỗng)")
 
     total = sum(len(data.get(g, [])) for g in EXPECTED_COUNTS)
-    if total != 40:
-        errors.append(f"tổng phải là 40 item, đang có {total}")
+    want_total = sum(EXPECTED_COUNTS.values())
+    if total != want_total:
+        errors.append(f"tổng phải là {want_total} item, đang có {total}")
     return errors
 
 
@@ -140,5 +156,7 @@ if __name__ == "__main__":
         print("prompts-vi-30.json hợp lệ: 12 closed_qa + 6 code + 12 open_ended = 30 prompt "
               "(bộ thử nhạy ngôn ngữ, không phải bộ đánh giá chính).")
     else:
-        print("prompts.json hợp lệ: 10 mmlu + 10 gsm8k + 10 humaneval + 10 ifeval = 40 item, "
+        print("prompts.json hợp lệ: "
+              + " + ".join(f"{len(data.get(g, []))} {g}" for g in EXPECTED_COUNTS)
+              + f" = {sum(len(data.get(g, [])) for g in EXPECTED_COUNTS)} item, "
               "id duy nhất, đủ trường để chấm tự động.")
