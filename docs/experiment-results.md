@@ -277,7 +277,9 @@ kỳ kết luận nào về độ bền.
    mà **failover** lại chính là thứ Bifrost mạnh nhất. Chọn LiteLLM theo chi phí ở tải thấp **không**
    chứng minh nó bền hơn khi có sự cố.
 5. **Chỉ 2 lượt lỗi trong cả đợt, và không rõ nguyên nhân** (mục 9) nghĩa là nhánh dự phòng/retry của
-   cả 3 proxy **gần như chưa được kích hoạt**. `error_rate` ở đây **không** đủ để so sánh độ bền.
+   cả 3 proxy **gần như chưa được kích hoạt**. `error_rate` ở đây **không** đủ để so sánh độ bền —
+   đã bù bằng **phép thử tiêm lỗi (D15)** ngay dưới, và kết quả cho thấy thứ tự độ bền **ngược** với
+   thứ tự chi phí.
 6. **HumanEval gần bão hòa** nên đóng góp rất ít vào việc phân biệt 3 proxy, trong khi vẫn kéo điểm
    trung bình của cả ba lên.
 7. **Bifrost chạy ở 150 câu mẫu mặc định** (tiếng Anh, miền DevOps); nhóm không tự viết câu mẫu riêng
@@ -287,13 +289,85 @@ kỳ kết luận nào về độ bền.
    rất dài và sẽ đẩy mọi câu của nhánh Portkey sang model đắt. Nhóm không so với điểm công bố, chỉ so
    **giữa 3 proxy trên cùng bộ đề**.
 
+### Phép thử tiêm lỗi provider (D15) — đo cái giá của lựa chọn đã chốt
+
+Giới hạn 4–5 ở trên là chỗ yếu thật của thí nghiệm chính: nó chạy ở điều kiện **không có sự cố**, tức
+bỏ qua đúng thứ Bifrost mạnh nhất. Nên nhóm đo thêm một phép thử bổ sung, **đăng ký trước khi chạy**
+(D15, `docs/roadmap.md` mục 4, commit `417b055`).
+
+⚠️ **Phép thử này KHÔNG dùng để chọn lại proxy.** Luật 4 bước đã khóa, đã áp trên 720 lượt, kết luận
+là `litellm` (mục 1). Đây là bằng chứng cho phần giới hạn — nói rõ **cái giá** của lựa chọn đó.
+
+**Thiết kế:** một lỗi duy nhất — `OPENAI_API_KEY` không hợp lệ — tiêm **đồng thời** vào container
+`litellm`, container `bifrost`, và **môi trường tiến trình backend** (Portkey OSS nhận cả config lẫn
+key từ backend qua header `x-portkey-config`, không đọc env container nó). Key Anthropic và Gemini
+**giữ hợp lệ**, nên proxy nào chuyển được sang `claude-haiku`/`gemini-flash` thì thành công. Item: 5
+item GSM8K chọn theo luật *"id nhỏ nhất trong số 36 item mà **cả 3 proxy** đều chọn một model OpenAI
+và nhất quán 3/3 lần ở 720 lượt"* → `gsm8k_01, 03, 06, 08, 12`, bảo đảm **phơi nhiễm lỗi bằng nhau**.
+45 lượt, **$0,00971**.
+
+| Proxy | Phục hồi | Model đã trả lời thay thế | Độ trễ khi phục hồi | Độ trễ khi thất bại |
+|---|---|---|---|---|
+| `litellm` | **0/15 (0%)** | — | — | **40.488 ms** |
+| `bifrost` | **13/15 (87%)** | `claude-haiku` ×12, `gemini-flash` ×1 | **5.932 ms** | 45.046 ms (đụng timeout) |
+| `portkey` | **0/15 (0%)** | — | — | **330 ms** |
+
+**Đối chiếu 3 dự đoán đã đăng ký trước: 2 đúng, 1 SAI.**
+
+- **P1 — LiteLLM phục hồi: SAI.** Nhóm dự đoán `conduit-pool` có 4 deployment trong cùng một model
+  group nên router sẽ retry sang deployment khác. Thực tế **0/15**, và nó tiêu **40 giây** cho các
+  lượt retry rồi vẫn thất bại — tức retry chỉ quay lại các deployment OpenAI, không hề sang
+  Anthropic/Gemini. Đây là **chẩn đoán quan trọng nhất của phép thử**: `num_retries=2` ở mức model
+  group **không** thay cho `fallbacks`, và nó biến sự cố provider thành **vừa không phục hồi vừa bắt
+  người dùng chờ 40 giây** — xấu hơn cả thất bại nhanh.
+- **P2 — Bifrost phục hồi: ĐÚNG**, 87%, chuyển sang `claude-haiku` trong ~6 giây. Hai lượt thất bại
+  còn lại **không** phải lỗi định tuyến mà là **đụng đúng timeout 45s** (45.076 và 45.016 ms) trong
+  lúc đang chuyển; lượt lặp thứ ba của chính item đó phục hồi được qua `gemini-flash` ở 24 giây. Tức
+  cơ chế failover của Bifrost **có hoạt động**, chỉ đôi khi chậm hơn ngân sách thời gian đã đặt.
+- **P3 — Portkey không phục hồi: ĐÚNG**, 0/15, nhưng nó **thất bại rất nhanh — 330 ms**. Cấu hình
+  Design Y dùng `strategy.mode=conditional` với `retry.attempts: 2` trên từng target, **không có**
+  `fallback` và **không có** `on_status_codes`, nên nó trả lỗi gần như tức thì thay vì thử provider
+  khác.
+
+**Đọc ra một đánh đổi mà thí nghiệm chính không thấy được:** ở điều kiện có sự cố, ba proxy rơi vào ba
+chế độ khác nhau — Bifrost **phục hồi** (~6 s), Portkey **thất bại nhanh** (330 ms, trả quyền quyết
+định lại cho ứng dụng), còn LiteLLM **thất bại chậm** (40 s, không phục hồi) — tức tệ nhất ở cả hai
+chiều. Nói cách khác: **proxy được chọn vì rẻ nhất lại là proxy xử lý sự cố kém nhất trong cấu hình đã
+đánh giá.** Điều này **không** đảo kết luận (luật đã khóa, và chi phí ở điều kiện bình thường chênh
+4,5–6,4×), nhưng nó biến đề nghị "giữ `fallbacks`" ở dưới từ một lời khuyên thận trọng thành một
+**yêu cầu đã được kiểm chứng bằng số**.
+
+**Phép thử cũng xác nhận lại khoảng trống logging ở mục 9 một cách độc lập:** **0/32** lượt lỗi ghi
+được bất kỳ thông điệp lỗi nào. Hai lần quan sát riêng biệt cùng chỉ vào một chỗ.
+
+**Giới hạn của chính phép thử này** (đăng ký trước, không phải thêm sau khi thấy số):
+
+1. Đây là **lỗi xác thực (401)**, không phải 5xx hay mất kết nối. Một proxy có thể **cố ý** không
+   failover khi gặp 401 vì retry một key sai là vô nghĩa — nên kết quả **không** suy ra được hành vi
+   khi provider sập thật.
+2. Phép thử đo **đúng những cấu hình đã đánh giá**, không đo **trần năng lực** của 3 proxy. Portkey
+   OSS *có* hỗ trợ `strategy: fallback`; nhóm không cấu hình vì Design Y dùng `conditional` để biểu
+   đạt chính sách định tuyến. LiteLLM cũng *có* `fallbacks`; nhóm **cố ý** chưa bật để không ảnh hưởng
+   tính công bằng của thí nghiệm chính.
+3. **5 item là cỡ rất nhỏ** — chỉ đủ phân biệt "có/không phục hồi", **không** đủ so sánh định lượng
+   thời gian phục hồi.
+
 ### Đề nghị cho phần tích hợp vào Conduit
 
-Chọn `litellm` theo đúng luật, **nhưng không bỏ cơ chế dự phòng**, vì: (a) nó **không bao giờ tự nâng
-model** khi gặp prompt khó — 240/240 lượt cùng một model, (b) cổng 80% không phân giải được, (c) giới
-hạn 4–5 ở trên. Cụ thể nên cấu hình `fallbacks` cho `conduit-pool` (log hiện còn báo
-`Available Model Group Fallbacks=None`) — việc này trước đây **cố ý** chưa làm để không ảnh hưởng tính
-công bằng của thí nghiệm; giờ thí nghiệm đã xong thì làm được.
+Chọn `litellm` theo đúng luật, **nhưng BẮT BUỘC cấu hình `fallbacks` cho `conduit-pool` trước khi dùng
+thật.** Đây không còn là lời khuyên thận trọng mà là **yêu cầu đã kiểm chứng bằng số**: phép thử tiêm
+lỗi cho thấy LiteLLM ở cấu hình hiện tại **phục hồi 0/15** khi provider chính không dùng được, và tiêu
+**40 giây** mỗi lượt trước khi báo lỗi. `num_retries=2` ở mức model group **không** thay cho
+`fallbacks` — retry chỉ quay lại các deployment cùng provider. Log hiện vẫn báo
+`Available Model Group Fallbacks=None`; việc này trước đây **cố ý** chưa làm để không ảnh hưởng tính
+công bằng của thí nghiệm, giờ thí nghiệm đã xong thì phải làm.
+
+Thêm hai lý do nữa để không bỏ cơ chế dự phòng: (a) LiteLLM **không bao giờ tự nâng model** khi gặp
+prompt khó — 240/240 lượt cùng một model, (b) cổng 80% không phân giải được.
+
+**Sau khi bật `fallbacks`, nên chạy lại phép thử tiêm lỗi** (`experiments/scripts/fault_injection.sh`,
+45 lượt, ~$0,01) để xác nhận LiteLLM đã phục hồi được — đây là phép kiểm hồi quy rẻ cho đúng khuyết
+điểm vừa đo được.
 
 Ngoài ra nên **sửa khoảng trống logging ở mục 9** trước khi dựa vào `error_rate` cho bất cứ quyết định
 vận hành nào.
