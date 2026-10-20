@@ -256,9 +256,41 @@ tính công bằng của thí nghiệm, giờ thí nghiệm đã xong thì làm 
 
 ### Nếu còn thời gian: tăng cỡ mẫu (chi phí gần như bằng 0)
 
-Cả 360 lượt chỉ tốn **$0,189**. Nâng từ 10 lên **20 item/bộ** là thêm 360 lượt ≈ **$0,19 nữa**, và sẽ
-**thu hẹp khoảng tin cậy khoảng 1,4 lần** — đủ để biết LiteLLM thật sự trên hay dưới ngưỡng 80%. Đây
-là cách duy nhất xử lý được giới hạn 1 mà **không** cần sửa luật hay sửa bộ đề.
+Cả 360 lượt chỉ tốn **$0,189**. Nâng từ 10 lên **20 item/bộ** là thêm 360 lượt ≈ **$0,19 nữa**, và
+**thu hẹp khoảng tin cậy khoảng 1,4 lần** (nửa-rộng 12,1 → 8,6 đpt).
+
+⚠️ **ĐÍNH CHÍNH (20/10, sau khi đã chạy nửa đợt mở rộng).** Bản đầu của mục này viết rằng mở rộng
+lên 20 item/bộ là *"đủ để biết LiteLLM thật sự trên hay dưới ngưỡng 80%"*. **Sai.** Tính lại: để nửa
+rộng của khoảng tin cậy nhỏ hơn biên 1,1 đpt (tức phân biệt được 81,1% với 80%) cần **~4.865 item ≈
+43.785 lượt gọi API** — ngoài tầm với ở mọi mức kinh phí của khóa luận. Ngay cả 320 item vẫn cho
+khoảng [76,8%; 85,4%], **vẫn chứa 80%**.
+
+**Nên phát biểu đúng là:** độ chính xác thật của LiteLLM nằm **gần như đúng trên** ngưỡng 80%, nên
+cổng ở bước 1 **không có khả năng phân giải** trường hợp này — và đó là **thuộc tính của thiết kế**,
+không phải thiếu sót do chạy ít. Mở rộng cỡ mẫu vẫn đáng làm (gấp đôi dữ liệu, ước lượng theo từng
+bộ chắc hơn, và cho thấy ước lượng **ổn định**: 81,7% ở 360 lượt → 81,1% ở 540 lượt), nhưng **không**
+giải quyết được câu hỏi về cổng.
+
+### Có một kết luận VỮNG, không phụ thuộc cổng 80%
+
+Vì cổng không phân giải được, phần kết luận của báo cáo nên tựa vào chỗ **không cần ngưỡng nào**:
+chỉ số **chi phí trên mỗi câu trả lời đạt**. Phép thử khắt khe nhất — đặt LiteLLM ở **đáy** khoảng
+tin cậy của nó (độ chính xác thấp nhất có thể) và hai proxy kia ở **đỉnh** khoảng tin cậy của chúng
+(cao nhất có thể), tính trên 540 lượt:
+
+| | Độ chính xác (CI95 theo item) | Chi phí/câu đạt | Trường hợp bất lợi nhất cho LiteLLM |
+|---|---|---|---|
+| `litellm` | 81,1% [71,2%; 91,0%] | $0,000126 | **$0,000143** (đáy CI) |
+| `bifrost` | 88,9% [80,9%; 96,8%] | $0,000563 | $0,000517 (đỉnh CI) |
+| `portkey` | 92,8% [86,2%; 99,3%] | $0,000842 | $0,000787 (đỉnh CI) |
+
+Kể cả trong tình huống bất lợi nhất đó, **LiteLLM vẫn rẻ hơn 3,6× so với Bifrost và 5,5× so với
+Portkey** trên mỗi câu trả lời đạt. Khoảng cách này **lớn hơn sai số lấy mẫu rất nhiều**, trong khi
+biên 1,1 đpt ở cổng thì **nằm hẳn trong sai số**.
+
+Nói gọn: **"LiteLLM rẻ nhất trên mỗi câu đạt" là kết luận vững; "LiteLLM đạt ≥ 80%" là kết luận
+không phân giải được.** Báo cáo nên tách rạch ròi hai câu đó, và nêu rõ rằng nếu cổng 80% được đọc
+theo hướng loại LiteLLM thì proxy được chọn sẽ đổi (xem bảng leave-one-out ở mục 7).
 
 ⚠️ **Điều kiện để việc này còn hợp lệ về phương pháp:** phải **đăng ký trước khi chạy** (một quyết
 định D14) rằng *"mở rộng lên N item/bộ theo đúng quy trình lấy mẫu và đúng luật 4 bước đã khóa, và
