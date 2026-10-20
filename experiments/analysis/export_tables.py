@@ -94,7 +94,15 @@ def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
     graded = [r for r in rows if r.get("status") != "success" or r.get("passed") is not None]
     n_passed = sum(1 for r in ok if r.get("passed"))
     cost_total = sum(r.get("cost") or 0 for r in ok)       # luot loi khong tinh phi
-    lats = [r["latency_ms"] for r in ok if r.get("latency_ms") is not None]
+    # Do tre tinh tren MOI luot, ke ca luot loi - khop compute_p95_latency() cua
+    # decision_rule.py (ban co tham quyen vi no thuc thi luat da khoa). Truoc day cho nay
+    # chi lay luot thanh cong nen p95 cua Bifrost ra 7042 ms o day va 7166 ms o
+    # decision_rule.py tren cung du lieu 720 luot: 2 luot loi cua Bifrost (3.904 va
+    # 10.616 ms) bi bo o mot ben. Day la lan thu hai hai file lech nhau ve p95 (lan dau
+    # Khoa phat hien 19/10, do khac phuong phap percentile) - lan nay do khac TAP luot.
+    # Ve nghia: nguoi goi VAN phai cho het khoang thoi gian do roi moi nhan loi, nen tinh
+    # vao do tre la dung. Chi phi thi nguoc lai - luot loi khong tinh phi (D7).
+    lats = [r["latency_ms"] for r in rows if r.get("latency_ms") is not None]
     return {
         "n_runs": len(rows),
         "n_success": len(ok),

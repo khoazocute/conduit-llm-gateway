@@ -1,8 +1,9 @@
-# Kết quả thực nghiệm đánh giá 3 routing proxy (Phase 3)
+# Kết quả thực nghiệm đánh giá 3 routing proxy
 
-**Ngày chạy:** 19/10/2026 · **Dữ liệu:** 360/360 lượt gọi API thật, 0 lượt lỗi
-**Bài toán, biến, giả thuyết, giới hạn:** xem `docs/experiment-design.md` (file này chỉ báo cáo số).
-**Người chạy:** Hùng 180 lượt (MMLU + GSM8K), Khoa 180 lượt (HumanEval + IFEval).
+**Dữ liệu chính thức: 720/720 lượt gọi API thật** (80 item × 3 proxy × 3 lần), chạy 19–20/10/2026.
+**Bài toán, biến, giả thuyết, giới hạn:** xem `docs/experiment-design.md`. File này chỉ báo cáo số.
+**Cỡ mẫu:** 20 item/bộ theo **D14** (mở rộng từ 10, đăng ký trước khi chạy — xem mục 7).
+**Chi phí toàn bộ thí nghiệm: $0,35354.**
 
 ---
 
@@ -10,37 +11,43 @@
 
 > **Proxy được chọn để tích hợp vào Conduit: `litellm`.**
 > Quyết định ở **bước 2** của luật 4 bước đã khóa (chi phí trung bình/prompt thấp nhất), **không**
-> phải do dự phòng D13, **không** có hòa phải xét tiếp bước 3–4.
+> dùng luật dự phòng D13, **không** có hòa phải xét bước 3–4.
 
-Cả 3 proxy đều **qua** cổng chất lượng 80% ở bước 1, nên bước 2 định đoạt. LiteLLM rẻ hơn Bifrost
-**6,2 lần** và rẻ hơn Portkey **9,0 lần** — chênh lệch này lớn hơn ngưỡng 5% của bước 3 rất nhiều,
-nên p95 latency và consistency rate **không được dùng tới**.
+Cả 3 proxy **qua** cổng chất lượng 80% ở bước 1, nên bước 2 định đoạt. LiteLLM rẻ hơn Bifrost
+**4,55 lần** và rẻ hơn Portkey **6,43 lần** — vượt xa ngưỡng 5% của bước 3, nên p95 latency và
+consistency rate **không được dùng tới**.
 
-**Phải nói thẳng cái giá của lựa chọn này:** LiteLLM là proxy có **độ chính xác thấp nhất** (81,7%,
-chỉ hơn cổng 80% đúng **1,7 điểm phần trăm**) và nó qua cổng **chỉ nhờ gộp đủ 4 bộ đề** — trên nửa
-bộ đề của Hùng (MMLU + GSM8K) nó chỉ đạt **75,0% và sẽ bị loại**. Mục 7 phân tích rủi ro này.
+Kết luận này **vững qua mọi phép kiểm độ nhạy** đã làm (mục 7): cả 4 biến thể leave-one-out đều
+chọn LiteLLM, và chỉ số "chi phí/câu đạt" cho cùng kết luận kể cả ở tình huống bất lợi nhất.
+
+**Cái giá phải nói rõ:** LiteLLM là proxy có **độ chính xác thấp nhất** (83,8% so với 87,5% và
+92,1%), và nó **không hề định tuyến** — chọn `gpt-4o-mini` cho **240/240 lượt** (mục 3).
 
 ---
 
 ## 2. Bảng tổng hợp — các chỉ số của luật quyết định
 
-| Proxy | Đạt | Độ chính xác | Lỗi | Chi phí TB/lượt | Chi phí/câu đạt | p95 latency | Độ trễ TB | Nhất quán |
-|---|---|---|---|---|---|---|---|---|
-| `litellm` | 98/120 | **81,7%** | 0,0% | **$0,000097** | **$0,000119** | 5001 ms | 2230 ms | 1,00 |
-| `bifrost` | 106/120 | 88,3% | 0,0% | $0,000601 | $0,000680 | 5629 ms | 2681 ms | 1,00 |
-| `portkey` | 113/120 | **94,2%** | 0,0% | $0,000879 | $0,000933 | 5819 ms | **2168 ms** | 1,00 |
-
-Chi phí tổng cả đợt: **$0,18920** (litellm $0,01167 = 6,2% · bifrost $0,07209 = 38,1% ·
-portkey $0,10544 = 55,7%).
+| Proxy | Đạt | Độ chính xác | Lỗi | Chi phí TB/lượt | Chi phí/câu đạt | p95 latency | Nhất quán |
+|---|---|---|---|---|---|---|---|
+| `litellm` | 201/240 | **83,8%** | 0,0% | **$0,0001233** | **$0,000147** | **6348 ms** | **1,00** |
+| `bifrost` | 210/240 | 87,5% | 0,8% | $0,0005616 | $0,000636 | 7166 ms | 0,975 |
+| `portkey` | 221/240 | **92,1%** | 0,0% | $0,0007929 | $0,000861 | 6887 ms | **1,00** |
 
 ### Áp luật 4 bước, từng bước
 
 | Bước | Luật | Kết quả |
 |---|---|---|
-| 1 | Loại proxy có độ chính xác < 80% | Không loại ai (81,7% / 88,3% / 94,2%) → còn cả 3 |
-| 2 | Chọn chi phí TB/prompt thấp nhất | **`litellm` $0,000097** — thấp nhất → **CHỌN** |
-| 3 | Nếu chênh chi phí < 5% thì xét p95 | **Không áp dụng** (chênh 518% và 803%) |
+| 1 | Loại proxy có độ chính xác < 80% | Không loại ai (83,8% / 87,5% / 92,1%) → còn cả 3 |
+| 2 | Chọn chi phí TB/prompt thấp nhất | **`litellm` $0,0001233** → **CHỌN** |
+| 3 | Nếu chênh chi phí < 5% thì xét p95 | **Không áp dụng** (chênh 355% và 543%) |
 | 4 | Nếu vẫn hòa thì xét consistency | **Không áp dụng** |
+
+**Quy ước tính (D7), nhắc lại để đọc đúng bảng:** lượt lỗi **không** tính phí và **không** vào chi
+phí trung bình (tính ở $0 sẽ thưởng cho proxy hay lỗi), nhưng **có** tính là 1 trong 3 lần lặp, **có**
+vào độ trễ (người gọi vẫn phải chờ hết khoảng đó rồi mới nhận lỗi), và `error_rate` báo riêng.
+Consistency coi lượt lỗi là **một lựa chọn riêng biệt** (quyết định của Khoa 03/10: lỗi tự nó là một
+dạng mất nhất quán của quyết định routing, không phải trường hợp trung lập) — đó là lý do Bifrost
+được 0,975 chứ không phải 1,00.
 
 ---
 
@@ -51,18 +58,20 @@ tuyến + model được chọn), không đo riêng "proxy thông minh" (`docs/e
 
 | Proxy | Model | Tầng | Số lượt | Tỷ lệ | Độ chính xác của riêng model đó |
 |---|---|---|---|---|---|
-| `litellm` | `gpt-4o-mini` | SIMPLE | 120 | **100%** | 82% |
-| `bifrost` | `gpt-4o-mini` | SIMPLE | 69 | 57% | 84% |
-| `bifrost` | `gpt-4o` | COMPLEX | 30 | 25% | 100% |
-| `bifrost` | `claude-haiku` | MEDIUM | 21 | 18% | 86% |
-| `portkey` | `gpt-4o` | COMPLEX | 42 | 35% | 90% |
-| `portkey` | `claude-haiku` | MEDIUM | 39 | 32% | 100% |
-| `portkey` | `gpt-4o-mini` | SIMPLE | 39 | 32% | 92% |
+| `litellm` | `gpt-4o-mini` | SIMPLE | 240 | **100%** | 84% |
+| `bifrost` | `gpt-4o-mini` | SIMPLE | 137 | 57% | 84% |
+| `bifrost` | `gpt-4o` | COMPLEX | 57 | 24% | 100% |
+| `bifrost` | `claude-haiku` | MEDIUM | 44 | 18% | 86% |
+| `bifrost` | *(lượt lỗi)* | — | 2 | 1% | — |
+| `portkey` | `claude-haiku` | MEDIUM | 102 | 42% | 94% |
+| `portkey` | `gpt-4o-mini` | SIMPLE | 75 | 31% | 92% |
+| `portkey` | `gpt-4o` | COMPLEX | 63 | 26% | 89% |
 
-**LiteLLM `cost-based-routing` chọn `gpt-4o-mini` cho 120/120 lượt — không hề đổi model dù một lần.**
-Đúng như dự đoán: nó xếp hạng theo **giá**, không có đầu vào chất lượng nào, nên prompt khó cỡ nào
-cũng ra model rẻ nhất. Nghĩa là **nhánh LiteLLM trong thí nghiệm này thực chất đo `gpt-4o-mini`**,
-chứ không đo một cơ chế định tuyến đang hoạt động.
+**LiteLLM `cost-based-routing` chọn `gpt-4o-mini` cho 240/240 lượt — không đổi model dù một lần.**
+Nó xếp hạng theo **giá**, không có đầu vào chất lượng nào, nên prompt khó cỡ nào cũng ra model rẻ
+nhất. Nghĩa là **nhánh LiteLLM trong thí nghiệm này thực chất là đường cơ sở `gpt-4o-mini`**, không
+đo được một cơ chế định tuyến đang hoạt động. Đây là phát hiện quan trọng nhất của cả thí nghiệm và
+nó **không phụ thuộc** vào cổng 80% hay cỡ mẫu.
 
 ---
 
@@ -70,255 +79,291 @@ chứ không đo một cơ chế định tuyến đang hoạt động.
 
 | Proxy | MMLU | GSM8K | HumanEval | IFEval | Tổng |
 |---|---|---|---|---|---|
-| `litellm` | 27/30 | **18/30** | 30/30 | 23/30 | 98/120 (81,7%) |
-| `bifrost` | 27/30 | 24/30 | 30/30 | 25/30 | 106/120 (88,3%) |
-| `portkey` | 27/30 | **30/30** | 29/30 | 27/30 | 113/120 (94,2%) |
+| `litellm` | 48/60 | **45/60** | 57/60 | 51/60 | 201/240 (83,8%) |
+| `bifrost` | 54/60 | 51/60 | 57/60 | **48/60** | 210/240 (87,5%) |
+| `portkey` | **57/60** | 54/60 | 56/60 | **54/60** | 221/240 (92,1%) |
 
-Hai điều đọc ra ngay:
-
-- **MMLU không phân biệt được 3 proxy** (27/30 cho cả ba) và **HumanEval gần như bão hòa** (30/30,
-  30/30, 29/30). Toàn bộ khác biệt giữa 3 proxy đến từ **GSM8K** (18 → 24 → 30) và **IFEval**
-  (23 → 25 → 27).
-- Bifrost đẩy **24/30 câu MMLU lên tầng COMPLEX** (`gpt-4o`, model đắt nhất pool) nhưng vẫn chỉ được
-  **27/30 — bằng đúng LiteLLM chạy toàn bộ bằng `gpt-4o-mini`**. Tiền trả thêm cho MMLU **không mua
-  được điểm nào**. Đây là xác nhận thực nghiệm cho phân loại lệch đã đo ở smoke test 09/10.
+- **GSM8K là chỗ phân biệt rõ nhất** (45 → 51 → 54) — cơ chế ở mục 5.
+- **HumanEval gần bão hòa** (57/57/56): không phân biệt được 3 proxy, nhưng **kéo điểm trung bình
+  của cả ba lên**, LiteLLM được lợi nhiều nhất vì nó yếu nhất ở các bộ khác.
+- **IFEval là bộ duy nhất Bifrost thua LiteLLM** (48 so với 51) — và cũng là bộ Bifrost đắt nhất.
 
 ---
 
 ## 5. Cơ chế: vì sao độ chính xác chênh nhau
 
-GSM8K là chỗ 3 proxy tách nhau rõ nhất, và quan hệ nhân quả ở đây **sạch**:
+### Bifrost trả giá đắt nhất cho bộ dễ nhất
 
-| Item | `prompt_len` | litellm (mini) | bifrost | portkey |
-|---|---|---|---|---|
-| gsm8k_05 | 277 | SIMPLE **0/3** | SIMPLE **0/3** | MEDIUM **3/3** |
-| gsm8k_07 | 340 | SIMPLE **0/3** | MEDIUM **3/3** | MEDIUM **3/3** |
-| gsm8k_09 | 225 | SIMPLE **0/3** | SIMPLE **0/3** | MEDIUM **3/3** |
-| gsm8k_10 | 510 | SIMPLE **0/3** | MEDIUM **3/3** | COMPLEX **3/3** |
+| Bifrost | SIMPLE | MEDIUM | COMPLEX |
+|---|---|---|---|
+| **MMLU** | 3 | 6 | **51** |
+| GSM8K | 42 | 18 | — |
+| HumanEval | 57 | 3 | — |
+| IFEval | 35 | 17 | 6 |
 
-Bốn câu `gpt-4o-mini` làm sai thì nó sai **0/3 — tất định**, không phải nhiễu. Và **mỗi lần** proxy
-nâng lên model mạnh hơn thì câu đó **đạt 3/3**. Tức là chênh lệch độ chính xác ở mục 2 **không** do
-may rủi, mà **toàn bộ** do quyết định định tuyến: Portkey nâng cả 4/4 câu → 30/30; Bifrost nâng 2/4 →
-24/30; LiteLLM nâng 0/4 → 18/30.
+Bifrost Complexity Router đẩy **51/60 lượt MMLU (85%) lên tầng COMPLEX** — `gpt-4o`, model đắt nhất
+pool — để đổi lấy 54/60 so với 48/60 của LiteLLM chạy toàn `gpt-4o-mini`. Tức **6 câu đúng thêm, trả
+giá model đắt nhất cho 85% một bộ trắc nghiệm 4 đáp án**. Đây là xác nhận thực nghiệm cho phân loại
+lệch đã đo ở smoke test 09/10: nó coi câu trắc nghiệm ngắn là "phức tạp".
 
-**Nhưng Portkey nâng đúng 4 câu đó không phải vì nó "hiểu" câu khó.** Nó định tuyến theo **độ dài
-prompt**, ngưỡng do **nhóm tự đặt** (<211 ký tự → rẻ, ≥385 → đắt; suy từ tercile phân bố độ dài 40
-item, khóa 14/10). Cả 4 câu mini trượt đều dài **≥ 225 ký tự**, còn mọi câu mini làm được mà Portkey
-để ở SIMPLE đều **≤ 177 ký tự**. Trên bộ GSM8K, **độ dài câu đố chữ tình cờ tỷ lệ với độ khó số
-học** — nên một ngưỡng độ dài thuần cú pháp lại hoạt động như một bộ phân loại độ khó. Đó là **sự
-trùng hợp có lợi trên bộ đề này**, không phải năng lực của Portkey, và **không có gì bảo đảm nó còn
-đúng trên dữ liệu người dùng thật của Conduit**.
+Ngược lại, HumanEval — bộ **thật sự** cần suy luận — thì Bifrost cho **57/60 lượt vào SIMPLE**.
+Phân loại của nó gần như **ngược** với độ khó thật.
+
+### Lợi thế của Portkey một phần là trùng hợp
+
+Portkey định tuyến theo **độ dài prompt**, ngưỡng do **nhóm tự đặt** (<211 ký tự → rẻ, ≥385 → đắt;
+suy từ tercile phân bố độ dài 40 item đầu, khóa 14/10 và **giữ nguyên** qua đợt mở rộng theo D14).
+
+Trên GSM8K, **độ dài câu đố chữ tình cờ tỷ lệ với độ khó số học**, nên một ngưỡng độ dài thuần cú
+pháp lại hoạt động như một bộ phân loại độ khó — ở 40 item đầu, **cả 4 câu `gpt-4o-mini` làm sai đều
+dài ≥ 225 ký tự** còn mọi câu nó làm được mà Portkey để ở SIMPLE đều ≤ 177 ký tự. Đó là **sự trùng
+hợp có lợi trên bộ đề này**, không phải năng lực của Portkey, và **không có gì bảo đảm còn đúng trên
+dữ liệu người dùng thật của Conduit**.
+
+Trên HumanEval, Portkey không cho **câu nào** vào SIMPLE (30 MEDIUM + 30 COMPLEX) vì prompt code vốn
+dài — nên nó trả giá cao nhất ở bộ mà `gpt-4o-mini` vốn đã làm được 57/60.
 
 ---
 
 ## 6. Chỉ số diễn giải: chi phí trên mỗi câu trả lời đạt
 
-Chỉ số này gộp cả hai vế mục tiêu ("đạt yêu cầu" + "chi phí thấp") vào một số, nên nó là phép thử
-xem kết luận ở mục 2 có phải là hệ quả của một luật đo lệch hay không:
+Chỉ số này gộp cả hai vế mục tiêu ("đạt yêu cầu" + "chi phí thấp") vào một số, nên nó là phép thử xem
+kết luận ở mục 2 có phải hệ quả của một luật đo lệch hay không.
 
-| Proxy | Chi phí/câu đạt | So với litellm |
-|---|---|---|
-| `litellm` | **$0,000119** | — |
-| `bifrost` | $0,000680 | đắt gấp **5,7×** |
-| `portkey` | $0,000933 | đắt gấp **7,8×** |
+| Proxy | Chi phí/câu đạt | So với litellm | Bất lợi nhất cho LiteLLM¹ |
+|---|---|---|---|
+| `litellm` | **$0,000147** | — | **$0,000163** |
+| `bifrost` | $0,000636 | đắt gấp **4,3×** | $0,000588 |
+| `portkey` | $0,000861 | đắt gấp **5,8×** | $0,000809 |
 
-**Hai cách tính cho cùng một kết luận.** Luật 4 bước và chỉ số diễn giải **không lệch nhau**, nên
-không có chỗ nào phải giải trình thêm: ngay cả khi tính giá cho từng *câu đúng* (tức là đã phạt
-LiteLLM vì 22 câu nó làm sai), LiteLLM vẫn rẻ nhất một khoảng rất lớn. Độ chính xác cao hơn của
-Portkey **không bù được** chi phí cao hơn.
+¹ Phép thử khắt khe nhất: đặt LiteLLM ở **đáy** khoảng tin cậy 95% của nó (độ chính xác thấp nhất có
+thể) và hai proxy kia ở **đỉnh** khoảng tin cậy của chúng (cao nhất có thể).
+
+**Kể cả trong tình huống bất lợi nhất đó, LiteLLM vẫn rẻ hơn 3,6× so với Bifrost và 5,0× so với
+Portkey** trên mỗi câu trả lời đạt. **Hai cách tính cho cùng một kết luận**, nên không có chỗ nào
+phải giải trình thêm: ngay cả khi đã phạt LiteLLM vì 39 câu nó làm sai, nó vẫn rẻ nhất một khoảng
+lớn hơn sai số lấy mẫu rất nhiều. Độ chính xác cao hơn của Portkey **không bù được** chi phí.
 
 ---
 
-## 7. Đối chiếu 3 giả thuyết đã đăng ký trước
+## 7. Độ vững của kết luận
 
-Ba giả thuyết này viết **trước khi** chạy (`docs/experiment-design.md` mục 7), ghi lại đúng nguyên
-văn để báo cáo không bị nghi là giải thích sau khi đã thấy số.
+### 7.1. Ổn định khi tăng cỡ mẫu
 
-| | Giả thuyết | Kết quả | Phán định |
-|---|---|---|---|
-| **H1** | LiteLLM: chi phí/lượt **thấp nhất**, độ chính xác **thấp nhất**, **ứng viên dễ trượt cổng 80%** | Rẻ nhất ✅ (6–9×) · thấp nhất ✅ (81,7%) · **nhưng vẫn qua cổng** | **Đúng 2/3** |
-| **H2** | Bifrost: chính xác hơn LiteLLM ở câu khó nhưng đắt hơn đáng kể; p95 cao hơn ~257 ms; **sẽ xếp sai câu trắc nghiệm tầm thường lên COMPLEX** | Chính xác hơn ✅ (88,3 > 81,7) · đắt hơn 6,2× ✅ · p95 cao hơn **nhưng +628 ms** chứ không phải ~257 ms ⚠️ · **xếp 24/30 câu MMLU lên COMPLEX mà điểm không tăng** ✅ | **Đúng 3/4, 1 lệch độ lớn** |
-| **H3** | Portkey: **nằm giữa**; kết quả **phụ thuộc ngưỡng `prompt_len` nhóm đặt** | **Không nằm giữa** ❌ — nó **chính xác nhất (94,2%) và đắt nhất** · phụ thuộc ngưỡng ✅ (mục 5 chứng minh trực tiếp) | **Đúng 1/2** |
+| Cỡ mẫu | litellm | bifrost | portkey | Proxy được chọn |
+|---|---|---|---|---|
+| 360 lượt (40 item) | 81,7% | 88,3% | 94,2% | `litellm` |
+| 540 lượt (60 item) | 81,1% | 88,9% | 92,8% | `litellm` |
+| **720 lượt (80 item)** | **83,8%** | **87,5%** | **92,1%** | **`litellm`** |
 
-### Về chỗ lệch của H2: p95 cao hơn 628 ms, không phải 257 ms
+Thứ tự 3 proxy **không đổi** qua cả ba mốc, và proxy được chọn **không đổi**. Biên của LiteLLM tới
+cổng 80% **rộng ra** khi thêm dữ liệu: dư 2 lượt ở 360 → **dư 9 lượt** ở 720.
 
-Con số ~257 ms đo ở smoke test 09/10 là **chi phí riêng của lượt embedding** (bật/tắt analyzer trên
-cùng một model). Còn +628 ms ở đây là **hiệu p95 giữa hai proxy**, trong đó Bifrost còn gửi 43% lượt
-sang `claude-haiku`/`gpt-4o` — vốn chậm hơn `gpt-4o-mini`. Hai con số **không đo cùng một thứ**, nên
-chỗ lệch này **không** phủ định phép đo cũ; nhưng cũng **không** dùng nó làm bằng chứng cho "overhead
-của Bifrost là 628 ms" được. Muốn tách bạch thì phải chạy cùng một model qua cả hai proxy — ngoài
-phạm vi đợt này.
-
-### H1 sai ở đâu, và vì sao chỗ sai đó đáng lo
-
-H1 đoán LiteLLM sẽ trượt cổng 80%. Nó **không trượt — nhưng chỉ vừa đủ, và chỉ nhờ cách gộp bộ đề**:
-
-| Nửa bộ đề | Độ chính xác LiteLLM | Qua cổng 80%? |
-|---|---|---|
-| MMLU + GSM8K (Hùng) | **75,0%** | **KHÔNG** |
-| HumanEval + IFEval (Khoa) | 88,3% | Có |
-| **Gộp cả 4 bộ** | **81,7%** | **Có (hơn 1,7 đpt)** |
-
-Nguyên nhân: **HumanEval bão hòa** — `gpt-4o-mini` đạt 30/30, kéo điểm trung bình của LiteLLM lên.
-
-### Phân tích độ nhạy: bỏ lần lượt từng bộ đề
-
-Phép thử thẳng nhất cho câu "kết luận có vững không": bỏ từng bộ ra, áp lại đúng luật 4 bước.
+### 7.2. Leave-one-out: bỏ lần lượt từng bộ đề
 
 | Bỏ bộ | litellm | bifrost | portkey | Proxy được chọn |
 |---|---|---|---|---|
-| — (cả 4 bộ) | 81,7% / $0,000097 | 88,3% / $0,000601 | 94,2% / $0,000879 | **`litellm`** |
-| MMLU | **78,9% → loại** | 87,8% / $0,000605 | 95,6% / $0,001096 | `bifrost` |
-| GSM8K | 88,9% / $0,000080 | 91,1% / $0,000666 | 92,2% / $0,000849 | **`litellm`** |
-| HumanEval | **75,6% → loại** | 84,4% / $0,000719 | 93,3% / $0,000682 | `portkey` |
-| IFEval | 83,3% / $0,000088 | 90,0% / $0,000413 | 95,6% / $0,000887 | **`litellm`** |
+| — (cả 4 bộ) | 83,8% | 87,5% | 92,1% | **`litellm`** |
+| MMLU | 85,0% | 86,7% | 91,1% | **`litellm`** |
+| GSM8K | 86,7% | 88,3% | 92,8% | **`litellm`** |
+| HumanEval | 80,0% | 85,0% | 91,7% | **`litellm`** |
+| IFEval | 83,3% | 90,0% | 92,8% | **`litellm`** |
 
-**2 trong 4 biến thể giữ LiteLLM, 2 biến thể loại nó.** Và khi LiteLLM bị loại thì proxy thay thế
-**không cố định**: bỏ MMLU thì Bifrost thắng, bỏ HumanEval thì **Portkey** thắng. Lý do Portkey vượt
-lên ở biến thể đó: HumanEval là bộ **đắt nhất của Portkey** ($0,001468/lượt — nó không gửi câu nào
-sang tầng SIMPLE) nhưng lại là bộ **rẻ nhất của Bifrost** ($0,000246/lượt — 27/30 câu ở SIMPLE), nên
-bỏ HumanEval **làm Bifrost đắt lên và Portkey rẻ đi**, đủ để đảo thứ tự.
+**Cả 4/4 biến thể đều chọn LiteLLM.** Đây là thay đổi quan trọng nhất mà đợt mở rộng mang lại: ở cỡ
+mẫu 40 item, **2/4 biến thể đổi hẳn proxy được chọn** (bỏ MMLU → Bifrost, bỏ HumanEval → Portkey).
+Ở 80 item, độ nhạy đó **biến mất**.
 
-Nghĩa là **kết luận của thí nghiệm này nhạy với thành phần bộ đề** — phải ghi vào giới hạn, không
-được che. Luật quyết định **không được sửa sau khi đã thấy số**, nên kết luận chính thức vẫn là
-LiteLLM; nhưng đây là lý do mục 9 đề nghị **giữ cơ chế dự phòng** thay vì coi LiteLLM là lựa chọn an
-toàn tuyệt đối, và là lý do mục 9 đề nghị **tăng cỡ mẫu** nếu còn thời gian.
+⚠️ Biến thể "bỏ HumanEval" cho LiteLLM **đúng 80,0%** — qua cổng vì luật là "loại nếu **< 80%**",
+nhưng sát sàn. Phải ghi rõ, không làm tròn thành "an toàn".
 
-### Khoảng tin cậy: chỗ yếu thật nằm ở cỡ mẫu, không phải ở nhiễu
+### 7.3. Chỗ KHÔNG phân giải được: cổng 80% và cỡ mẫu
 
-Hai nguồn bất định **khác nhau**, không được gộp:
+| Proxy | Độ chính xác | CI95 (theo 80 item) | Phân biệt được với ngưỡng 80%? |
+|---|---|---|---|
+| `litellm` | 83,8% | [75,7%; 91,8%] | **KHÔNG** — khoảng chứa 80% |
+| `bifrost` | 87,5% | [80,3%; 94,7%] | Có |
+| `portkey` | 92,1% | [86,2%; 98,0%] | Có |
 
-- **Nhiễu phía provider _không_ đủ để làm LiteLLM trượt cổng.** LiteLLM đạt 98/120; cổng 80% cần
-  ≥ 96/120, tức còn **dư 2 lượt** — phải có **3 lượt** đổi từ đạt sang trượt mới bị loại. Mà trong
-  120 lượt của LiteLLM chỉ có **1/40 item** bất định (`ifeval_07`, 2/3), ảnh hưởng tối đa ~1 lượt.
-  Đổi cách gộp sang **đa số 2/3 mỗi item** thì LiteLLM được **33/40 = 82,5%**, vẫn qua cổng (Bifrost
-  87,5%, Portkey 95,0%) — kết luận **không đổi**.
-- **Cỡ mẫu thì mới là chỗ yếu.** Khoảng tin cậy 95% của độ chính xác LiteLLM là **[74,7%; 88,6%]**
-  nếu tính theo 120 lượt, và **[69,7%; 93,7%]** nếu lấy **item** làm đơn vị (đúng hơn, vì 3 lần lặp
-  trên cùng một item **không độc lập**). Cả hai khoảng **đều chứa 80%**. Nói đúng là: với 40 item,
-  **không phân biệt được** độ chính xác thật của LiteLLM với ngưỡng 80% ở mức tin cậy 95%.
+Khoảng tin cậy lấy **item** làm đơn vị, vì 3 lần lặp trên cùng một item **không độc lập**.
 
-Vậy phát biểu đúng là *"khoảng cách tới cổng nằm trong sai số lấy mẫu của cỡ mẫu 40 item"*, **không**
-phải *"nằm trong sàn nhiễu 2,5%"* — hai đại lượng đó đo hai thứ khác nhau.
+**Nói thẳng:** với 80 item, **không khẳng định được** ở mức tin cậy 95% rằng độ chính xác thật của
+LiteLLM ≥ 80%. Và **không thể chữa bằng cách chạy thêm**: để nửa-rộng của khoảng tin cậy xuống dưới
+biên 3,8 đpt cần **~400 item ≈ 3.600 lượt**; để phân biệt được một biên 1 đpt cần **~5.000 item ≈
+45.000 lượt** — ngoài tầm với ở mọi mức kinh phí của khóa luận.
+
+Vì vậy báo cáo phải **tách rạch ròi hai phát biểu**:
+
+- ✅ **"LiteLLM rẻ nhất trên mỗi câu trả lời đạt"** — **vững**, khoảng cách 3,6–5,0× lớn hơn sai số
+  lấy mẫu rất nhiều, và không cần ngưỡng nào để phát biểu.
+- ⚠️ **"LiteLLM đạt ≥ 80%"** — **không phân giải được** ở cỡ mẫu này. Điểm ước lượng (83,8%) nằm
+  trên ngưỡng và cả 4 biến thể leave-one-out đều giữ nó, nhưng khoảng tin cậy vẫn phủ 80%.
+
+### 7.4. Sàn nhiễu
+
+`temperature=0` **không** cho kết quả lặp lại hoàn toàn (nó chỉ là "nỗ lực tối đa" phía provider).
+Đo trên 720 lượt: **7/240 nhóm (proxy, item) đổi đáp án giữa 3 lần lặp = 2,92%**. Tách ra:
+
+- **5/240 = 2,08%** là đổi đáp án thật: cùng một model, cả 3 lượt đều thành công, mà kết quả khác
+  nhau → **bất định phía provider**, không phải định tuyến bất ổn.
+- **2/240 = 0,83%** là do 2 lượt lỗi của Bifrost (mục 9), không phải đổi đáp án.
+
+Hệ quả: chênh lệch **nhỏ hơn ~2,9 đpt** giữa 2 proxy thì không kết luận được. Các khoảng cách ở mục 2
+— litellm↔bifrost 3,7 đpt và bifrost↔portkey 4,6 đpt — đều **lớn hơn** sàn này nên vẫn đọc được,
+nhưng **không nhiều**: đây là lý do thứ tự *độ chính xác* giữa 3 proxy nên được phát biểu thận trọng,
+trong khi thứ tự *chi phí* (4,6–6,4×) thì không có vấn đề gì.
+
+**6 trong 7 ca rơi vào IFEval** (ca còn lại là HumanEval; MMLU và GSM8K **không có ca nào**). Hợp lý:
+IFEval chấm theo ràng buộc định dạng ở mức *prompt-level strict* — đạt chỉ khi **mọi** ràng buộc đều
+được tuân thủ — nên chỉ cần model lỡ một ràng buộc là cả item trượt, khiến nó nhạy hơn hẳn với dao
+động nhỏ so với các bộ có đáp án đúng/sai rạch ròi. Đáng ghi vào phần giới hạn của bộ đánh giá.
+
+### 7.5. Tái lập độc lập
+
+Hùng chấm lại toàn bộ 180 lượt của Khoa trên máy mình bằng bản `graders.py` mới nhất và ra **đúng
+từng con số** Khoa báo (88,3% / 91,7% / 93,3%); khác biệt duy nhất trong file là đường dẫn thư mục
+tạm của hai máy. Phép chấm **tái lập được trên máy khác**.
 
 ---
 
-## 8. Độ tin cậy của phép đo
+## 8. Đối chiếu 3 giả thuyết đã đăng ký trước
 
-| | Kết quả |
-|---|---|
-| Lượt lỗi (`usage_logs.status=error`) | **0/360 (0,0%)** cả 3 proxy |
-| Consistency rate (chọn **cùng model** qua 3 lần lặp) | **1,00** cả 3 proxy — định tuyến **tất định** |
-| Sàn nhiễu (đáp án **đổi** giữa 3 lần lặp, dù `temperature=0`) | **3/120 nhóm = 2,5%** |
+Viết **trước khi** chạy (`docs/experiment-design.md` mục 7), giữ nguyên văn để báo cáo không bị nghi
+là giải thích sau khi đã thấy số.
 
-Ba nhóm đổi đáp án: `bifrost/ifeval_05` (1/3), `litellm/ifeval_07` (2/3), `portkey/humaneval_08`
-(2/3). Cả ba đều dùng **đúng một model** trong cả 3 lần lặp, nên đây **không** phải định tuyến bất
-ổn mà là **tính bất định phía provider** (`temperature=0` chỉ là "nỗ lực tối đa", không bảo đảm).
-Hệ quả: mọi chênh lệch **nhỏ hơn ~2,5 điểm phần trăm** giữa 2 proxy thì **không kết luận được**.
-Khoảng cách litellm↔bifrost (6,6 đpt) và bifrost↔portkey (5,9 đpt) đều **lớn hơn** sàn này nên vẫn
-đọc được.
+| | Giả thuyết | Kết quả trên 720 lượt | Phán định |
+|---|---|---|---|
+| **H1** | LiteLLM: chi phí/lượt **thấp nhất**, độ chính xác **thấp nhất**, **ứng viên dễ trượt cổng 80%** | Rẻ nhất ✅ (4,6–6,4×) · thấp nhất ✅ (83,8%) · **qua cổng với dư 9 lượt** ❌ | **Đúng 2/3** |
+| **H2** | Bifrost: chính xác hơn LiteLLM ở câu khó nhưng đắt hơn đáng kể; p95 cao hơn ~257 ms; **sẽ xếp sai câu trắc nghiệm tầm thường lên COMPLEX** | Chính xác hơn ✅ (87,5 > 83,8) · đắt hơn 4,55× ✅ · p95 cao hơn **+818 ms** chứ không ~257 ms ⚠️ · **51/60 lượt MMLU lên COMPLEX** ✅ | **Đúng 3/4, 1 lệch độ lớn** |
+| **H3** | Portkey: **nằm giữa**; kết quả **phụ thuộc ngưỡng `prompt_len` nhóm đặt** | **Không nằm giữa** ❌ — **chính xác nhất (92,1%) và đắt nhất** · phụ thuộc ngưỡng ✅ (mục 5 chứng minh trực tiếp) | **Đúng 1/2** |
 
-⚠️ **Đừng dùng sàn nhiễu này để nói về khoảng cách 1,7 đpt giữa LiteLLM và cổng 80%** — đó là hai
-đại lượng khác nhau (sàn nhiễu là tỷ lệ **item** bất định; 1,7 đpt là **biên của một tỷ lệ tổng
-hợp**). Nhiễu thực tế chỉ ảnh hưởng ~1 lượt của LiteLLM trong khi cần 3 lượt mới đổi được kết luận.
-Chỗ yếu thật là **sai số lấy mẫu của cỡ mẫu 40 item** — xem mục 7.
+### Về chỗ lệch của H2
 
-Bản chấm được **tái lập độc lập**: Hùng chấm lại toàn bộ 180 lượt của Khoa trên máy mình bằng bản
-`graders.py` mới nhất (sau 2 bản sửa ở commit `871e756`) và ra **đúng từng con số** Khoa báo
-(88,3% / 91,7% / 93,3%); khác biệt duy nhất trong file là đường dẫn thư mục tạm của 2 máy.
+Con số ~257 ms đo ở smoke test 09/10 là **chi phí riêng của lượt embedding** (bật/tắt analyzer trên
+cùng một model). Còn +818 ms ở đây là **hiệu p95 giữa hai proxy**, trong đó Bifrost còn gửi 42% lượt
+sang `claude-haiku`/`gpt-4o` — vốn chậm hơn `gpt-4o-mini` — và có 2 lượt lỗi tính vào độ trễ. Hai con
+số **không đo cùng một thứ**; chỗ lệch này không phủ định phép đo cũ, nhưng cũng **không** dùng làm
+bằng chứng cho "overhead của Bifrost là 818 ms" được.
 
 ---
 
-## 9. Giới hạn (bổ sung cho `docs/experiment-design.md` mục 9)
+## 9. Lượt lỗi
 
-1. **Kết luận nhạy với thành phần bộ đề, và cỡ mẫu chưa đủ để chốt cổng 80%.** 2/4 biến thể
-   leave-one-out đổi proxy được chọn (mục 7), và khoảng tin cậy 95% của LiteLLM **chứa ngưỡng 80%**
-   ở cả hai cách tính. 10 item/bộ là cỡ mẫu nhỏ. Đây là **giới hạn nặng nhất** của đợt này.
-2. **Nhánh LiteLLM không đo được cơ chế định tuyến** vì nó chọn cùng một model 120/120 lượt — nhánh
-   này thực chất là **đường cơ sở `gpt-4o-mini`**. Đó là một kết quả, nhưng nó làm so sánh "3 cơ chế
-   định tuyến" trở thành so sánh "1 model cố định vs 2 cơ chế".
+**2/720 lượt lỗi, cả hai của Bifrost** (`error_rate` 0,8%; LiteLLM và Portkey 0,0%):
+
+| Item | Lần lặp | Độ trễ | Ghi chú |
+|---|---|---|---|
+| `ifeval_16` | run1 | 3.904 ms | run2, run3 **thành công và đạt** (`gpt-4o-mini`) |
+| `ifeval_17` | run1 | 10.616 ms | run2, run3 **thành công và đạt** (`claude-haiku`) |
+
+Không phải timeout (timeout cấu hình 45s). Cả hai rơi vào **run1 của hai item liền nhau**, ngay sau
+khi backend restart sang `active-proxy=bifrost` — nghi là hiện tượng thoáng qua lúc khởi động, nhưng
+**chưa xác định được nguyên nhân**: trường `error` trong record **rỗng**, không ghi lại được thông
+điệp lỗi. Đây là **một khoảng trống logging cần sửa** trước khi dùng `error_rate` làm căn cứ cho bất
+kỳ kết luận nào về độ bền.
+
+---
+
+## 10. Giới hạn
+
+1. **Cổng 80% không phân giải được cho LiteLLM** ở cỡ mẫu này, và không chữa được bằng chạy thêm
+   (mục 7.3). Đây là **thuộc tính của thiết kế** (độ chính xác thật của LiteLLM nằm gần ngưỡng), không
+   phải thiếu sót thực thi.
+2. **Nhánh LiteLLM không đo được cơ chế định tuyến** vì nó chọn cùng một model 240/240 lượt — nhánh
+   này thực chất là **đường cơ sở `gpt-4o-mini`**. So sánh "3 cơ chế định tuyến" do đó thực tế là so
+   sánh "1 model cố định vs 2 cơ chế".
 3. **Lợi thế của Portkey một phần là trùng hợp** giữa độ dài prompt và độ khó trên GSM8K (mục 5), và
-   ngưỡng là do nhóm đặt — không chuyển giao được sang dữ liệu thật.
-4. **Chưa đo ở tải cao.** 360 lượt chạy tuần tự, không đo hành vi khi nghẽn hay khi provider sập —
-   mà **failover** lại chính là thứ Bifrost mạnh nhất. Chọn LiteLLM theo chi phí ở tải thấp
-   **không** chứng minh nó bền hơn khi có sự cố.
-5. **0 lượt lỗi trong cả đợt** nghĩa là nhánh dự phòng/retry của **cả 3 proxy chưa hề được kích
-   hoạt** — `error_rate` bằng nhau ở 0% là do không có sự cố nào, không phải do cả 3 chống lỗi tốt
-   như nhau.
+   ngưỡng do nhóm đặt — không chuyển giao được sang dữ liệu thật.
+4. **Chưa đo ở tải cao.** 720 lượt chạy tuần tự; không đo hành vi khi nghẽn hay khi provider sập —
+   mà **failover** lại chính là thứ Bifrost mạnh nhất. Chọn LiteLLM theo chi phí ở tải thấp **không**
+   chứng minh nó bền hơn khi có sự cố.
+5. **Chỉ 2 lượt lỗi trong cả đợt, và không rõ nguyên nhân** (mục 9) nghĩa là nhánh dự phòng/retry của
+   cả 3 proxy **gần như chưa được kích hoạt**. `error_rate` ở đây **không** đủ để so sánh độ bền.
+6. **HumanEval gần bão hòa** nên đóng góp rất ít vào việc phân biệt 3 proxy, trong khi vẫn kéo điểm
+   trung bình của cả ba lên.
+7. **Bifrost chạy ở 150 câu mẫu mặc định** (tiếng Anh, miền DevOps); nhóm không tự viết câu mẫu riêng
+   để tránh tinh chỉnh bộ phân loại theo chính bộ test của mình. Bộ đề **bắt buộc tiếng Anh** vì
+   Bifrost dìm **mọi** prompt tiếng Việt về SIMPLE (đã đo) — ràng buộc này **chỉ do Bifrost**.
+8. **0-shot, lệch khỏi protocol gốc** (MMLU chuẩn 5-shot, GSM8K 8-shot CoT), vì few-shot làm prompt
+   rất dài và sẽ đẩy mọi câu của nhánh Portkey sang model đắt. Nhóm không so với điểm công bố, chỉ so
+   **giữa 3 proxy trên cùng bộ đề**.
 
 ### Đề nghị cho phần tích hợp vào Conduit
 
-Chọn `litellm` theo đúng luật, **nhưng** không bỏ cơ chế dự phòng: vì (a) LiteLLM qua cổng chỉ 1,7
-đpt — nằm trong sàn nhiễu, (b) nó không đổi model bao giờ nên không tự nâng cấp khi gặp prompt khó,
-và (c) giới hạn 4–5 ở trên. Cụ thể nên cấu hình `fallbacks` cho `conduit-pool` (hiện log còn báo
-`Available Model Group Fallbacks=None`) — việc này trước đây **cố ý** chưa làm để không ảnh hưởng
-tính công bằng của thí nghiệm, giờ thí nghiệm đã xong thì làm được.
+Chọn `litellm` theo đúng luật, **nhưng không bỏ cơ chế dự phòng**, vì: (a) nó **không bao giờ tự nâng
+model** khi gặp prompt khó — 240/240 lượt cùng một model, (b) cổng 80% không phân giải được, (c) giới
+hạn 4–5 ở trên. Cụ thể nên cấu hình `fallbacks` cho `conduit-pool` (log hiện còn báo
+`Available Model Group Fallbacks=None`) — việc này trước đây **cố ý** chưa làm để không ảnh hưởng tính
+công bằng của thí nghiệm; giờ thí nghiệm đã xong thì làm được.
 
-### Nếu còn thời gian: tăng cỡ mẫu (chi phí gần như bằng 0)
-
-Cả 360 lượt chỉ tốn **$0,189**. Nâng từ 10 lên **20 item/bộ** là thêm 360 lượt ≈ **$0,19 nữa**, và
-**thu hẹp khoảng tin cậy khoảng 1,4 lần** (nửa-rộng 12,1 → 8,6 đpt).
-
-⚠️ **ĐÍNH CHÍNH (20/10, sau khi đã chạy nửa đợt mở rộng).** Bản đầu của mục này viết rằng mở rộng
-lên 20 item/bộ là *"đủ để biết LiteLLM thật sự trên hay dưới ngưỡng 80%"*. **Sai.** Tính lại: để nửa
-rộng của khoảng tin cậy nhỏ hơn biên 1,1 đpt (tức phân biệt được 81,1% với 80%) cần **~4.865 item ≈
-43.785 lượt gọi API** — ngoài tầm với ở mọi mức kinh phí của khóa luận. Ngay cả 320 item vẫn cho
-khoảng [76,8%; 85,4%], **vẫn chứa 80%**.
-
-**Nên phát biểu đúng là:** độ chính xác thật của LiteLLM nằm **gần như đúng trên** ngưỡng 80%, nên
-cổng ở bước 1 **không có khả năng phân giải** trường hợp này — và đó là **thuộc tính của thiết kế**,
-không phải thiếu sót do chạy ít. Mở rộng cỡ mẫu vẫn đáng làm (gấp đôi dữ liệu, ước lượng theo từng
-bộ chắc hơn, và cho thấy ước lượng **ổn định**: 81,7% ở 360 lượt → 81,1% ở 540 lượt), nhưng **không**
-giải quyết được câu hỏi về cổng.
-
-### Có một kết luận VỮNG, không phụ thuộc cổng 80%
-
-Vì cổng không phân giải được, phần kết luận của báo cáo nên tựa vào chỗ **không cần ngưỡng nào**:
-chỉ số **chi phí trên mỗi câu trả lời đạt**. Phép thử khắt khe nhất — đặt LiteLLM ở **đáy** khoảng
-tin cậy của nó (độ chính xác thấp nhất có thể) và hai proxy kia ở **đỉnh** khoảng tin cậy của chúng
-(cao nhất có thể), tính trên 540 lượt:
-
-| | Độ chính xác (CI95 theo item) | Chi phí/câu đạt | Trường hợp bất lợi nhất cho LiteLLM |
-|---|---|---|---|
-| `litellm` | 81,1% [71,2%; 91,0%] | $0,000126 | **$0,000143** (đáy CI) |
-| `bifrost` | 88,9% [80,9%; 96,8%] | $0,000563 | $0,000517 (đỉnh CI) |
-| `portkey` | 92,8% [86,2%; 99,3%] | $0,000842 | $0,000787 (đỉnh CI) |
-
-Kể cả trong tình huống bất lợi nhất đó, **LiteLLM vẫn rẻ hơn 3,6× so với Bifrost và 5,5× so với
-Portkey** trên mỗi câu trả lời đạt. Khoảng cách này **lớn hơn sai số lấy mẫu rất nhiều**, trong khi
-biên 1,1 đpt ở cổng thì **nằm hẳn trong sai số**.
-
-Nói gọn: **"LiteLLM rẻ nhất trên mỗi câu đạt" là kết luận vững; "LiteLLM đạt ≥ 80%" là kết luận
-không phân giải được.** Báo cáo nên tách rạch ròi hai câu đó, và nêu rõ rằng nếu cổng 80% được đọc
-theo hướng loại LiteLLM thì proxy được chọn sẽ đổi (xem bảng leave-one-out ở mục 7).
-
-⚠️ **Điều kiện để việc này còn hợp lệ về phương pháp:** phải **đăng ký trước khi chạy** (một quyết
-định D14) rằng *"mở rộng lên N item/bộ theo đúng quy trình lấy mẫu và đúng luật 4 bước đã khóa, và
-lấy kết quả trên toàn bộ mẫu mở rộng làm kết luận cuối, bất kể nó nói gì"*. Nếu chạy thêm rồi mới
-chọn công bố bộ số nào có lợi thì thành **chạy tới khi ra kết quả mình thích** — còn tệ hơn là giữ
-nguyên 40 item và báo cáo trung thực độ nhạy như hiện tại.
+Ngoài ra nên **sửa khoảng trống logging ở mục 9** trước khi dựa vào `error_rate` cho bất cứ quyết định
+vận hành nào.
 
 ---
 
-## 10. Tái lập kết quả
+## 11. Ghi chú phương pháp: đợt mở rộng cỡ mẫu (D14)
 
-Dữ liệu thô (360 lượt, đã chấm) và bảng đã xuất đều trong repo — **không cần gọi lại API**:
+**Phải ghi rõ để người đọc tự đánh giá:** quyết định mở rộng từ 10 lên 20 item/bộ được đưa ra **SAU
+khi đã thấy kết quả 360 lượt**, vì kết quả đó cho thấy cổng 80% không phân giải được (LiteLLM 81,7%,
+biên 1,7 đpt) và 2/4 biến thể leave-one-out đổi proxy được chọn.
+
+Mở rộng sau khi đã thấy số là chỗ dễ mất khách quan nhất, nên **D14 được đăng ký vào
+`docs/roadmap.md` mục 4 và commit TRƯỚC khi gọi lượt API nào** (commit `2eb45ae`), kèm 5 ràng buộc:
+
+1. **Kết luận cuối lấy trên toàn bộ 720 lượt**, áp đúng luật 4 bước không sửa + D13, **bất kể nó nói
+   gì** — kể cả nếu đổi proxy được chọn. Không công bố chọn lọc bộ số có lợi. *(Đã giữ: kết quả 720
+   là kết luận chính thức ở mục 1; các mốc 360 và 540 vẫn báo cáo đầy đủ ở mục 7.1.)*
+2. **Cùng quy trình lấy mẫu**: cùng seed `20261014`, cùng `seed_offset` từng bộ, chỉ đổi `k` từ 10 →
+   20. Đã kiểm thực nghiệm: 10 index cũ của **cả 4 bộ** là **tập con thật** của mẫu k=20, nên 360 lượt
+   đã chạy **vẫn hợp lệ** và chỉ phải chạy 40 item mới. Đây là *tăng k của cùng một phép lấy mẫu*,
+   không phải lấy mẫu mới.
+3. **Không gán lại ID item.** 40 item cũ giữ nguyên ID; item mới đánh `*_11..*_20`. Sinh lại thẳng với
+   `N_PER_SET=20` sẽ **dịch 36/40 ID** (vd. `mmlu_01` nhảy từ `source_index` 1044 sang 917) và ghép
+   360 lượt cũ với đề khác — sai âm thầm, không báo lỗi.
+4. **Không tính lại ngưỡng `prompt_len` của Portkey** (giữ 211/385 khóa 14/10): ngưỡng là một phần
+   **cấu hình của nhánh Portkey**, tính lại theo phân bố 80 item là đổi nhánh giữa thí nghiệm, khiến 2
+   đợt **không gộp được**.
+5. Mọi tham số khác giữ y nguyên: `max_tokens=1024`, `temperature=0`, `num_retries=2`, `timeout=45s`,
+   0-shot, pool model, cấu hình 3 proxy.
+
+**Đính chính một khẳng định sai khi đề xuất D14:** lúc đề xuất, lý do nêu ra là mở rộng sẽ "đủ để biết
+LiteLLM thật sự trên hay dưới 80%". **Sai** — tính lại thì phân biệt được biên đó cần ~5.000 item
+(mục 7.3). Mở rộng **thực sự** mang lại một thứ khác và quan trọng hơn: **xóa bỏ độ nhạy
+leave-one-out** (2/4 biến thể đổi proxy → 0/4), tức làm kết luận vững trước thành phần bộ đề.
+
+### Ai chạy phần nào
+
+| Đợt | MMLU + GSM8K | HumanEval + IFEval |
+|---|---|---|
+| 360 lượt đầu (item 01–10) | Hùng | Khoa |
+| 360 lượt mở rộng (item 11–20) | Hùng | **Hùng** (máy Khoa không tham gia đợt này) |
+
+Kế hoạch ban đầu là mỗi người chạy phần mình. Ở đợt mở rộng, cả hai nửa chạy trên máy Hùng — **không
+ảnh hưởng số liệu** (cùng bộ đề, cùng cấu hình, cùng script) nhưng **mất một lớp kiểm chứng độc lập**.
+Bù lại bằng việc Khoa chấm lại dữ liệu trên máy mình (phép chấm đã chứng minh tái lập được — mục 7.5).
+
+---
+
+## 12. Tái lập kết quả
+
+Dữ liệu thô (720 lượt, đã chấm) và bảng đã xuất đều trong repo — **không cần gọi lại API**:
 
 ```
-experiments/results/run_{litellm,bifrost,portkey}_20261019T13*.json   # 180 lượt Khoa (HumanEval + IFEval)
-experiments/results/run_{litellm,bifrost,portkey}_20261019T16*.json   # 180 lượt Hùng (MMLU + GSM8K)
-experiments/results/phase3-full-360/merged.json                       # 360 lượt đã gộp
-experiments/results/phase3-full-360/tables/*.csv                      # 4 bảng CSV
+experiments/results/run_{litellm,bifrost,portkey}_20261019T13*.json  # 180 lượt, item 01-10, HumanEval+IFEval (Khoa)
+experiments/results/run_{litellm,bifrost,portkey}_20261019T16*.json  # 180 lượt, item 01-10, MMLU+GSM8K (Hùng)
+experiments/results/run_{litellm,bifrost,portkey}_20261020T0*.json   # 360 lượt, item 11-20 (đợt mở rộng D14)
+experiments/results/d14-full-720/merged.json                         # 720 lượt đã gộp
+experiments/results/d14-full-720/tables/*.csv                        # 4 bảng CSV
+experiments/results/d14-full-720/decision_rule_output.json           # kết quả áp luật
 ```
 
 ```bash
-# chấm lại (offline, miễn phí) -> gộp -> xuất bảng -> áp luật quyết định
-PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/results/run_*_20261019T1*.json
-PYTHONIOENCODING=utf-8 python experiments/scripts/verify_results.py experiments/results/phase3-full-360/merged.json --expect 360
-PYTHONIOENCODING=utf-8 python experiments/analysis/export_tables.py experiments/results/phase3-full-360/merged.json -o experiments/results/phase3-full-360/tables
-PYTHONIOENCODING=utf-8 python experiments/analysis/decision_rule.py experiments/results/phase3-full-360/merged.json
+# chấm lại (offline, miễn phí) -> kiểm toàn vẹn -> xuất bảng -> áp luật quyết định
+PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/results/run_*_202610{19T1,20T0}*.json
+PYTHONIOENCODING=utf-8 python experiments/scripts/verify_results.py experiments/results/d14-full-720/merged.json --expect 720
+PYTHONIOENCODING=utf-8 python experiments/analysis/export_tables.py experiments/results/d14-full-720/merged.json -o experiments/results/d14-full-720/tables
+PYTHONIOENCODING=utf-8 python experiments/analysis/decision_rule.py experiments/results/d14-full-720/merged.json
 ```
 
 Tham số cố định cả 3 proxy: `max_tokens=1024` · `temperature=0` · `num_retries=2` · `timeout=45s` ·
-0-shot · pool 4 model thực dùng (`gpt-4o-mini` / `claude-haiku` / `gpt-4o`; `claude-sonnet` bị loại
-theo D12, `gemini-flash` không nằm trong nhánh nào) · seed lấy mẫu `20261014`.
+0-shot · pool 3 model thực dùng (`gpt-4o-mini` / `claude-haiku` / `gpt-4o`; `claude-sonnet` bị loại
+theo D12, `gemini-flash` không nằm trong nhánh nào) · seed lấy mẫu `20261014` · 20 item/bộ (D14).
