@@ -1,0 +1,24 @@
+# Tiem loi provider cho phep thu D15 (docs/roadmap.md muc 4) - KHONG dung cho chay thuong.
+#
+# Khoi `environment:` uu tien cao hon `env_file:` cua docker-compose.yml, nen file nay ghi de
+# OPENAI_API_KEY thanh gia tri khong hop le => moi deployment OpenAI cua litellm va bifrost
+# that bai, trong khi key Anthropic/Gemini VAN hop le (lay tu env_file). Proxy nao chuyen duoc
+# sang claude-haiku/gemini-flash thi phuc hoi.
+#
+# Portkey KHONG co o day: Portkey OSS nhan ca Config object lan api_key tu BACKEND qua header
+# x-portkey-config (HttpProxyChatClient.substituteEnvVars), khong doc env cua container no.
+# Loi cho nhanh Portkey duoc tiem bang cach dat OPENAI_API_KEY khong hop le trong moi truong
+# tien trinh backend - xem experiments/scripts/fault_injection.sh.
+#
+# Bat:  docker compose -f docker-compose.yml -f docker-compose.faultinject.yml up -d --force-recreate litellm bifrost
+# Tat:  docker compose -f docker-compose.yml up -d --force-recreate litellm bifrost
+#       (bo file nay ra la container quay ve doc .env binh thuong)
+
+services:
+  litellm:
+    environment:
+      OPENAI_API_KEY: "sk-d15-fault-injection-invalid-key"
+
+  bifrost:
+    environment:
+      OPENAI_API_KEY: "sk-d15-fault-injection-invalid-key"

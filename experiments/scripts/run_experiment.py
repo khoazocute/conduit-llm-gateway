@@ -79,6 +79,21 @@ def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> li
     return selected
 
 
+def select_ids(prompts: list[dict[str, Any]], ids: str) -> list[dict[str, Any]]:
+    """Chỉ lấy đúng các prompt_id được nêu, giữ thứ tự trong danh sách truyền vào.
+
+    Id lạ thì **NỔ**, không âm thầm bỏ qua: phép thử tiêm lỗi (D15) chọn item theo một
+    luật đã đăng ký trước, chạy thiếu item mà không báo gì là làm sai thiết kế đã khóa.
+    """
+    wanted = [i.strip() for i in ids.split(",") if i.strip()]
+    by_id = {p["id"]: p for p in prompts}
+    unknown = [i for i in wanted if i not in by_id]
+    if unknown:
+        raise SystemExit(f"--ids co id khong ton tai (hoac bi --sets loc mat): {unknown}")
+    print(f"--ids: chay dung {len(wanted)} item: {wanted}")
+    return [by_id[i] for i in wanted]
+
+
 def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str],
                    proxy: str | None = None,
                    quiet: bool = False) -> list[dict[str, Any]]:
@@ -410,6 +425,13 @@ def main() -> None:
                               "(không trả tiền hai lần khi đợt chạy bị dứt giữa chừng).")
     parser.add_argument("--per-set", type=int, default=0,
                          help="Lấy N item đầu của MỖI bộ (VD dry-run 1/bộ). 0 = lấy hết.")
+    parser.add_argument("--ids", default="",
+                         help="Chỉ chạy đúng các prompt_id này, cách nhau dấu phẩy "
+                              "(VD gsm8k_01,gsm8k_03). Id không tồn tại thì NỔ.")
+    parser.add_argument("--out-dir",
+                         help="Thư mục ghi file kết quả (mặc định experiments/results/). "
+                              "Dùng cho phép thử phụ (VD tiêm lỗi D15) để kết quả KHÔNG "
+                              "lẫn vào bộ dữ liệu chính.")
     parser.add_argument("--skip-ran", nargs="*", metavar="FILE", default=None,
                          help="Bỏ các item ĐÃ chạy trong các file kết quả này (dùng cho đợt "
                               "mở rộng cỡ mẫu D14: chỉ chạy item mới, không trả tiền lại "
@@ -418,14 +440,20 @@ def main() -> None:
     args = parser.parse_args()
 
     prompts = select_prompts(load_prompts(), args.sets, args.per_set)
+    if args.ids:
+        prompts = select_ids(prompts, args.ids)
     if args.skip_ran is not None:
         prompts = skip_ran_items(prompts, args.skip_ran, proxy=args.proxy_name)
     if args.limit:
         prompts = prompts[: args.limit]
     identity = ensure_experiment_identity()
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out_file = RESULTS_DIR / f"run_{args.proxy_name}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
+    # --out-dir: de ket qua phep thu phu (tiem loi D15) nam RIENG, khong lot vao glob cua
+    # bo du lieu chinh. Da dinh that mot lan lop loi nay: glob qua rong keo file vua ghi
+    # ra vao tap skip (xem skip_ran_items).
+    out_dir = Path(args.out_dir) if args.out_dir else RESULTS_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / f"run_{args.proxy_name}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
 
     # --resume: bo qua nhung (prompt_id, run_index) DA CO trong file ket qua truoc, de
     # khong tra tien hai lan cho cung mot luot khi dot chay bi dut giua chung (rui ro da
