@@ -31,11 +31,27 @@ N_HALF = N_TOTAL // 2
 class SkipRanItems(unittest.TestCase):
     """--skip-ran (D14): dot mo rong chi chay item MOI, khong tra tien lai cho item cu."""
 
-    def _file(self, tmp, ids):
-        f = Path(tmp) / "ran.json"
-        f.write_text(json.dumps([{"prompt_id": i, "run_index": 1} for i in ids]),
-                     encoding="utf-8")
+    def _file(self, tmp, ids, proxy="litellm", name="ran.json"):
+        f = Path(tmp) / name
+        f.write_text(json.dumps([{"prompt_id": i, "run_index": 1, "proxy_name": proxy}
+                                 for i in ids]), encoding="utf-8")
         return str(f)
+
+    def test_loc_theo_PROXY_item_khong_phai_item_suong(self):
+        """Lỗi gặp thật 20/10: dry_run.sh chạy 3 proxy lần lượt, mỗi proxy ghi 1 file mới.
+        Lọc theo item suông thì file litellm VỪA ghi ra bị glob của chính đợt đó khớp vào,
+        làm bifrost/portkey thấy "mọi item đã chạy" rồi bị bỏ qua (chạy 0 lượt)."""
+        ps = select_prompts(PROMPTS, "mmlu", 0)
+        ids = [p["id"] for p in ps]
+        with tempfile.TemporaryDirectory() as tmp:
+            f = self._file(tmp, ids, proxy="litellm")
+            # bifrost CHUA chay item nao -> phai giu lai het
+            kept = skip_ran_items(ps, [f], proxy="bifrost")
+            self.assertEqual([p["id"] for p in kept], ids,
+                             "item litellm đã chạy không được làm bifrost bỏ qua")
+            # litellm thi da chay het -> phai NO
+            with self.assertRaises(SystemExit):
+                skip_ran_items(ps, [f], proxy="litellm")
 
     def test_bo_dung_item_da_chay(self):
         ps = select_prompts(PROMPTS, "mmlu", 0)

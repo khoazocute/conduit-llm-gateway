@@ -54,12 +54,15 @@ PER_SET="${PER_SET:-0}"
 # De trong = chay het (hanh vi cu, khong doi).
 SKIP_RAN="${SKIP_RAN:-}"
 
-echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" ==="
+echo "=== Dry-run: PROMPT_LIMIT=$PROMPT_LIMIT SETS=\"$SETS\" PER_SET=$PER_SET RUNS=$RUNS PROXIES=\"$PROXIES\" SKIP_RAN=\"$SKIP_RAN\" ==="
+# Dem so item theo proxy DAU TIEN: --skip-ran loc theo (proxy, item) nen so item con lai
+# co the khac nhau giua cac proxy.
+FIRST_PROXY=$(echo $PROXIES | awk '{print $1}')
 N_PROMPTS=$(cd "$ROOT_DIR/experiments/scripts" && PYTHONIOENCODING=utf-8 python -c "
 import run_experiment as r
 ps=r.select_prompts(r.load_prompts(), '$SETS', $PER_SET)
 skip='$SKIP_RAN'
-if skip: ps=r.skip_ran_items(ps, skip.split(), quiet=True)
+if skip: ps=r.skip_ran_items(ps, skip.split(), proxy='$FIRST_PROXY', quiet=True)
 lim='$PROMPT_LIMIT'
 print(len(ps[:int(lim)] if lim else ps))")
 echo "Số item: $N_PROMPTS → tổng lượt gọi thật dự kiến (nếu cả $(echo $PROXIES | wc -w) proxy chạy được): $((N_PROMPTS * RUNS * $(echo $PROXIES | wc -w)))"

@@ -80,12 +80,24 @@ def select_prompts(prompts: list[dict[str, Any]], sets: str, per_set: int) -> li
 
 
 def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str],
+                   proxy: str | None = None,
                    quiet: bool = False) -> list[dict[str, Any]]:
-    """Bỏ item đã có trong các file kết quả cũ (đợt mở rộng cỡ mẫu — D14).
+    """Bỏ item đã chạy CHO ĐÚNG PROXY NÀY trong các file kết quả cũ (D14).
 
-    Lọc theo **item**, không theo lượt: item nào đã chạy (dù 1 lượt) thì bỏ hẳn, vì đợt
-    mở rộng chỉ cần chạy item MỚI. Lấy chính dữ liệu đã chạy làm nguồn đúng, an toàn hơn
-    lọc theo số thứ tự trong ID (ID chỉ là quy ước đặt tên, đổi quy ước là lọc sai).
+    Lọc theo **(proxy, item)**, đúng như cách dữ liệu được khóa — KHÔNG lọc theo item
+    suông. Bỏ `proxy` thì quay về lọc theo item bất kể proxy (chỉ dùng để đếm nhanh).
+
+    Vì sao phải có `proxy`: `dry_run.sh` chạy 3 proxy lần lượt trong CÙNG một đợt và mỗi
+    proxy ghi ra một file mới. Nếu lọc theo item suông thì file mà proxy chạy TRƯỚC vừa
+    ghi ra sẽ bị glob của chính đợt đó khớp vào, làm proxy chạy SAU thấy "mọi item đã
+    chạy" rồi dừng. Đã gặp thật 20/10: litellm chạy xong 20 item mới, bifrost và portkey
+    thấy 0 item còn lại và bị bỏ qua. Không mất tiền (cơ chế chặn từ chối thay vì chạy
+    lại) nhưng mất một đợt chạy.
+
+    Lọc theo item, không theo lượt: item nào đã chạy cho proxy này (dù 1 lượt) thì bỏ
+    hẳn, vì đợt mở rộng chỉ cần chạy item MỚI. Lấy chính dữ liệu đã chạy làm nguồn đúng,
+    an toàn hơn lọc theo số thứ tự trong ID (ID chỉ là quy ước đặt tên, đổi quy ước là
+    lọc sai).
 
     Không khớp file nào thì NỔ, không âm thầm chạy lại hết — gõ sai đường dẫn mà vẫn chạy
     thì trả tiền hai lần cho toàn bộ bộ đề.
@@ -110,14 +122,18 @@ def skip_ran_items(prompts: list[dict[str, Any]], patterns: list[str],
             if not path.exists():
                 continue
             for r in json.loads(path.read_text(encoding="utf-8")):
-                if r.get("prompt_id"):
-                    ran.add(r["prompt_id"])
+                if not r.get("prompt_id"):
+                    continue
+                if proxy is not None and r.get("proxy_name") != proxy:
+                    continue
+                ran.add(r["prompt_id"])
             n_files += 1
     if not n_files:
         raise SystemExit(f"--skip-ran: khong file nao khop {patterns} - kiem lai duong dan")
     kept = [p for p in prompts if p["id"] not in ran]
     if not quiet:
-        print(f"--skip-ran: {n_files} file, {len(ran)} item da chay "
+        scope = f"cho proxy {proxy}" if proxy else "(moi proxy)"
+        print(f"--skip-ran: {n_files} file, {len(ran)} item da chay {scope} "
               f"-> con {len(kept)}/{len(prompts)} item moi")
     if not kept:
         raise SystemExit("--skip-ran: khong con item nao de chay")
@@ -403,7 +419,7 @@ def main() -> None:
 
     prompts = select_prompts(load_prompts(), args.sets, args.per_set)
     if args.skip_ran is not None:
-        prompts = skip_ran_items(prompts, args.skip_ran)
+        prompts = skip_ran_items(prompts, args.skip_ran, proxy=args.proxy_name)
     if args.limit:
         prompts = prompts[: args.limit]
     identity = ensure_experiment_identity()
