@@ -225,6 +225,46 @@ tạm của hai máy. Phép chấm **tái lập được trên máy khác**.
 
 ---
 
+### 7.6. Kết luận phụ thuộc vào ngưỡng chất lượng, và vì sao điều đó không phải thiên vị
+
+**Câu hỏi dễ bị đặt ra:** "LiteLLM được chọn vì ngưỡng 80% đặt vừa đúng để nó qua?" Câu này đáng trả
+lời bằng số, không bằng lời đảm bảo. Tính lại luật 4 bước (kể cả luật dự phòng khi không proxy nào
+qua cổng) trên 720 lượt, với các mức ngưỡng khác nhau:
+
+| Ngưỡng chất lượng (loại nếu thấp hơn) | Proxy qua cổng | Proxy được chọn |
+|---|---|---|
+| ≤ 83,75% (gồm cả 80%) | cả ba | **`litellm`** |
+| trên 83,75% đến 87,5% | bifrost, portkey | `bifrost` |
+| trên 87,5% đến 92,1% | chỉ portkey | `portkey` |
+| trên 92,1% | không ai | `litellm` (luật dự phòng: rẻ nhất trên mỗi câu đúng) |
+
+Tức là **kết luận đổi theo ngưỡng**: đặt yêu cầu 85% thì chọn Bifrost, đặt 90% thì chọn Portkey. Đây
+là thuộc tính của luật đã khóa, không phải lỗi, nhưng phải nói rõ.
+
+**Ngưỡng không được chọn theo kết quả.** Có thể kiểm chứng bằng lịch sử git:
+
+- Luật 4 bước và ngưỡng 80% nằm trong **commit đầu tiên của repo, `9d6dfd7` (11/09/2026)**, ở cả
+  `CLAUDE.md` lẫn `experiments/analysis/decision_rule.py` (`0.80`).
+- Kết quả 720 lượt được commit ở `b55ed56` (20/10/2026), **hơn 5 tuần sau**. Ngưỡng ra đời trước cả
+  bộ đề hiện tại (chốt 14/10) và trước cả thiết kế thí nghiệm hiện tại.
+- Bộ chấm (`experiments/analysis/graders.py` và verifier IFEval vendored) **không đổi** từ commit
+  `871e756` đến khi chấm xong 720 lượt, nên toàn bộ 720 lượt được chấm bằng một phiên bản duy nhất.
+- Khi đứng trước khả năng ngưỡng 80% bất tiện, nhóm đã đăng ký trước luật dự phòng (D13) và ghi rõ
+  *"không hạ ngưỡng 80%"* trước khi chạy Phase 3.
+
+**Giới hạn của lập luận trên, nói thẳng:** ngưỡng 80% được đặt cho thiết kế cũ (bộ 30 prompt tự soạn)
+rồi giữ nguyên khi chuyển sang 4 bộ benchmark chuẩn. Giữ nguyên là có chủ đích (đổi sau khi thấy số
+mới là mất khách quan), nhưng **chưa có ai kiểm chứng rằng 80% là mức yêu cầu đúng cho người dùng của
+Conduit**. Đó là câu hỏi về yêu cầu sản phẩm, không phải câu hỏi mà thí nghiệm này trả lời được.
+
+**Cách diễn giải đúng của kết quả:** *"Với yêu cầu chất lượng 80%, mô hình rẻ nhất trong pool đã đủ
+đạt, nên trả thêm tiền cho định tuyến thông minh là không đáng."* Muốn chất lượng cao hơn 83,75% thì
+phải chấp nhận một proxy đắt hơn, và bảng trên cho biết đổi lấy proxy nào ở mỗi mức.
+
+Một dữ kiện hỗ trợ cách diễn giải này, đo trên cùng 720 lượt (**lưu ý: không so sánh công bằng được**
+giữa các model, vì mỗi proxy gửi những câu khác nhau cho từng model): `gpt-4o-mini` đạt 85,2%
+(385/452 lượt), `claude-haiku` 91,8% (134/146), `gpt-4o` 94,2% (113/120).
+
 ## 8. Đối chiếu 3 giả thuyết đã đăng ký trước
 
 Viết **trước khi** chạy (`docs/experiment-design.md` mục 7), giữ nguyên văn để báo cáo không bị nghi
@@ -441,3 +481,36 @@ PYTHONIOENCODING=utf-8 python experiments/analysis/decision_rule.py experiments/
 Tham số cố định cả 3 proxy: `max_tokens=1024` · `temperature=0` · `num_retries=2` · `timeout=45s` ·
 0-shot · pool 3 model thực dùng (`gpt-4o-mini` / `claude-haiku` / `gpt-4o`; `claude-sonnet` bị loại
 theo D12, `gemini-flash` không nằm trong nhánh nào) · seed lấy mẫu `20261014` · 20 item/bộ (D14).
+
+---
+
+## 13. Danh sách kiểm cuối phần đánh giá (22/10/2026)
+
+Mục này để phiên làm việc sau không phải suy luận lại phần nào đã xong.
+
+**Đã kiểm, đạt:**
+
+| Mục | Kết quả |
+|---|---|
+| Luật quyết định và ngưỡng 80% khóa trước kết quả | Có từ commit `9d6dfd7` (11/09), kết quả ở `b55ed56` (20/10) |
+| Bộ chấm không đổi trong lúc chấm | 0 commit chạm `graders.py` / `vendor/` từ `871e756` đến nay |
+| Dữ liệu 720 lượt toàn vẹn | `verify_results.py`: sạch; 240 lượt mỗi proxy; 0 lượt chưa chấm |
+| Thứ tự và proxy được chọn ổn định | Không đổi qua 360 / 540 / 720 lượt; 4/4 leave-one-out |
+| Hai công cụ phân tích khớp nhau | `decision_rule.py` và `export_tables.py` cùng p95 trên cả 3 proxy |
+| Test tự động của phần thí nghiệm | 68/68 pass |
+
+**Chưa kiểm, cần làm (không chặn kết luận):**
+
+| Mục | Vì sao còn mở | Ai |
+|---|---|---|
+| Đếm dòng `routing_decisions` theo `proxy_name` cho 19–20/10, so với 720 + 45 | Cần bật Docker/Postgres; `CLAUDE.md` mục 2 yêu cầu mọi lượt phải được ghi vào bảng này | Hùng |
+| Đối chiếu tổng chi phí (~$0,36) với dashboard OpenAI và Anthropic | Chỉ đọc được từ console của nhà cung cấp, không đọc được từ máy | Hùng |
+| Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | Chưa bật; đây là phép kiểm hồi quy đã đăng ký | Hùng |
+| Khoảng trống ghi log lỗi (mục 9): trường `error` rỗng ở 0/32 lượt lỗi | Chưa truy nguyên nhân | Khoa |
+
+Nếu đối chiếu chi phí với dashboard cho thấy chênh lệch, cách xử lý là **tính lại chi phí offline từ
+`model_pricing`**, không chạy lại thí nghiệm. Kết luận chỉ đổi nếu giá sai lệch hơn khoảng 4,5 lần
+(tỷ lệ giữa chi phí của LiteLLM và Bifrost), điều khó xảy ra với bảng giá lấy từ trang giá chính thức.
+
+**Dữ liệu và công cụ của phần đánh giá được coi là đóng.** Thay đổi sau thời điểm này chỉ nên là
+bổ sung (ví dụ kết quả phép thử hồi quy D15), không sửa số liệu hay luật đã áp.
