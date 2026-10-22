@@ -1,0 +1,284 @@
+[
+  {
+    "message_id": "9c033920-ed8d-40db-909b-8a502bf69ff3",
+    "timestamp": "2026-10-16T16:57:23.939304+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 2.94e-05,
+    "credit_charged": 290,
+    "latency_ms": 3343,
+    "latency_ms_runner": 3692.9872000000614,
+    "response": "C",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "51c6aea7-6908-4a15-b4b6-3bbded2617cd",
+    "timestamp": "2026-10-16T16:57:34.040810+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 2,
+    "model_selected": "claude-haiku",
+    "cost": 0.004483,
+    "credit_charged": 1595,
+    "latency_ms": 9728,
+    "latency_ms_runner": 9982.163499998933,
+    "response": "I need to analyze the cache behavior for this loop with a write-back policy.\n\n**Cache Parameters:**\n- Size: 2K bytes = 2048 bytes\n- Block size: 8 bytes\n- Direct-mapped\n- Number of sets: 2048/8 = 256 sets\n- Address bits for offset: 3 bits (8 bytes)\n- Address bits for set index: 8 bits (256 sets)\n\n**Array A:**\n- 256 elements × 4 bytes = 1024 bytes\n- Starts at address 4096\n- Ends at address 5119\n\n**Array B:**\n- 512 elements × 4 bytes = 2048 bytes\n- Starts at address 8192\n- Ends at address 10239\n\n**Loop Analysis:**\nThe loop accesses:\n- A[i] for i = 0 to 255 (read and write)\n- B[2*i] for i = 0 to 255 (read only, so B[0], B[2], B[4], ..., B[510])\n\n**Cache Mapping:**\nFor direct-mapped cache, the set index is bits [10:3] of the physical address.\n\nArray A addresses: 4096-5119\n- Set indices: (4096 >> 3) to (5119 >> 3) = 512 to 639 (mod 256) = 0 to 127\n\nArray B addresses: 8192-10239\n- Set indices: (8192 >> 3) to (10239 >> 3) = 1024 to 1279 (mod 256) = 0 to 127\n\nBoth arrays map to the same cache sets (0-127), so they will conflict.\n\n**Execution Pattern:**\n- Each iteration reads A[i] and B[2*i], then writes A[i]\n- A[i] and B[2*i] map to different addresses but may conflict in the cache\n- With write-back policy, writes go to cache, not memory (unless evicted)\n\n**Cache Behavior:**\nSince both arrays compete for the same 128 sets and the cache can only hold one block per set:\n- When A[i] is accessed, it's loaded into cache\n- When B[2*i] is accessed, it evicts A[i] from cache (write-back: A[i] is written to memory)\n- When A[i+1] is accessed, it evicts B[2*i] from cache\n\nEach iteration causes:\n- A[i] to be evicted (1 write to memory per iteration when B[2*i] is accessed)\n- B[2*i] to be evicted (1 write to memory per iteration when A[i+1] is accessed)\n\nActually, let me reconsider: A[i] is written to in the loop. With write-back, it stays in cache until evicted. When B[2*i] is loaded, A[i] is evicted and written back.\n\nFor 256 iterations:\n- Each A[i] write is cached\n- When B[2*i] loads, A[i] is evicted → 256 bytes written\n- When A[i+1] loads, B[2*i] is evicted → 256 bytes written (but B is read-only, so dirty bit may not be set)\n\nWait - B is only read, so B blocks won't be dirty. Only A blocks will be written back.\n\nEach of 256 A elements gets written once in the loop. When evicted from cache, they're written to memory: 256 × 4 = 1024 bytes.\n\n**Answer: C**",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "ebae37e8-3259-4158-9a8c-221149a0fd79",
+    "timestamp": "2026-10-16T16:57:44.823711+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "mmlu_01",
+    "category": "mmlu",
+    "run_index": 3,
+    "model_selected": "claude-haiku",
+    "cost": 0.004483,
+    "credit_charged": 1595,
+    "latency_ms": 10389,
+    "latency_ms_runner": 10682.556100000511,
+    "response": "I need to analyze the cache behavior for this loop with a write-back policy.\n\n**Cache Parameters:**\n- Size: 2K bytes = 2048 bytes\n- Block size: 8 bytes\n- Direct-mapped\n- Number of sets: 2048/8 = 256 sets\n- Address bits for offset: 3 bits (8 bytes)\n- Address bits for set index: 8 bits (256 sets)\n\n**Array A:**\n- 256 elements × 4 bytes = 1024 bytes\n- Starts at address 4096\n- Ends at address 5119\n\n**Array B:**\n- 512 elements × 4 bytes = 2048 bytes\n- Starts at address 8192\n- Ends at address 10239\n\n**Loop Analysis:**\nThe loop accesses:\n- A[i] for i = 0 to 255 (read and write)\n- B[2*i] for i = 0 to 255 (read only, so B[0], B[2], B[4], ..., B[510])\n\n**Cache Mapping:**\nFor direct-mapped cache, the set index is bits [10:3] of the physical address.\n\nArray A addresses: 4096-5119\n- Set indices: (4096 >> 3) to (5119 >> 3) = 512 to 639 (mod 256) = 0 to 127\n\nArray B addresses: 8192-10239\n- Set indices: (8192 >> 3) to (10239 >> 3) = 1024 to 1279 (mod 256) = 0 to 127\n\nBoth arrays map to the same cache sets (0-127), so they will conflict.\n\n**Execution Pattern:**\n- Each iteration reads A[i] and B[2*i], then writes A[i]\n- A[i] and B[2*i] map to different addresses but may conflict in the cache\n- With write-back policy, writes go to cache, not memory (unless evicted)\n\n**Cache Behavior:**\nSince both arrays compete for the same 128 sets and the cache can only hold one block per set:\n- When A[i] is accessed, it's loaded into cache\n- When B[2*i] is accessed, it evicts A[i] from cache (write-back: A[i] is written to memory)\n- When A[i+1] is accessed, it evicts B[2*i] from cache\n\nEach iteration causes:\n- A[i] to be evicted (1 write to memory per iteration when B[2*i] is accessed)\n- B[2*i] to be evicted (1 write to memory per iteration when A[i+1] is accessed)\n\nActually, let me reconsider: A[i] is written to in the loop. With write-back, it stays in cache until evicted. When B[2*i] is loaded, A[i] is evicted and written back.\n\nFor 256 iterations:\n- Each A[i] write is cached\n- When B[2*i] loads, A[i] is evicted → 256 bytes written\n- When A[i+1] loads, B[2*i] is evicted → 256 bytes written (but B is read-only, so dirty bit may not be set)\n\nWait - B is only read, so B blocks won't be dirty. Only A blocks will be written back.\n\nEach of 256 A elements gets written once in the loop. When evicted from cache, they're written to memory: 256 × 4 = 1024 bytes.\n\n**Answer: C**",
+    "passed": false,
+    "metric": "accuracy_letter",
+    "status": "success",
+    "score": 0.0,
+    "grade_detail": {
+      "extracted": "C",
+      "expected": "A"
+    }
+  },
+  {
+    "message_id": "e374e5c7-15f5-435b-9fe3-377e62737527",
+    "timestamp": "2026-10-16T16:57:48.273714+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 0.00012765,
+    "credit_charged": 377,
+    "latency_ms": 3088,
+    "latency_ms_runner": 3351.731700000528,
+    "response": "To find out how many years ago Raymond's son was born, we first need to determine Raymond's current age.\n\nSince Samantha is currently 31 years old and Raymond was born 6 years before her, we can calculate Raymond's age as follows:\n\n\\[\n\\text{Raymond's age} = \\text{Samantha's age} + 6 = 31 + 6 = 37\n\\]\n\nNext, we know that Raymond had a son when he was 23 years old. To find out how many years ago that was, we subtract Raymond's age at the time of his son's birth from his current age:\n\n\\[\n\\text{Years since son's birth} = \\text{Raymond's current age} - \\text{Raymond's age at son's birth} = 37 - 23 = 14\n\\]\n\nThus, Raymond's son was born 14 years ago. \n\nTherefore, the answer is:\n\n\\[\n\\boxed{14}\n\\]",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "f30591d8-a7fa-43b1-88e0-2d561f272d24",
+    "timestamp": "2026-10-16T16:57:50.931761+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.685e-05,
+    "credit_charged": 275,
+    "latency_ms": 2315,
+    "latency_ms_runner": 2554.3569999990723,
+    "response": "Let's break down the information given:\n\n1. Samantha is currently 31 years old.\n2. Raymond was born 6 years before Samantha, so Raymond's age is:\n   \\[\n   31 + 6 = 37 \\text{ years old}\n   \\]\n3. Raymond had a son when he was 23 years old. To find out how many years ago Raymond's son was born, we need to determine how old Raymond is now compared to when he had his son:\n   \\[\n   37 - 23 = 14 \\text{ years ago}\n   \\]\n\nThus, Raymond's son was born 14 years ago.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "cd0d2500-42a6-464c-9551-dcc10cb7bd03",
+    "timestamp": "2026-10-16T16:57:53.860911+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "gsm8k_01",
+    "category": "gsm8k",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 8.685e-05,
+    "credit_charged": 275,
+    "latency_ms": 2495,
+    "latency_ms_runner": 2812.9829999998037,
+    "response": "Let's break down the information given:\n\n1. Samantha is currently 31 years old.\n2. Raymond was born 6 years before Samantha, so Raymond's age is:\n   \\[\n   31 + 6 = 37 \\text{ years old}\n   \\]\n3. Raymond had a son when he was 23 years old. To find out how many years ago Raymond's son was born, we need to determine how old Raymond is now compared to when he had his son:\n   \\[\n   37 - 23 = 14 \\text{ years ago}\n   \\]\n\nThus, Raymond's son was born 14 years ago.",
+    "passed": true,
+    "metric": "exact_match_number",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "extracted": "14",
+      "expected": "14"
+    }
+  },
+  {
+    "message_id": "49497d7c-0fe9-4192-ad9d-b1d1c84cf837",
+    "timestamp": "2026-10-16T16:57:55.862173+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 1,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1611,
+    "latency_ms_runner": 1889.091400000325,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "41eefb49-504c-49f3-8fbb-41507c34b18f",
+    "timestamp": "2026-10-16T16:57:57.999904+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 2,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1786,
+    "latency_ms_runner": 2034.1504999996687,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "e6426a77-85e4-49bf-b485-054bc5325084",
+    "timestamp": "2026-10-16T16:58:00.289323+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "humaneval_01",
+    "category": "humaneval",
+    "run_index": 3,
+    "model_selected": "gpt-4o-mini",
+    "cost": 5.895e-05,
+    "credit_charged": 307,
+    "latency_ms": 1909,
+    "latency_ms_runner": 2176.0071000007883,
+    "response": "```python\ndef factorize(n: int) -> List[int]:\n    factors = []\n    divisor = 2\n    while n > 1:\n        while n % divisor == 0:\n            factors.append(divisor)\n            n //= divisor\n        divisor += 1\n    return factors\n```",
+    "passed": true,
+    "metric": "pass_at_1",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "returncode": 0
+    }
+  },
+  {
+    "message_id": "f4e7bdde-2aa9-4085-a21e-bc708dbe0681",
+    "timestamp": "2026-10-16T16:58:07.325331+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 1,
+    "model_selected": "gpt-4o",
+    "cost": 0.0102625,
+    "credit_charged": 1577,
+    "latency_ms": 6688,
+    "latency_ms_runner": 6935.649500001091,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਤਾ ਦਾ ਮੁਲਾਂਕਨ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n#### 1. ਕੋਡਿੰਗ ਦੱਖਲਤਾ (ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਕੋਡ ਸਾਫ਼, ਸੁਧਾਰਿਆ ਹੋਇਆ ਅਤੇ ਦਸਤਾਵੇਜ਼ੀਕ੍ਰਿਤ ਹੈ। ਬਿਨਾ ਕਿਸੇ ਗਲਤੀ ਦੇ ਕੰਪਾਇਲ ਹੁੰਦਾ ਹੈ।\n- **4 - ਚੰਗਾ**: ਕੋਡ ਵਧੀਆ ਹੈ ਪਰ ਕੁਝ ਛੋਟੀਆਂ ਗਲਤੀਆਂ ਹਨ। ਵਧੀਆ ਦਸਤਾਵੇਜ਼ੀਕਰਨ।\n- **3 - ਠੀਕ**: ਕੋਡ ਪੜ੍ਹਨਯੋਗ ਹੈ ਪਰ ਕੁਝ ਗਲਤੀਆਂ ਹਨ। ਦਸਤਾਵੇਜ਼ੀਕਰਨ ਦੀ ਘਾਟ।\n- **2 - ਔਸਤ**: ਕੋਡ ਵਿੱਚ ਕਈ ਗਲਤੀਆਂ ਹਨ। ਦਸਤਾਵੇਜ਼ੀਕਰਨ ਦੀ ਕਮੀ।\n- **1 - ਕਮਜ਼ੋਰ**: ਕੋਡ ਪੜ੍ਹਨਯੋਗ ਨਹੀਂ ਹੈ ਅਤੇ ਬਹੁਤ ਸਾਰੀਆਂ ਗਲਤੀਆਂ ਹਨ।\n\n#### 2. ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਢੰਗ ਨਾਲ ਹੱਲ ਕਰਦਾ ਹੈ।\n- **4 - ਚੰਗਾ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਕੁਝ ਸਮਾਂ ਲਗਦਾ ਹੈ ਪਰ ਹੱਲ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਹੁੰਦੇ ਹਨ।\n- **3 - ਠੀਕ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਵਧੇਰੇ ਸਮਾਂ ਲਗਦਾ ਹੈ ਅਤੇ ਹੱਲ ਸਧਾਰਨ ਹੁੰਦੇ ਹਨ।\n- **2 - ਔਸਤ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਬਹੁਤ ਜ਼ਿਆਦਾ ਸਮਾਂ ਲਗਦਾ ਹੈ ਅਤੇ ਹੱਲ ਅਸਪਸ਼ਟ ਹੁੰਦੇ ਹਨ।\n- **1 - ਕਮਜ਼ੋਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।\n\n#### 3. ਤਕਨੀਕੀ ਗਿਆਨ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਤਕਨੀਕੀ ਮੂਲ ਭੂਤਾਂ ਅਤੇ ਅਗਲੇ ਪੱਧਰ ਦੇ ਵਿਸ਼ਿਆਂ ਵਿੱਚ ਡੂੰਘੀ ਸਮਝ।\n- **4 - ਚੰਗਾ**: ਤਕਨੀਕੀ ਮੂਲ ਭੂਤਾਂ ਦੀ ਵਧੀਆ ਸਮਝ ਅਤੇ ਕੁਝ ਅਗਲੇ ਪੱਧਰ ਦੇ ਵਿਸ਼ਿਆਂ ਦੀ ਜਾਣਕਾਰੀ।\n- **3 - ਠੀਕ**: ਤਕਨੀਕੀ ਮੂਲ ਭੂਤਾਂ ਦੀ ਠੀਕ ਸਮਝ।\n- **2 - ਔਸਤ**: ਤਕਨੀਕੀ ਮੂਲ ਭੂਤਾਂ ਦੀ ਘੱਟ ਸਮਝ।\n- **1 - ਕਮਜ਼ੋਰ**: ਤਕਨੀਕੀ ਮੂਲ ਭੂਤਾਂ ਦੀ ਬਹੁਤ ਘੱਟ ਸਮਝ।\n\n#### 4. ਟੀਮ ਵਰਕ ਅਤੇ ਸਹਿਯੋਗ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਟੀਮ ਨਾਲ ਬਹੁਤ ਵਧੀਆ ਸਹਿਯੋਗ ਅਤੇ ਸੰਚਾਰ।\n- **4 - ਚੰਗਾ**: ਟੀਮ ਨਾਲ ਚੰਗਾ ਸਹਿਯੋਗ ਅਤੇ ਸੰਚਾਰ।\n- **3 - ਠੀਕ**: ਟੀਮ ਨਾਲ ਠੀਕ ਸਹਿਯੋਗ।\n- **2 - ਔਸਤ**: ਟੀਮ ਨਾਲ ਘੱਟ ਸਹਿਯੋਗ।\n- **1 - ਕਮਜ਼ੋਰ**: ਟੀਮ ਨਾਲ ਬਹੁਤ ਘੱਟ ਜਾਂ ਕੋਈ ਸਹਿਯੋਗ ਨਹੀਂ।\n\n#### 5. ਨਵੀਨਤਾ ਅਤੇ ਸਿੱਖਣ ਦੀ ਯੋਗਤਾ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਨਵੇਂ ਤਕਨੀਕੀ ਟੂਲ ਅਤੇ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਸਿੱਖਣ ਦੀ ਸਮਰੱਥਾ।\n- **4 - ਚੰਗਾ**: ਨਵੇਂ ਤਕਨੀਕੀ ਟੂਲ ਅਤੇ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਚੰਗੀ ਸਮਰੱਥਾ।\n- **3 - ਠੀਕ**: ਨਵੇਂ ਤਕਨੀਕੀ ਟੂਲ ਅਤੇ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਠੀਕ ਸਮਰੱਥਾ।\n- **2 - ਔਸਤ**: ਨਵੇਂ ਤਕਨੀਕੀ ਟੂਲ ਅਤੇ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਘੱਟ ਸਮਰੱਥਾ।\n- **1 - ਕਮਜ਼ੋਰ**: ਨਵੇਂ ਤਕਨੀਕੀ ਟੂਲ ਅਤੇ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਬਹੁਤ ਘੱਟ ਸਮਰੱਥਾ।",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "8d785552-b707-4675-9881-98adcc491a8f",
+    "timestamp": "2026-10-16T16:58:17.306802+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 2,
+    "model_selected": "gpt-4o",
+    "cost": 0.0103225,
+    "credit_charged": 1586,
+    "latency_ms": 9637,
+    "latency_ms_runner": 9860.17289999836,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਤਾ ਦਾ ਮੁਲਾਂਕਨ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n#### 1. ਕੋਡਿੰਗ ਦੱਖਲਤਾ (ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਕੋਡ ਸਾਫ਼, ਸੁਧਾਰਯੋਗ ਅਤੇ ਵਧੀਆ ਦਸਤਾਵੇਜ਼ੀਕਰਨ ਨਾਲ ਭਰਪੂਰ ਹੈ। ਹਰ ਸਮੱਸਿਆ ਦਾ ਹੱਲ ਸੁਚੱਜੇ ਤਰੀਕੇ ਨਾਲ ਕੀਤਾ ਗਿਆ ਹੈ।\n- **4 - ਬਹੁਤ ਵਧੀਆ**: ਕੋਡ ਸਾਫ਼ ਅਤੇ ਸੁਧਾਰਯੋਗ ਹੈ। ਕੁਝ ਛੋਟੇ ਮੁੱਦੇ ਹੋ ਸਕਦੇ ਹਨ ਪਰ ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਵਧੀਆ ਹੈ।\n- **3 - ਠੀਕ**: ਕੋਡ ਪੜ੍ਹਨਯੋਗ ਹੈ ਪਰ ਕੁਝ ਹਿੱਸੇ ਗੁੰਝਲਦਾਰ ਹਨ। ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਮੂਲ ਤੌਰ 'ਤੇ ਠੀਕ ਹੈ।\n- **2 - ਸੰਤੋਸ਼ਜਨਕ**: ਕੋਡ ਵਿੱਚ ਕਈ ਗਲਤੀਆਂ ਹਨ ਅਤੇ ਪੜ੍ਹਨ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੈ। ਹੱਲ ਅਧੂਰਾ ਜਾਂ ਗਲਤ ਹੈ।\n- **1 - ਕਮਜ਼ੋਰ**: ਕੋਡ ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਸਪਸ਼ਟ ਹੈ ਅਤੇ ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।\n\n#### 2. ਡਿਜ਼ਾਈਨ ਅਤੇ ਆਰਕੀਟੈਕਚਰ (ਸਾਫਟਵੇਅਰ ਡਿਜ਼ਾਈਨ ਦੀ ਸਮਝ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਡਿਜ਼ਾਈਨ ਬਹੁਤ ਹੀ ਮਜ਼ਬੂਤ ਅਤੇ ਸਕੇਲਬਲ ਹੈ। ਸਭ ਤੋਂ ਵਧੀਆ ਅਭਿਆਸਾਂ ਦੀ ਪਾਲਣਾ ਕੀਤੀ ਗਈ ਹੈ।\n- **4 - ਬਹੁਤ ਵਧੀਆ**: ਡਿਜ਼ਾਈਨ ਮਜ਼ਬੂਤ ਹੈ ਪਰ ਕੁਝ ਸੁਧਾਰਾਂ ਦੀ ਸੰਭਾਵਨਾ ਹੈ।\n- **3 - ਠੀਕ**: ਡਿਜ਼ਾਈਨ ਕਾਰਗਰ ਹੈ ਪਰ ਕੁਝ ਹਿੱਸੇ ਅਸਪਸ਼ਟ ਹਨ।\n- **2 - ਸੰਤੋਸ਼ਜਨਕ**: ਡਿਜ਼ਾਈਨ ਵਿੱਚ ਕਈ ਕਮਜ਼ੋਰੀਆਂ ਹਨ ਜੋ ਭਵਿੱਖ ਵਿੱਚ ਸਮੱਸਿਆਵਾਂ ਪੈਦਾ ਕਰ ਸਕਦੀਆਂ ਹਨ।\n- **1 - ਕਮਜ਼ੋਰ**: ਡਿਜ਼ਾਈਨ ਬਿਲਕੁਲ ਵੀ ਮਜ਼ਬੂਤ ਨਹੀਂ ਹੈ ਅਤੇ ਸਮੱਸਿਆਵਾਂ ਦਾ ਹੱਲ ਨਹੀਂ ਦਿੰਦਾ।\n\n#### 3. ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ (ਪ੍ਰੋਬਲਮ ਸੋਲਵਿੰਗ ਸਕਿਲਜ਼)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਨਵੀਂ ਸੋਚ ਅਤੇ ਰਚਨਾਤਮਕ ਤਰੀਕਿਆਂ ਨਾਲ ਹੱਲ ਕਰਦਾ ਹੈ।\n- **4 - ਬਹੁਤ ਵਧੀਆ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਤਰੀਕੇ ਨਾਲ ਹੱਲ ਕਰਦਾ ਹੈ।\n- **3 - ਠੀਕ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਲਈ ਮੂਲ ਤੌਰ 'ਤੇ ਠੀਕ ਤਰੀਕੇ ਵਰਤਦਾ ਹੈ।\n- **2 - ਸੰਤੋਸ਼ਜਨਕ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਮੁਸ਼ਕਲਾਂ ਦਾ ਸਾਹਮਣਾ ਕਰਦਾ ਹੈ।\n- **1 - ਕਮਜ਼ੋਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ ਰਹਿੰਦਾ ਹੈ।\n\n#### 4. ਟੀਮ ਵਰਕ ਅਤੇ ਸਹਿਯੋਗ (ਟੀਮ ਦੇ ਨਾਲ ਕੰਮ ਕਰਨ ਦੀ ਸਮਰੱਥਾ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਟੀਮ ਦੇ ਨਾਲ ਬਹੁਤ ਹੀ ਵਧੀਆ ਤਰੀਕੇ ਨਾਲ ਕੰਮ ਕਰਦਾ ਹੈ ਅਤੇ ਸਹਿਯੋਗੀ ਹੈ।\n- **4 - ਬਹੁਤ ਵਧੀਆ**: ਟੀਮ ਦੇ ਨਾਲ ਚੰਗਾ ਕੰਮ ਕਰਦਾ ਹੈ ਅਤੇ ਸਹਿਯੋਗੀ ਹੈ।\n- **3 - ਠੀਕ**: ਟੀਮ ਦੇ ਨਾਲ ਠੀਕ ਤਰੀਕੇ ਨਾਲ ਕੰਮ ਕਰਦਾ ਹੈ।\n- **2 - ਸੰਤੋਸ਼ਜਨਕ**: ਟੀਮ ਦੇ ਨਾਲ ਕੰਮ ਕਰਨ ਵਿੱਚ ਕੁਝ ਮੁਸ਼ਕਲਾਂ ਦਾ ਸਾਹਮਣਾ ਕਰਦਾ ਹੈ।\n- **1 - ਕਮਜ਼ੋਰ**: ਟੀਮ ਦੇ ਨਾਲ ਕੰਮ ਕਰਨ ਵਿੱਚ ਅਸਫਲ ਰਹਿੰਦਾ ਹੈ।\n\n#### 5. ਸਿਖਣ ਦੀ ਯੋਗਤਾ (ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਸਿੱਖਣ ਦੀ ਸਮਰੱਥਾ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਨਵੀਆਂ ਤਕਨੀਕਾਂ ਨੂੰ ਤੇ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  },
+  {
+    "message_id": "70c8a300-e211-4c9d-84f5-658877679fe5",
+    "timestamp": "2026-10-16T16:58:26.437985+00:00",
+    "proxy_name": "bifrost",
+    "prompt_id": "ifeval_01",
+    "category": "ifeval",
+    "run_index": 3,
+    "model_selected": "gpt-4o",
+    "cost": 0.0103225,
+    "credit_charged": 1586,
+    "latency_ms": 8755,
+    "latency_ms_runner": 9008.441199999652,
+    "response": "### ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ ਦੀ ਤਕਨੀਕੀ ਕੌਸ਼ਲਤਾ ਦਾ ਮੁਲਾਂਕਨ ਕਰਨ ਲਈ ਰੂਬ੍ਰਿਕ\n\n#### 1. ਕੋਡਿੰਗ ਦੱਖਲਤਾ (ਕੋਡ ਲਿਖਣ ਦੀ ਸਮਰੱਥਾ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਕੋਡ ਸਾਫ਼, ਸੁਧਾਰਯੋਗ ਅਤੇ ਦਸਤਾਵੇਜ਼ੀਕ੍ਰਿਤ ਹੈ। ਸਾਰੇ ਯੂਨਿਟ ਟੈਸਟ ਪਾਸ ਹਨ।\n- **4 - ਚੰਗਾ**: ਕੋਡ ਵਧੀਆ ਹੈ ਪਰ ਕੁਝ ਸੁਧਾਰ ਦੀ ਗੁੰਜਾਇਸ਼ ਹੈ। ਜ਼ਿਆਦਾਤਰ ਯੂਨਿਟ ਟੈਸਟ ਪਾਸ ਹਨ।\n- **3 - ਠੀਕ**: ਕੋਡ ਪੜ੍ਹਨਯੋਗ ਹੈ ਪਰ ਕਈ ਗਲਤੀਆਂ ਹਨ। ਕੁਝ ਯੂਨਿਟ ਟੈਸਟ ਪਾਸ ਹਨ।\n- **2 - ਕਮਜ਼ੋਰ**: ਕੋਡ ਪੜ੍ਹਨ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੈ ਅਤੇ ਬਹੁਤ ਸਾਰੀਆਂ ਗਲਤੀਆਂ ਹਨ। ਬਹੁਤ ਘੱਟ ਯੂਨਿਟ ਟੈਸਟ ਪਾਸ ਹਨ।\n- **1 - ਬਹੁਤ ਕਮਜ਼ੋਰ**: ਕੋਡ ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਸਫਲ ਹੈ। ਕੋਈ ਵੀ ਯੂਨਿਟ ਟੈਸਟ ਪਾਸ ਨਹੀਂ ਹੈ।\n\n#### 2. ਡਿਜ਼ਾਈਨ ਸਮਰੱਥਾ (ਸਾਫਟਵੇਅਰ ਆਰਕੀਟੈਕਚਰ)\n- **5 - ਸ਼ਾਨਦਾਰ**: ਡਿਜ਼ਾਈਨ ਬਹੁਤ ਹੀ ਮਜ਼ਬੂਤ ਅਤੇ ਸਕੇਲਬਲ ਹੈ। ਸਾਰੇ ਮੋਡੀਊਲ ਵਧੀਆ ਤਰੀਕੇ ਨਾਲ ਇੰਟੇਗ੍ਰੇਟ ਕੀਤੇ ਗਏ ਹਨ।\n- **4 - ਚੰਗਾ**: ਡਿਜ਼ਾਈਨ ਵਧੀਆ ਹੈ ਪਰ ਕੁਝ ਸੁਧਾਰ ਦੀ ਲੋੜ ਹੈ। ਮੋਡੀਊਲ ਵਧੀਆ ਤਰੀਕੇ ਨਾਲ ਕੰਮ ਕਰਦੇ ਹਨ।\n- **3 - ਠੀਕ**: ਡਿਜ਼ਾਈਨ ਠੀਕ ਹੈ ਪਰ ਕਈ ਕਮਜ਼ੋਰੀਆਂ ਹਨ। ਕੁਝ ਮੋਡੀਊਲ ਠੀਕ ਤਰੀਕੇ ਨਾਲ ਕੰਮ ਨਹੀਂ ਕਰਦੇ।\n- **2 - ਕਮਜ਼ੋਰ**: ਡਿਜ਼ਾਈਨ ਵਿੱਚ ਬਹੁਤ ਸਾਰੀਆਂ ਕਮਜ਼ੋਰੀਆਂ ਹਨ। ਮੋਡੀਊਲ ਅਕਸਰ ਫੇਲ ਹੁੰਦੇ ਹਨ।\n- **1 - ਬਹੁਤ ਕਮਜ਼ੋਰ**: ਡਿਜ਼ਾਈਨ ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਸਫਲ ਹੈ। ਕੋਈ ਵੀ ਮੋਡੀਊਲ ਠੀਕ ਤਰੀਕੇ ਨਾਲ ਕੰਮ ਨਹੀਂ ਕਰਦਾ।\n\n#### 3. ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਯੋਗਤਾ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਤਰੀਕੇ ਨਾਲ ਹੱਲ ਕਰਦਾ ਹੈ।\n- **4 - ਚੰਗਾ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਵਧੀਆ ਤਰੀਕੇ ਨਾਲ ਹੱਲ ਕਰਦਾ ਹੈ ਪਰ ਕੁਝ ਸਮੇਂ ਲਗਦਾ ਹੈ।\n- **3 - ਠੀਕ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਸਮਾਂ ਲਗਦਾ ਹੈ ਅਤੇ ਕੁਝ ਗਲਤੀਆਂ ਹੁੰਦੀਆਂ ਹਨ।\n- **2 - ਕਮਜ਼ੋਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਬਹੁਤ ਜ਼ਿਆਦਾ ਸਮਾਂ ਲਗਦਾ ਹੈ ਅਤੇ ਅਕਸਰ ਗਲਤੀਆਂ ਹੁੰਦੀਆਂ ਹਨ।\n- **1 - ਬਹੁਤ ਕਮਜ਼ੋਰ**: ਸਮੱਸਿਆਵਾਂ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ ਹੈ।\n\n#### 4. ਤਕਨੀਕੀ ਸਾਧਨਾਂ ਦੀ ਜਾਣਕਾਰੀ\n- **5 - ਸ਼ਾਨਦਾਰ**: ਤਕਨੀਕੀ ਸਾਧਿਆਂ ਦੀ ਗਹਿਰਾਈ ਨਾਲ ਜਾਣਕਾਰੀ ਹੈ ਅਤੇ ਨਵੇਂ ਸਾਧਿਆਂ ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਸਿੱਖਦਾ ਹੈ।\n- **4 - ਚੰਗਾ**: ਵਧੀਆ ਜਾਣਕਾਰੀ ਹੈ ਅਤੇ ਨਵੇਂ ਸਾਧਿਆਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਕੁਝ ਸਮਾਂ ਲਗਦਾ ਹੈ।\n- **3 - ਠੀਕ**: ਬੁਨਿਆਦੀ ਜਾਣਕਾਰੀ ਹੈ ਪਰ ਨਵੇਂ ਸਾਧਿਆਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਕਾਫ਼ੀ ਸਮਾਂ ਲਗਦਾ ਹੈ।\n- **2 - ਕਮਜ਼ੋਰ**: ਤਕਨੀਕੀ ਸਾਧਿਆਂ ਦੀ ਘੱਟ ਜਾਣਕਾਰੀ ਹੈ ਅਤੇ ਨਵੇਂ ਸਾਧਿਆਂ ਨੂੰ ਸਿੱਖਣ ਵਿੱਚ ਬਹੁਤ ਜ਼ਿਆਦਾ ਸਮਾਂ ਲਗਦਾ ਹੈ।\n- **1 - ਬਹੁਤ ਕਮਜ਼ੋਰ**: ਤਕਨੀਕੀ ਸਾਧਿਆਂ ਦੀ ਬਿਲਕੁਲ ਵੀ ਜਾਣਕ",
+    "passed": true,
+    "metric": "ifeval_strict_prompt",
+    "status": "success",
+    "score": 1.0,
+    "grade_detail": {
+      "instruction_level": 1.0,
+      "followed": 1,
+      "total": 1,
+      "per_instruction": [
+        {
+          "id": "language:response_language",
+          "followed": true
+        }
+      ]
+    }
+  }
+]

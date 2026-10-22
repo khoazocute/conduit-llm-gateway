@@ -43,6 +43,17 @@ app:
     # tuan truoc). Env override de thu routing that (VD conduit-pool, H1) ma khong
     # phai sua file/commit gia tri tam.
     default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
+    # D7 (docs/experiment-design.md muc 3): max_tokens gui kem MOI request, giong nhau ca 3 proxy.
+    # Truoc 2026-10-16 backend chua gui bao gio nen D7 chua tung duoc thuc thi qua duong app.
+    # 1024 (nang tu 512 ngay 2026-10-16, D12 bo sung). Ly do do duoc: claude-haiku
+    # (tier MEDIUM) viet 855 token lap luan cho mmlu_01 -> o 512 bi cat TRUOC KHI kip
+    # dua dap an => truot vi NGAN SACH chu khong phai vi sai. O 1024: 0/10 item MMLU bi
+    # cat, 10/10 trich duoc dap an, 8/10 dung = do nang luc that. Gan nhu khong ton them
+    # vi 9/10 item haiku tra loi dung 4 token (10 luot = $0.0056).
+    max-tokens: ${CHAT_MAX_TOKENS:1024}
+    # D7: greedy decoding (protocol pass@1 doi temperature 0). Am = khong gui.
+    # claude-sonnet-5 tu choi tham so nay nen da bi bo khoi moi duong dinh tuyen.
+    temperature: ${CHAT_TEMPERATURE:0}
     proxy-base-urls:
       litellm: http://localhost:4000/v1
       bifrost: ${BIFROST_BASE_URL:http://localhost:8080/v1}
@@ -67,4 +78,7 @@ app:
     # re -> dat (docs/model-pricing-sources.md). Model chinh = model duoc yeu cau; cac
     # model con lai gui kem trong "fallbacks" theo dung thu tu nay.
     proxy-fallback-chains:
-      bifrost: [gpt-4o-mini, gemini-flash, claude-haiku, claude-sonnet, gpt-4o]
+      # claude-sonnet DA BO khoi chuoi (2026-10-16, D12): no tu choi tham so temperature
+      # (HTTP 400) ma backend gio gui temperature kem moi request -> de trong chuoi la de
+      # lai min: model re loi thi Bifrost leo toi sonnet roi 400. Xem docs/roadmap.md D12.
+      bifrost: [gpt-4o-mini, gemini-flash, claude-haiku, gpt-4o]

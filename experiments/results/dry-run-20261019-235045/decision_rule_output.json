@@ -1,0 +1,44 @@
+{
+  "selected_proxy": "bifrost",
+  "selected_by_fallback": false,
+  "no_proxy_passed_gate": false,
+  "gate_threshold": 0.8,
+  "tie_unresolved": false,
+  "tied_candidates": [],
+  "candidates_after_qa_filter": [
+    "bifrost",
+    "portkey"
+  ],
+  "pareto_data": {
+    "bifrost": {
+      "quality_accuracy": 0.85,
+      "ungraded_runs": 0,
+      "avg_cost": 0.0004966041666666667,
+      "error_rate": 0.0,
+      "p95_latency_ms": 5263.449999999998,
+      "consistency_rate": 1.0,
+      "cost_per_passing": 0.0005842401960784314,
+      "passed_gate": true
+    },
+    "litellm": {
+      "quality_accuracy": 0.75,
+      "ungraded_runs": 0,
+      "avg_cost": 8.2655e-05,
+      "error_rate": 0.0,
+      "p95_latency_ms": 4240.049999999999,
+      "consistency_rate": 1.0,
+      "cost_per_passing": 0.00011020666666666666,
+      "passed_gate": false
+    },
+    "portkey": {
+      "quality_accuracy": 0.95,
+      "ungraded_runs": 0,
+      "avg_cost": 0.0005958533333333333,
+      "error_rate": 0.0,
+      "p95_latency_ms": 2782.8999999999996,
+      "consistency_rate": 1.0,
+      "cost_per_passing": 0.0006272140350877193,
+      "passed_gate": true
+    }
+  }
+}

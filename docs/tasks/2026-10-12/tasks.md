@@ -59,6 +59,11 @@ chết · commit 2 lô dữ liệu smoke + issue draft · mở PR.
 | K3 | **Backend** (`HttpProxyChatClient.complete()`): thêm `metadata.prompt_len`; thêm `max_tokens: 512` (thực thi D7 — hiện **chưa gửi bao giờ**) | `e2e_workflow_test.sh` pass |
 | K4 | ⚠️ **Sửa `resolveReturnedModel`** (`HttpProxyChatClient.java:151-157`) | `routing_decisions.selected_model` + `cost_upstream` **đúng** khi Portkey định tuyến động |
 
+**Trạng thái Bifrost khi Khoa bắt đầu K1** (Hùng đã dọn 14/10): image pin `v2.1.1`, container đã
+tạo lại, **0 routing rule**, analyzer **disabled**, provider openai/anthropic/gemini đều `active`
+với `timeout=45s` + `max_retries=2` (D7). 3 rule `smoke-*` của đợt thử khả thi đã xoá — nếu không
+xoá thì K1 sẽ đụng lỗi trùng `priority`.
+
 **Lưu ý kỹ thuật cho K1** (đã gặp thật, tiết kiệm thời gian cho Khoa):
 - `PUT /api/routing/complexity-analyzer-config` **thay toàn bộ config** → phải gửi lại **cả**
   `keywords` (150 câu mẫu) + `tier_boundaries`, không chỉ khối `semantic`. Thiếu `keywords` → lỗi 400
@@ -194,11 +199,11 @@ cấu hình đang chạy" trong bản nháp.
 ## 6. Checklist cuối tuần
 
 - [x] Phase 0: `experiment-design.md`, task file, quyết định D2/D10/D11, xoá file chết, PR
-- [ ] H1–H4: bộ 40 item + validator + ngưỡng `prompt_len` + `benchmark-survey.md`
-- [ ] H5, H6: pin Bifrost `v2.1.1`, dọn container thử
-- [ ] H7, H8: 4 bộ chấm có test, runner đọc 4 nhóm + chấm offline
-- [ ] K1–K4: Bifrost tier→model, Portkey `prompt_len`, backend metadata + `max_tokens`, **sửa `resolveReturnedModel`**
-- [ ] K5–K7: dry-run 36 lượt, kiểm `routing_decisions`, chạy `decision_rule.py`
+- [x] H1–H4: bộ 40 item + validator + ngưỡng `prompt_len` + `benchmark-survey.md` — xong 14/10
+- [x] H5, H6: pin Bifrost `v2.1.1`, dọn container thử — xong 14/10
+- [x] H7, H8: 4 bộ chấm có test, runner đọc 4 nhóm + chấm offline — xong 14/10
+- [x] K1–K4: Bifrost tier→model, Portkey `prompt_len`, backend metadata + `max_tokens`, **sửa `resolveReturnedModel`** — xong 15–16/10, xem `log-khoa.md`
+- [x] K5–K7: dry-run 36 lượt, kiểm `routing_decisions`, chạy `decision_rule.py` — xong 16/10, 36/36 thành công, 0 dòng sai giá
 - [ ] Phase 3: 360 lượt, chấm, `experiment-results.md` có kết luận + đối chiếu giả thuyết
 - [ ] Review chéo xong, cả hai đã viết `log-*.md`
 - [ ] `roadmap.md` mục 5 cập nhật: Phase B/C → 🟨, Phase E ghi mốc 17/10
@@ -208,8 +213,8 @@ cấu hình đang chạy" trong bản nháp.
 | Việc | Trạng thái (✅/🟨/⛔) | Ghi chú |
 |---|---|---|
 | Phase 0 | ✅ | 14/10, Hùng |
-| H1–H6 (Phase 1) | | |
-| K1–K4 (Phase 1) | | |
-| H7–H8 (Phase 2) | | |
-| K5–K7 (Phase 2) | | |
-| Phase 3 | | |
+| H1–H6 (Phase 1) | ✅ | 14/10, làm sớm 1 ngày. Xem `log-hung.md` |
+| K1–K4 (Phase 1) | ✅ | 15–16/10, Khoa. e2e 43/43 cả 3 proxy. Portkey so `prompt_len` theo số (đã thử 93/300/1102). Xem `log-khoa.md` |
+| H7–H8 (Phase 2) | ✅ | 14/10, làm sớm 2 ngày. Xem `log-hung.md` |
+| K5–K7 (Phase 2) | ✅ | 16/10, Khoa. 36/36, $0.0505. Sửa bộ chấm HumanEval (thiếu import của đề). ⛔ Trước Phase 3 phải chốt `max_tokens` vì Sonnet dùng hết 512 token để suy nghĩ → trả lời rỗng |
+| Phase 3 | 🟨 | Khoa xong phần HumanEval + IFEval 19/10: 180/180, 0 lỗi, $0.1187, dữ liệu sạch (`verify_results.py`). Chờ phần MMLU + GSM8K của Hùng rồi gộp 360 lượt |

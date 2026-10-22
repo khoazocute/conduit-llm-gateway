@@ -77,6 +77,16 @@ nhiễu.**
 | **Bifrost** | Complexity Router + 3 CEL rule | **v2.1.1** | Proxy — theo **độ khó** | **~257 ms/request** | Không |
 | **Portkey** | `conditional` trên `metadata.prompt_len` | hiện tại | **Người + app** | ~0 | **Có** |
 
+**Map tier → model (giống hệt cho Bifrost và Portkey):** SIMPLE → `gpt-4o-mini` · MEDIUM →
+`claude-haiku` · COMPLEX → `gpt-4o`.
+
+> ⚠️ **`claude-sonnet-5` bị loại khỏi mọi đường định tuyến (2026-10-16), kèm số liệu.** Nó bật
+> thinking mặc định và nở suy nghĩ cho vừa hết `max_tokens` rồi trả về **rỗng** (512→512 thinking,
+> 2048→2048 thinking, cả hai lần text rỗng mà vẫn tính tiền), và **từ chối `temperature`**
+> (HTTP 400). Chi tiết: `docs/routing-policy.md` mục 7. Đây là một **phát hiện của khoá luận**,
+> không chỉ là ghi chú cấu hình: *đặt một reasoning model vào pool thì mọi router chọn nó đều trả
+> giá đầy đủ cho một câu trả lời trống, và không có cảnh báo nào.*
+
 Ba hành vi khác nhau thật và dự đoán được trước:
 
 - **LiteLLM** tối ưu chi phí một cách "mù" — luôn rẻ nhất, không xét chất lượng.
@@ -162,6 +172,19 @@ Luật này **vốn đúng** — nó chỉ vô nghĩa dưới D2. Dưới Design
 chưa chạy.** Sửa **thí nghiệm** bây giờ, có lý do ghi lại, là hợp lệ; sửa **luật** sau khi đã thấy
 kết quả thì mới là mất khách quan. Nhóm sửa thí nghiệm, **không sửa luật**.
 
+### 6.0. Luật dự phòng nếu không proxy nào qua cổng (D13, đăng ký trước 2026-10-17)
+
+Đợt kiểm 24 lượt cho **cả hai proxy đều 75%** → ngưỡng 80% nằm ngay giữa khoảng kết quả có thể
+xảy ra. Nên phải chốt **trước khi chạy**:
+
+> Nếu không proxy nào đạt 80% ở bước 1: xếp theo **chi phí trên mỗi câu trả lời đạt**, chọn thấp
+> nhất. Proxy không có câu nào đạt thì chỉ số này **không xác định** và **không được chọn**. Cả ba
+> sai hết thì không chọn ai.
+
+Báo cáo **phải nói rõ** rằng luật 4 bước không phân giải được và kết quả dùng luật dự phòng đã
+đăng ký trước. **Không hạ ngưỡng 80%** — hạ ngưỡng sau khi thấy số là dịch mục tiêu, và đó là chỗ
+dễ bị hỏi nhất khi bảo vệ.
+
 ### 6.1. Chỉ số diễn giải chính
 
 **Chi phí trên mỗi câu trả lời đạt** = tổng chi phí / số câu đạt. *(Ý của Khoa.)* Nó gộp đúng hai vế
@@ -175,7 +198,7 @@ một quan sát đáng viết.
 ### 6.2. Bắt buộc báo cáo kèm
 
 **Bảng tỷ lệ model mà mỗi proxy đã chọn.** Không có bảng này thì con số accuracy vô nghĩa. Có nó thì
-đọc được, ví dụ: *"Bifrost đẩy 40% câu sang `claude-sonnet`, đạt 95%, giá $0.0007/lượt; LiteLLM đẩy
+đọc được, ví dụ: *"Bifrost đẩy 40% câu sang `gpt-4o`, đạt 95%, giá $0.0007/lượt; LiteLLM đẩy
 100% sang `gpt-4o-mini`, đạt 82%, giá $0.00004/lượt."*
 
 ---

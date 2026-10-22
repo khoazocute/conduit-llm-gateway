@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "analysis"))
 from decision_rule import (  # noqa: E402
     apply_decision_rule,
     compute_avg_cost,
-    compute_closed_qa_accuracy,
+    compute_quality_accuracy,
     compute_consistency_rate,
     compute_error_rate,
     compute_p95_latency,
@@ -38,6 +38,7 @@ def make_records(proxy_name, correct_ids, cost, latency, run_index=1, model_sele
             "proxy_name": proxy_name, "prompt_id": pid, "category": "closed_qa",
             "run_index": run_index, "model_selected": model_selected,
             "cost": cost, "latency_ms": latency, "response": response, "status": "success",
+            "passed": pid in correct_ids,
         })
     return records
 
@@ -50,7 +51,7 @@ class ComputeFunctions(unittest.TestCase):
             "run_index": 2, "model_selected": "m", "cost": 0.01, "latency_ms": 100,
             "response": "Canberra", "status": "error",
         })
-        acc = compute_closed_qa_accuracy(records, "p")
+        acc = compute_quality_accuracy(records, "p")
         # 13 dòng tổng (12 + 1 lượt lỗi thêm cho cq_01), 9 đúng -> lượt lỗi vẫn tính vào
         # mẫu số (đúng nguyên tắc D7: lượt lỗi tính là 1 lần lặp, không loại bỏ).
         self.assertAlmostEqual(acc, 9 / 13)
@@ -104,12 +105,14 @@ class ComputeFunctions(unittest.TestCase):
         for run in (1, 2, 3):
             records.append({"proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
                              "run_index": run, "model_selected": "gpt-4o-mini", "cost": 0.01,
-                             "latency_ms": 100, "response": "Canberra", "status": "success"})
+                             "latency_ms": 100, "response": "Canberra", "status": "success",
+                             "passed": True})
         # prompt B: đổi model giữa các lần -> không nhất quán
         for run, model in ((1, "gpt-4o-mini"), (2, "gemini-flash"), (3, "gpt-4o-mini")):
             records.append({"proxy_name": "p", "prompt_id": "cq_02", "category": "closed_qa",
                              "run_index": run, "model_selected": model, "cost": 0.01,
-                             "latency_ms": 100, "response": "Natri", "status": "success"})
+                             "latency_ms": 100, "response": "Natri", "status": "success",
+                             "passed": True})
         # 1/2 prompt nhất quán
         self.assertAlmostEqual(compute_consistency_rate(records, "p"), 0.5)
 
@@ -157,6 +160,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "run_index": run, "model_selected": model,
                         "cost": 0.01, "latency_ms": 200,
                         "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
         result = apply_decision_rule(records, ["proxyF", "proxyG"])
         self.assertEqual(compute_avg_cost(records, "proxyF"), compute_avg_cost(records, "proxyG"))
@@ -164,10 +168,98 @@ class DecisionRuleBranches(unittest.TestCase):
         self.assertLess(compute_consistency_rate(records, "proxyF"), compute_consistency_rate(records, "proxyG"))
         self.assertEqual(result["selected_proxy"], "proxyG")
 
-    def test_no_candidate_raises(self):
-        records = make_records("proxyA", [], cost=0.01, latency=100)  # 0/12 đúng
-        with self.assertRaises(ValueError):
-            apply_decision_rule(records, ["proxyA"])
+    def test_khong_proxy_nao_qua_cong_thi_BAO_CAO_chu_khong_nem_exception(self):
+        """Đổi 2026-10-17: trước đây ném ValueError, nên nếu chạy thật mà không proxy nào
+        qua 80% thì mất luôn bảng số liệu (gặp ở đợt kiểm 24 lượt). Giờ đó là MỘT KẾT QUẢ:
+        no_proxy_passed_gate=True + số liệu đủ CẢ BA proxy + chọn theo luật dự phòng D13."""
+        records = (make_records("proxyA", [], cost=0.01, latency=100)          # 0/12 đúng
+                   + make_records("proxyB", CLOSED_QA_IDS[:3], cost=0.02, latency=200))  # 3/12
+        result = apply_decision_rule(records, ["proxyA", "proxyB"])
+
+        self.assertTrue(result["no_proxy_passed_gate"])
+        # proxyA sai het -> chi phi/cau dat khong xac dinh -> D13 chon proxyB
+        self.assertEqual(result["selected_proxy"], "proxyB")
+        self.assertTrue(result["selected_by_fallback"])
+        self.assertEqual(result["candidates_after_qa_filter"], [])
+        # So lieu phai co cho CA HAI proxy du ca hai deu bi loai
+        self.assertEqual(set(result["pareto_data"]), {"proxyA", "proxyB"})
+        for name, row in result["pareto_data"].items():
+            self.assertFalse(row["passed_gate"], name)
+            self.assertIn("avg_cost", row)
+            self.assertIn("p95_latency_ms", row)
+
+    def test_D13_khong_ai_qua_cong_thi_chon_theo_chi_phi_moi_cau_dat(self):
+        """D13 (đăng ký trước 2026-10-17): không ai đạt 80% thì xếp theo chi phí/câu đạt.
+        Luật này chốt TRƯỚC khi thấy số nên vẫn khách quan."""
+        # proxyRe: 3/12 dat, re  -> 12*0.001/3 = 0.004/cau dat
+        # proxyDat: 6/12 dat, dat -> 12*0.010/6 = 0.020/cau dat
+        records = (make_records("proxyRe", CLOSED_QA_IDS[:3], cost=0.001, latency=100)
+                   + make_records("proxyDat", CLOSED_QA_IDS[:6], cost=0.010, latency=100))
+        result = apply_decision_rule(records, ["proxyRe", "proxyDat"])
+
+        self.assertTrue(result["no_proxy_passed_gate"])
+        self.assertTrue(result["selected_by_fallback"])
+        self.assertEqual(result["selected_proxy"], "proxyRe")
+        self.assertLess(result["fallback_ranking"]["proxyRe"],
+                        result["fallback_ranking"]["proxyDat"])
+
+    def test_D13_proxy_sai_HET_khong_duoc_chon_du_chi_phi_bang_0(self):
+        """Bẫy chia cho 0: proxy sai hết thì chi phí/câu đạt KHÔNG xác định, không được
+        coi là 0 rồi thành 'rẻ nhất'."""
+        records = (make_records("proxySaiHet", [], cost=0.001, latency=100)        # 0/12 dat
+                   + make_records("proxyCoDat", CLOSED_QA_IDS[:4], cost=0.010, latency=100))
+        result = apply_decision_rule(records, ["proxySaiHet", "proxyCoDat"])
+
+        self.assertTrue(result["no_proxy_passed_gate"])
+        self.assertIsNone(result["fallback_ranking"]["proxySaiHet"])
+        self.assertEqual(result["selected_proxy"], "proxyCoDat")
+
+    def test_D13_ca_hai_sai_het_thi_khong_chon_ai(self):
+        records = (make_records("a", [], cost=0.001, latency=100)
+                   + make_records("b", [], cost=0.002, latency=100))
+        result = apply_decision_rule(records, ["a", "b"])
+        self.assertIsNone(result["selected_proxy"])
+        self.assertFalse(result["selected_by_fallback"])
+
+    def test_qua_cong_thi_KHONG_dung_du_phong(self):
+        records = make_records("p", CLOSED_QA_IDS, cost=0.01, latency=100)  # 12/12
+        result = apply_decision_rule(records, ["p"])
+        self.assertEqual(result["selected_proxy"], "p")
+        self.assertFalse(result["selected_by_fallback"])
+        self.assertFalse(result["no_proxy_passed_gate"])
+
+    def test_p95_cua_export_tables_KHOP_decision_rule(self):
+        """Khoa phát hiện 19/10: Bifrost ra 5831 ms ở decision_rule.py nhưng 9641 ms ở
+        export_tables.py trên CÙNG dữ liệu — vì export_tables dùng method khác VÀ rơi về
+        max() khi có dưới 20 mẫu. decision_rule là bản có thẩm quyền (thực thi luật đã
+        khóa) nên export_tables phải lấy số của nó. Giờ hai bên dùng chung _percentile."""
+        import sys as _sys
+        _sys.path.insert(0, str(ROOT / "analysis"))
+        import export_tables
+
+        records = make_records("p", CLOSED_QA_IDS, cost=0.01, latency=100)
+        for i, lat in enumerate((50, 120, 300, 900, 5000), start=100):
+            records.append({"proxy_name": "p", "prompt_id": "cq_01", "category": "closed_qa",
+                            "run_index": i, "model_selected": "m", "cost": 0.01,
+                            "latency_ms": lat, "response": "Canberra", "status": "success",
+                            "passed": True})
+        self.assertAlmostEqual(export_tables.summarise(records)["p95_latency_ms"],
+                               compute_p95_latency(records, "p"), places=6)
+
+    def test_pareto_data_co_ca_proxy_bi_loai(self):
+        """Phát hiện E của Khoa: trước đây chỉ in số liệu của proxy QUA cổng, nên báo cáo
+        không có số của proxy bị loại — không biết nó bị loại vì gì."""
+        records = (make_records("proxyPass", CLOSED_QA_IDS, cost=0.02, latency=100)      # 12/12
+                   + make_records("proxyFail", CLOSED_QA_IDS[:5], cost=0.001, latency=50))  # 5/12
+        result = apply_decision_rule(records, ["proxyPass", "proxyFail"])
+
+        self.assertEqual(result["selected_proxy"], "proxyPass")
+        self.assertEqual(set(result["pareto_data"]), {"proxyPass", "proxyFail"})
+        self.assertTrue(result["pareto_data"]["proxyPass"]["passed_gate"])
+        self.assertFalse(result["pareto_data"]["proxyFail"]["passed_gate"])
+        # proxyFail re hon nhung bi loai o buoc 1 - bao cao phai thay duoc dieu do
+        self.assertLess(result["pareto_data"]["proxyFail"]["avg_cost"],
+                        result["pareto_data"]["proxyPass"]["avg_cost"])
 
     def test_error_prone_proxy_no_longer_wins_on_cost(self):
         # Tái tạo đúng kịch bản Khoa phát hiện (log-khoa.md, 2026-10-03): proxyJ đắt
@@ -187,6 +279,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "proxy_name": "proxyJ", "prompt_id": pid, "category": "closed_qa",
                         "run_index": run_index, "model_selected": "m", "cost": 0.0102,
                         "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
                 else:
                     records.append({
@@ -217,6 +310,7 @@ class DecisionRuleBranches(unittest.TestCase):
                         "proxy_name": proxy, "prompt_id": pid, "category": "closed_qa",
                         "run_index": run, "model_selected": "m", "cost": 0.01,
                         "latency_ms": 200, "response": GOOD_ANSWERS[pid], "status": "success",
+                        "passed": True,
                     })
         result = apply_decision_rule(records, ["proxyY", "proxyX"])  # thu tu dau vao dao nguoc
         self.assertTrue(result["tie_unresolved"])

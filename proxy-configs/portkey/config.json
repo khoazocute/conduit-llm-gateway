@@ -1,52 +1,85 @@
 {
   "_comment": "Portkey OSS gateway không nhận config lúc khởi động container — config này là một 'Config object' của Portkey, gửi kèm mỗi request qua header x-portkey-config (hoặc field 'config' trong body).",
-  "_comment_2": "H2 (2026-09-29): conditional routing thật, thay strategy.mode=single. Portkey không có khái niệm alias như LiteLLM (portkey-routing-notes.md) -- mô phỏng bằng cách khớp params.model (chuỗi caller gửi, VD 'gemini-flash') với 1 target, mỗi target override_params sang model thật. D2: chuỗi tĩnh, không tự tính giá. default rơi về gpt-4o-mini (rẻ nhất) nếu model không khớp target nào.",
+  "_comment_2": "Design Y (K2, 2026-10-16, docs/experiment-design.md mục 4): định tuyến theo độ dài prompt. Ngưỡng khóa 2026-10-14 (docs/routing-policy.md mục 7): < 211 ký tự -> gpt-4o-mini, 211-384 -> claude-haiku (default), >= 385 -> gpt-4o (D12, xem _comment_4). Portkey không tự đọc được độ dài prompt nên backend tính rồi gửi header x-portkey-metadata {\"prompt_len\": N} (HttpProxyChatClient). Đã thử 16/10: Portkey so $lt/$gte theo SỐ, cả khi giá trị gửi dạng số lẫn dạng chuỗi (93 -> rẻ, 300 -> trung, 1102 -> đắt).",
+  "_comment_3": "Tên target = alias trong model_pricing: HttpProxyChatClient đọc header x-portkey-last-used-option-index (config.targets[i]) rồi lấy targets[i].name làm model đã dùng. Đổi tên target thì phải giữ trùng alias.",
   "strategy": {
     "mode": "conditional",
     "conditions": [
-      { "query": { "params.model": { "$eq": "gpt-4o-mini" } }, "then": "gpt-4o-mini" },
-      { "query": { "params.model": { "$eq": "gemini-flash" } }, "then": "gemini-flash" },
-      { "query": { "params.model": { "$eq": "claude-haiku" } }, "then": "claude-haiku" },
-      { "query": { "params.model": { "$eq": "gpt-4o" } }, "then": "gpt-4o" },
-      { "query": { "params.model": { "$eq": "claude-sonnet" } }, "then": "claude-sonnet" }
+      {
+        "query": {
+          "metadata.prompt_len": {
+            "$lt": 211
+          }
+        },
+        "then": "gpt-4o-mini"
+      },
+      {
+        "query": {
+          "metadata.prompt_len": {
+            "$gte": 385
+          }
+        },
+        "then": "gpt-4o"
+      }
     ],
-    "default": "gpt-4o-mini"
+    "default": "claude-haiku"
   },
   "targets": [
     {
       "name": "gpt-4o-mini",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o-mini" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gpt-4o-mini"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "gemini-flash",
       "provider": "google",
       "api_key": "$GEMINI_API_KEY",
-      "override_params": { "model": "gemini-flash-latest" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gemini-flash-latest"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "claude-haiku",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-haiku-4-5-20251001" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "gpt-4o",
       "provider": "openai",
       "api_key": "$OPENAI_API_KEY",
-      "override_params": { "model": "gpt-4o" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "gpt-4o"
+      },
+      "retry": {
+        "attempts": 2
+      }
     },
     {
       "name": "claude-sonnet",
       "provider": "anthropic",
       "api_key": "$ANTHROPIC_API_KEY",
-      "override_params": { "model": "claude-sonnet-5" },
-      "retry": { "attempts": 2 }
+      "override_params": {
+        "model": "claude-sonnet-5"
+      },
+      "retry": {
+        "attempts": 2
+      }
     }
-  ]
+  ],
+  "_comment_4": "Tier dat dung gpt-4o chu KHONG dung claude-sonnet: Sonnet bat thinking mac dinh, no phan suy nghi cho vua het max_tokens roi tra ve rong (do 16/10, ca o 512 va 2048 token) va tu choi tham so temperature. gpt-4o cung thuoc tang dat trong pool."
 }

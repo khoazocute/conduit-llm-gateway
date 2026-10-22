@@ -1,0 +1,8 @@
+﻿proxy,model,tier,n_runs,share,n_passed,accuracy,cost_total_usd,cost_per_run_usd
+bifrost,claude-haiku,MEDIUM,6,0.1,6,1.0,0.009645,0.0016075000000000002
+bifrost,gpt-4o,COMPLEX,6,0.1,6,1.0,0.0278725,0.004645416666666667
+bifrost,gpt-4o-mini,SIMPLE,48,0.8,43,0.8958,0.00477615,9.9503125e-05
+litellm,gpt-4o-mini,SIMPLE,60,1.0,53,0.8833,0.00671325,0.00011188749999999999
+portkey,claude-haiku,MEDIUM,21,0.35,21,1.0,0.027573,0.001313
+portkey,gpt-4o,COMPLEX,21,0.35,20,0.9524,0.0402375,0.0019160714285714287
+portkey,gpt-4o-mini,SIMPLE,18,0.3,15,0.8333,0.00187695,0.000104275

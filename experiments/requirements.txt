@@ -1,0 +1,15 @@
+# Thu vien cho phan thi nghiem danh gia proxy (experiments/).
+#   python -m pip install -r experiments/requirements.txt
+#   python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt')"
+#
+# Lan 2 (nltk corpus) la BAT BUOC: 2 verifier IFEval dung tach cau
+# (length_constraints:number_sentences, change_case:capital_word_frequency) se nem
+# LookupError neu thieu punkt.
+
+requests          # runner goi HTTP API cua backend + tai dataset
+
+# --- dependency cua verifier IFEval chinh thuc (vendor trong analysis/vendor/) ---
+absl-py           # instructions.py dung absl.logging
+immutabledict     # instructions_registry.py
+langdetect        # verifier language:response_language
+nltk              # tach cau/tu cho cac verifier length_constraints
