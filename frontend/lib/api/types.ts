@@ -34,6 +34,11 @@ export interface Agent {
   creator_id: string;
   title: string;
   introduction: string | null;
+  /**
+   * D8 system prompt. Present ("" when unset) ONLY when the viewer is the owner or an admin;
+   * absent on public responses. `undefined` therefore means "not allowed to see it".
+   */
+  instructions?: string;
   agent_type: AgentType;
   price_vnd: number;
   default_credit_granted: number;

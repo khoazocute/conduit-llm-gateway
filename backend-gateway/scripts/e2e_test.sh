@@ -14,6 +14,8 @@ USER_EMAIL="e2e.user.${RUN_ID}@conduit.dev"
 ADMIN_EMAIL="e2e.admin.${RUN_ID}@conduit.dev"
 OTHER_EMAIL="e2e.other.${RUN_ID}@conduit.dev"
 PASSWORD="password123"
+# D8: chuoi bi mat lam instructions cua agent; test kiem no KHONG lot ra cho nguoi mua/an danh.
+INSTR_SECRET="e2e-secret-instructions-${RUN_ID}"
 
 COOKIE_JAR=$(mktemp)
 
@@ -87,6 +89,9 @@ RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/agents" \
   -d '{"title":"Self-signup Creator Agent","price_vnd":1000,"default_credit_granted":10}')
 split_body_code "$RESP"
 check "self-registered creator can POST /agents -> 201" "201" "$CODE" "$BODY"
+# Chu agent CHUA dat instructions van phai nhan truong (""), de frontend phan biet voi ban cong
+# khai (khong co truong) va khong ghi de mat system prompt khi luu.
+echo "$BODY" | grep -q '"instructions":""' && check "D8: owner view always carries instructions field (empty when unset)" "true" "true" "" || check "D8: owner view always carries instructions field (empty when unset)" "true" "false" "$BODY"
 
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -H "Content-Type: application/json" \
@@ -160,10 +165,11 @@ echo "$BODY" | grep -q '"role":"creator"' && check "re-login reflects promoted r
 # --- 10. Create agent as creator -> 201, draft ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/agents" \
   -H "Authorization: Bearer $CREATOR_ACCESS" -H "Content-Type: application/json" \
-  -d '{"title":"E2E Agent","introduction":"An automated test agent","price_vnd":1000,"default_credit_granted":10}')
+  -d "{\"title\":\"E2E Agent\",\"introduction\":\"An automated test agent\",\"instructions\":\"$INSTR_SECRET\",\"price_vnd\":1000,\"default_credit_granted\":10}")
 split_body_code "$RESP"
 check "POST /agents as creator -> 201" "201" "$CODE" "$BODY"
 AGENT_ID=$(json_get_nested_id "$BODY")
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner sees own instructions on create" "true" "true" "" || check "D8: owner sees own instructions on create" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"status":"draft"' && check "new agent status = draft" "true" "true" "" || check "new agent status = draft" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"created_at":null' && check "agent created_at populated (not null)" "true" "false" "$BODY" || check "agent created_at populated (not null)" "true" "true" ""
 
@@ -207,6 +213,7 @@ RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/agents/pending" -H "Authorizatio
 split_body_code "$RESP"
 check "admin GET /admin/agents/pending -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$AGENT_ID" && check "pending list includes our agent" "true" "true" "" || check "pending list includes our agent" "true" "false" "$BODY"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: admin sees instructions in pending list (to review them)" "true" "true" "" || check "D8: admin sees instructions in pending list (to review them)" "true" "false" "$BODY"
 
 # --- 17. Admin approves ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/admin/agents/$AGENT_ID/approve" -H "Authorization: Bearer $ADMIN_ACCESS")
@@ -219,6 +226,40 @@ RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents")
 split_body_code "$RESP"
 check "GET /agents (public, no auth) -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$AGENT_ID" && check "public listing includes published agent" "true" "true" "" || check "public listing includes published agent" "true" "false" "$BODY"
+
+# --- 18b. D8: instructions must NEVER reach buyers, other creators or anonymous visitors ---
+# GET /agents va GET /agents/{id} la permitAll va dung chung AgentResponse -> day la cho de lo nhat.
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: public listing hides instructions" "absent" "present" "$BODY" || check "D8: public listing hides instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID")
+split_body_code "$RESP"
+check "D8: anonymous GET /agents/{id} -> 200" "200" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"instructions"' && check "D8: anonymous GET /agents/{id} has no instructions field" "absent" "present" "$BODY" || check "D8: anonymous GET /agents/{id} has no instructions field" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.buyer.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"E2E Buyer\"}")
+split_body_code "$RESP"
+BUYER_ACCESS=$(json_get "$BODY" "access_token")
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $BUYER_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: logged-in buyer cannot see instructions" "absent" "present" "$BODY" || check "D8: logged-in buyer cannot see instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $SELF_CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: another creator cannot see instructions" "absent" "present" "$BODY" || check "D8: another creator cannot see instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner GET /agents/{id} sees instructions" "true" "true" "" || check "D8: owner GET /agents/{id} sees instructions" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: admin GET /agents/{id} sees instructions" "true" "true" "" || check "D8: admin GET /agents/{id} sees instructions" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/mine" -H "Authorization: Bearer $CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner GET /agents/mine includes instructions" "true" "true" "" || check "D8: owner GET /agents/mine includes instructions" "true" "false" "$BODY"
 
 # --- 19. PATCH published agent by owner -> 409 ---
 RESP=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE/agents/$AGENT_ID" \

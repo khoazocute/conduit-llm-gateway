@@ -11,4 +11,11 @@ public record AgentListResponse(List<AgentResponse> items, PageMetaDto page) {
                 page.getContent().stream().map(AgentResponse::from).toList(),
                 PageMetaDto.from(page));
     }
+
+    /** Danh sach cho CHU AGENT (/agents/mine) hoac ADMIN (/admin/agents/pending): kem instructions. */
+    public static AgentListResponse withInstructions(Page<com.conduit.backendgateway.domain.Agent> page) {
+        return new AgentListResponse(
+                page.getContent().stream().map(AgentResponse::withInstructions).toList(),
+                PageMetaDto.from(page));
+    }
 }

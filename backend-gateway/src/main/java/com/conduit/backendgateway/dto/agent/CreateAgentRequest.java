@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 public record CreateAgentRequest(
         @NotBlank String title,
         String introduction,
+        // D8: system prompt rieng, chi chu agent va admin doc duoc. Tuy chon.
+        String instructions,
         @JsonProperty("agent_type") AgentType agentType,
         @NotNull @Min(0) @JsonProperty("price_vnd") Integer priceVnd,
         @NotNull @Min(0) @JsonProperty("default_credit_granted") Integer defaultCreditGranted) {

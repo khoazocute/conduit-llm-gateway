@@ -119,6 +119,7 @@
           "creator_id": { "type": "string", "format": "uuid" },
           "title": { "type": "string" },
           "introduction": { "type": "string", "nullable": true },
+          "instructions": { "type": "string", "description": "D8: system prompt rieng. CHI co trong response khi nguoi goi la chu agent hoac admin (rong = chua dat). Response cong khai (GET /agents, GET /agents/{id} cho nguoi khac) KHONG co truong nay." },
           "agent_type": { "$ref": "#/components/schemas/AgentType" },
           "price_vnd": { "type": "integer", "minimum": 0 },
           "default_credit_granted": { "type": "integer", "minimum": 0 },
@@ -134,6 +135,7 @@
         "properties": {
           "title": { "type": "string" },
           "introduction": { "type": "string" },
+          "instructions": { "type": "string", "description": "D8: system prompt rieng, tuy chon. Chi chu agent va admin doc duoc." },
           "agent_type": { "$ref": "#/components/schemas/AgentType" },
           "price_vnd": { "type": "integer", "minimum": 0 },
           "default_credit_granted": { "type": "integer", "minimum": 0 }
@@ -145,6 +147,7 @@
         "properties": {
           "title": { "type": "string" },
           "introduction": { "type": "string" },
+          "instructions": { "type": "string", "description": "D8: system prompt rieng, tuy chon. Chi chu agent va admin doc duoc." },
           "price_vnd": { "type": "integer", "minimum": 0 },
           "default_credit_granted": { "type": "integer", "minimum": 0 }
         }

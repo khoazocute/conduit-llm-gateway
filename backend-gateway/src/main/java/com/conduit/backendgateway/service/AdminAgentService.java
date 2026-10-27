@@ -23,14 +23,15 @@ public class AdminAgentService {
     }
 
     public AgentListResponse listPending(Pageable pageable) {
-        return AgentListResponse.from(agentRepository.findByStatus(AgentStatus.pending, pageable));
+        // Admin can thay instructions de duyet (D8): system prompt doc hai cung phai qua kiem duyet.
+        return AgentListResponse.withInstructions(agentRepository.findByStatus(AgentStatus.pending, pageable));
     }
 
     @Transactional
     public AgentResponse approve(UUID agentId) {
         Agent agent = findPendingOrThrow(agentId);
         agent.setStatus(AgentStatus.published);
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     @Transactional
@@ -38,7 +39,7 @@ public class AdminAgentService {
         Agent agent = findPendingOrThrow(agentId);
         agent.setStatus(AgentStatus.rejected);
         agent.setRejectReason(request.rejectReason());
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     private Agent findPendingOrThrow(UUID agentId) {

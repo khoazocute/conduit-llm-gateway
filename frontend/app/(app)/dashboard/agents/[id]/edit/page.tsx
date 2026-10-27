@@ -16,10 +16,14 @@ export default function EditAgentPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<Agent>(`/agents/${params.id}`)
+    // Wait for the token: GET /agents/{id} is public, and without a token the backend returns the
+    // public view WITHOUT instructions. Loading that would show an empty box and wipe the agent's
+    // system prompt on save (D8).
+    if (!accessToken) return;
+    apiFetch<Agent>(`/agents/${params.id}`, { token: accessToken })
       .then(setAgent)
       .catch(() => setLoadError("Agent not found."));
-  }, [params.id]);
+  }, [params.id, accessToken]);
 
   async function handleSubmit(values: AgentFormValues) {
     setSubmitError(null);
@@ -27,7 +31,9 @@ export default function EditAgentPage() {
       const updated = await apiFetch<Agent>(`/agents/${params.id}`, {
         method: "PATCH",
         token: accessToken,
-        body: values,
+        // Defense in depth: if the loaded agent did not carry `instructions` (public view), do not
+        // send the field at all, so the stored system prompt can never be overwritten by mistake.
+        body: agent?.instructions === undefined ? { ...values, instructions: undefined } : values,
       });
       setAgent(updated);
       router.push("/dashboard");

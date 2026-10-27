@@ -2,6 +2,8 @@ package com.conduit.backendgateway.service;
 
 import com.conduit.backendgateway.domain.Agent;
 import com.conduit.backendgateway.domain.enums.AgentStatus;
+import com.conduit.backendgateway.security.UserPrincipal;
+import com.conduit.backendgateway.domain.enums.UserRole;
 import com.conduit.backendgateway.dto.agent.AgentListResponse;
 import com.conduit.backendgateway.dto.agent.AgentResponse;
 import com.conduit.backendgateway.dto.agent.CreateAgentRequest;
@@ -38,23 +40,31 @@ public class AgentService {
         agent.setCreatorId(creatorId);
         agent.setTitle(request.title());
         agent.setIntroduction(request.introduction());
+        agent.setInstructions(request.instructions());
         if (request.agentType() != null) {
             agent.setAgentType(request.agentType());
         }
         agent.setPriceVnd(request.priceVnd());
         agent.setDefaultCreditGranted(request.defaultCreditGranted());
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     public AgentListResponse listMine(UUID creatorId, AgentStatus status, Pageable pageable) {
         Page<Agent> page = (status == null)
                 ? agentRepository.findByCreatorId(creatorId, pageable)
                 : agentRepository.findByCreatorIdAndStatus(creatorId, status, pageable);
-        return AgentListResponse.from(page);
+        return AgentListResponse.withInstructions(page);
     }
 
-    public AgentResponse getById(UUID agentId) {
-        return AgentResponse.from(findAgentOrThrow(agentId));
+    /**
+     * GET /agents/{id} la permitAll nen viewer co the null. Chi tra instructions cho chu agent
+     * hoac admin (D8); moi nguoi khac, ke ca nguoi da mua agent, nhan ban cong khai.
+     */
+    public AgentResponse getById(UUID agentId, UserPrincipal viewer) {
+        Agent agent = findAgentOrThrow(agentId);
+        boolean privileged = viewer != null
+                && (viewer.getRole() == UserRole.admin || agent.getCreatorId().equals(viewer.getId()));
+        return privileged ? AgentResponse.withInstructions(agent) : AgentResponse.from(agent);
     }
 
     @Transactional
@@ -69,13 +79,16 @@ public class AgentService {
         if (request.introduction() != null) {
             agent.setIntroduction(request.introduction());
         }
+        if (request.instructions() != null) {
+            agent.setInstructions(request.instructions());
+        }
         if (request.priceVnd() != null) {
             agent.setPriceVnd(request.priceVnd());
         }
         if (request.defaultCreditGranted() != null) {
             agent.setDefaultCreditGranted(request.defaultCreditGranted());
         }
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     @Transactional
@@ -86,7 +99,7 @@ public class AgentService {
 
         agent.setStatus(AgentStatus.pending);
         agent.setRejectReason(null);
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     @Transactional
@@ -98,7 +111,7 @@ public class AgentService {
             throw new InvalidAgentStatusTransitionException("Only a published agent can be unpublished");
         }
         agent.setStatus(AgentStatus.unpublished);
-        return AgentResponse.from(agentRepository.saveAndFlush(agent));
+        return AgentResponse.withInstructions(agentRepository.saveAndFlush(agent));
     }
 
     private Agent findAgentOrThrow(UUID agentId) {
