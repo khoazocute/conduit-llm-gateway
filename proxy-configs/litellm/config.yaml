@@ -90,6 +90,15 @@ model_list:
   # temperature. Tier đắt của thí nghiệm dùng gpt-4o (cũng thuộc tầng đắt, CLAUDE.md mục 2).
   # Alias `claude-sonnet` độc lập ở trên vẫn giữ để gọi tay khi cần.
 
+  # TASK-56 (load test): alias GIA, LiteLLM tra mock_response ngay, KHONG goi nha cung cap nao ->
+  # 0 dong. Chi dung cho load test (CHAT_DEFAULT_MODEL=conduit-mock). Can 2 dong model_pricing gia 0
+  # o DB local, xem docs/load-test.md. model_info.id = alias de backend ghi dung ten model.
+  - model_name: conduit-mock
+    litellm_params:
+      model: openai/gpt-4o-mini
+      mock_response: "This is a canned reply used for load testing. No provider was called."
+    model_info:
+      id: conduit-mock
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
 

@@ -30,6 +30,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -38,6 +39,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ChatService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatService.class);
+    static final int BILLING_MAX_ATTEMPTS = 8;
+    private static final long BILLING_BACKOFF_BASE_MS = 10;
+    private static final long BILLING_BACKOFF_CAP_MS = 400;
 
     private final ConversationService conversationService;
     private final MessageRepository messageRepository;
@@ -117,10 +121,43 @@ public class ChatService {
         }
 
         try {
-            Message assistantMessage = self.recordSuccessfulTurn(userId, conversationId, model, activeProxy, result);
+            Message assistantMessage = recordSuccessfulTurnWithRetry(userId, conversationId, model, activeProxy, result);
             emitSuccess(emitter, result.content(), assistantMessage);
         } catch (InsufficientCreditException e) {
             emitError(emitter, "Insufficient credit balance");
+        }
+    }
+
+    // TASK-56 (load test 27/10): cung 1 nguoi dung chat song song -> ~50% luot loi "Row was updated or
+    // deleted by another transaction". Retry trong CreditService KHONG cuu duoc o day: debit chay ben
+    // trong transaction cua recordSuccessfulTurn, nen ca 3 lan thu deu nam trong CUNG transaction da
+    // bi danh dau rollback va van doc so du cu -> chac chan thua lai. Te hon: LLM DA duoc goi (ton
+    // tien nha cung cap) ma khong ghi usage_logs, khong tru credit. Retry phai o tang nay: moi lan la
+    // mot transaction MOI qua proxy `self`, doc lai so du moi nhat; tru credit + ghi log van nguyen tu.
+    private Message recordSuccessfulTurnWithRetry(
+            UUID userId, UUID conversationId, String model, RoutingProxy activeProxy, ChatCompletionResult result) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return self.recordSuccessfulTurn(userId, conversationId, model, activeProxy, result);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                if (attempt >= BILLING_MAX_ATTEMPTS) {
+                    log.warn("Billing gave up after {} optimistic-lock conflicts: user={} conversation={}",
+                            attempt, userId, conversationId);
+                    throw e;
+                }
+                // Cho ngau nhien, tang dan: retry ngay lap tuc thi cac luong tranh chap dam vao nhau
+                // lai lan nua (do 27/10: 20 luong, khong cho -> 11/20 thua ca 5 lan).
+                backoff(attempt);
+            }
+        }
+    }
+
+    private static void backoff(int attempt) {
+        long ceilingMs = Math.min(BILLING_BACKOFF_CAP_MS, BILLING_BACKOFF_BASE_MS << attempt);
+        try {
+            Thread.sleep(java.util.concurrent.ThreadLocalRandom.current().nextLong(ceilingMs + 1));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 

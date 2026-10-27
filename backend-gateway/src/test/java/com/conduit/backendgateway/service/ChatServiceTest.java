@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,8 @@ import com.conduit.backendgateway.adapter.ChatCompletionResult;
 import com.conduit.backendgateway.adapter.ChatProxyProperties;
 import com.conduit.backendgateway.adapter.ProxyChatClient;
 import com.conduit.backendgateway.adapter.ProxyChatException;
+import com.conduit.backendgateway.domain.CreditTransaction;
+import com.conduit.backendgateway.domain.CreditWallet;
 import com.conduit.backendgateway.domain.Message;
 import com.conduit.backendgateway.domain.ModelPricing;
 import com.conduit.backendgateway.domain.RoutingDecision;
@@ -39,6 +42,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
@@ -147,6 +151,35 @@ class ChatServiceTest {
         verify(usageLogRepository, never()).saveAndFlush(any());
         verify(routingDecisionRepository, never()).saveAndFlush(any());
         assertThat(emitter.events).anyMatch(e -> e.contains("Insufficient credit"));
+    }
+
+    @Test
+    void optimisticLockConflictOnTheWalletIsRetriedInAFreshTransaction() {
+        // TASK-56: cung 1 nguoi dung chat song song. Lan dau thua khoa lac quan, lan sau thanh cong.
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("hi", "gpt-4o-mini", 10, 10, 500));
+        when(creditService.debit(any(), anyLong(), any(), any(), any(), anyString()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(CreditWallet.class, UUID.randomUUID()))
+                .thenReturn(new CreditTransaction());
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        verify(creditService, times(2)).debit(eq(USER), eq(30L), any(), any(), any(), anyString());
+        verify(proxyChatClient, times(1)).complete(any(), any()); // KHONG goi LLM lai
+        assertThat(emitter.events).anyMatch(e -> e.contains("done"));
+    }
+
+    @Test
+    void persistentWalletConflictGivesUpAfterTheCap() {
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("hi", "gpt-4o-mini", 10, 10, 500));
+        when(creditService.debit(any(), anyLong(), any(), any(), any(), anyString()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(CreditWallet.class, UUID.randomUUID()));
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        verify(creditService, times(ChatService.BILLING_MAX_ATTEMPTS)).debit(any(), anyLong(), any(), any(), any(), anyString());
+        assertThat(emitter.events).anyMatch(e -> e.contains("error"));
     }
 
     @Test
