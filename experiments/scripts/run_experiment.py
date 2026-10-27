@@ -298,6 +298,22 @@ def ensure_experiment_identity() -> dict[str, Any]:
     return identity
 
 
+def _read_sse_error_data(lines) -> str | None:
+    """Doc dong `data:` ngay sau `event: error` (ChatService.emitError gui {"message": ...}).
+    Phai dung CHUNG iterator voi vong doc ngoai: goi iter_lines() lan nua tao iterator moi, ma
+    dong `data:` da nam trong bo dem cua iterator cu -> mat thong diep."""
+    for raw_line in lines:
+        if not raw_line:
+            break  # dong trong = het su kien SSE
+        if raw_line.startswith("data:"):
+            payload = raw_line.split(":", 1)[1].strip()
+            try:
+                return json.loads(payload).get("message") or payload
+            except (ValueError, AttributeError):
+                return payload
+    return None
+
+
 def send_chat_and_read_result(buyer_token: str, agent_id: str, prompt_text: str) -> dict[str, Any]:
     """POST /conversations -> POST .../messages (SSE, chờ done/error) -> GET
     messages để lấy model_used/credit_charged/latency_ms/content thật (đều lộ
@@ -314,11 +330,19 @@ def send_chat_and_read_result(buyer_token: str, agent_id: str, prompt_text: str)
         stream=True, timeout=REQUEST_TIMEOUT,
     )
     stream_status = "unknown"
-    for raw_line in sse_resp.iter_lines(decode_unicode=True):
+    error_message = None
+    lines = sse_resp.iter_lines(decode_unicode=True)
+    for raw_line in lines:
         if raw_line and raw_line.startswith("event:"):
             event = raw_line.split(":", 1)[1].strip()
-            if event in ("done", "error"):
+            if event == "done":
                 stream_status = event
+                break
+            if event == "error":
+                # TASK-67: truoc day break ngay o day nen dong `data:` mang thong diep loi ngay sau
+                # bi bo qua -> 0/32 luot loi (muc 9 + D15) khong ghi duoc thong diep nao.
+                stream_status = event
+                error_message = _read_sse_error_data(lines)
                 break
     sse_resp.close()
 
@@ -344,6 +368,7 @@ def send_chat_and_read_result(buyer_token: str, agent_id: str, prompt_text: str)
         "credit_charged": last.get("credit_charged"),
         "latency_ms": last.get("latency_ms"),
         "cost_upstream": cost_upstream,
+        "error": (error_message or "SSE error, khong co thong diep") if stream_status == "error" else None,
     }
 
 
@@ -367,7 +392,8 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
             status = "error"
     except Exception as e:  # noqa: BLE001 - ghi lại lượt lỗi, không để crash cả batch
         status = "error"
-        result = {"content": None, "model_used": None, "latency_ms": None, "cost_upstream": 0.0}
+        result = {"content": None, "model_used": None, "latency_ms": None, "cost_upstream": 0.0,
+                  "error": f"{type(e).__name__}: {e}"}
         print(f"  lỗi ở {prompt['id']} run {run_index}: {e}")
     elapsed_ms = (time.monotonic() - started) * 1000  # fallback khi backend không đo được (VD lỗi trước khi có response)
     # Dùng latency_ms backend tự đo (messages.latency_ms, chỉ tính thời gian gọi proxy) thay vì
@@ -395,6 +421,8 @@ def run_one(identity: dict[str, Any], prompt: dict[str, Any], proxy_name: str, r
         "passed": None,  # cham offline bang grade_results.py (D10)
         "metric": prompt.get("metric"),
         "status": status,
+        # TASK-67: thong diep loi (SSE `error` cua backend hoac exception phia runner). None neu thanh cong.
+        "error": result.get("error") if status == "error" else None,
     }
 
 

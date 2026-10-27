@@ -27,6 +27,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +36,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final ConversationService conversationService;
     private final MessageRepository messageRepository;
@@ -103,6 +107,10 @@ public class ChatService {
             result = proxyChatClient.complete(model, turns);
         } catch (ProxyChatException e) {
             int elapsed = (int) (System.currentTimeMillis() - start);
+            // TASK-67: thong diep loi truoc day chi di qua SSE roi mat - DB khong co cot nao giu
+            // no. Ghi log de luot loi luon de lai dau vet, ke ca khi khong ai doc SSE.
+            log.warn("Chat provider error: proxy={} model={} conversation={} elapsedMs={}: {}",
+                    activeProxy, model, conversationId, elapsed, e.getMessage());
             self.recordFailedTurn(conversationId, model, activeProxy, elapsed);
             emitError(emitter, "Chat provider error: " + e.getMessage());
             return;
