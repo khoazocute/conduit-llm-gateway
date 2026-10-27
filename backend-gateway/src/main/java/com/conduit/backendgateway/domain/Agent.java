@@ -39,6 +39,9 @@ public class Agent {
 
     private String introduction;
 
+    // System prompt rieng (D8). Chi tra ve cho chu agent va admin - xem AgentResponse.
+    private String instructions;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "agent_type", columnDefinition = "agent_type", nullable = false)
