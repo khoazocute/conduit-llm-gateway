@@ -1,0 +1,354 @@
+{
+    "root_group": {
+        "groups": {
+            "login": {
+                "path": "::login",
+                "id": "a7d10b3a6c9a385ee254f0dbc7f9c8c9",
+                "groups": {},
+                "checks": {
+                        "login 200": {
+                            "name": "login 200",
+                            "path": "::login::login 200",
+                            "id": "58317a2f976cb157cb59d169e89f0705",
+                            "passes": 1247,
+                            "fails": 0
+                        }
+                    },
+                "name": "login"
+            },
+            "browse": {
+                "path": "::browse",
+                "id": "c62c581410cd619dd49525ef1ffbe4b0",
+                "groups": {},
+                "checks": {
+                        "list 200": {
+                            "fails": 0,
+                            "name": "list 200",
+                            "path": "::browse::list 200",
+                            "id": "ef6de6bc5e81d94ebb92b10ff0b920b0",
+                            "passes": 6235
+                        },
+                        "detail 200": {
+                            "path": "::browse::detail 200",
+                            "id": "f82c9ded9459288c857a7a455d9fe569",
+                            "passes": 6235,
+                            "fails": 0,
+                            "name": "detail 200"
+                        },
+                        "detail hides instructions": {
+                            "id": "d00b463ff66ee192cc8ce718d491d100",
+                            "passes": 6235,
+                            "fails": 0,
+                            "name": "detail hides instructions",
+                            "path": "::browse::detail hides instructions"
+                        },
+                        "wallet 200": {
+                            "name": "wallet 200",
+                            "path": "::browse::wallet 200",
+                            "id": "32495e049be4e9063844707f8e69894e",
+                            "passes": 6235,
+                            "fails": 0
+                        }
+                    },
+                "name": "browse"
+            }
+        },
+        "checks": {},
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "metrics": {
+        "http_req_duration{endpoint:wallet}": {
+            "med": 37.628078,
+            "max": 965.851016,
+            "p(90)": 223.12443400000006,
+            "p(95)": 303.1125223999998,
+            "avg": 82.99148173809124,
+            "min": 4.361472,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_waiting": {
+            "med": 51.980469,
+            "max": 1189.748101,
+            "p(90)": 306.4651286,
+            "p(95)": 430.00828359999997,
+            "avg": 113.24121411524422,
+            "min": 3.942247
+        },
+        "http_req_duration{endpoint:get_agent}": {
+            "min": 4.985006,
+            "med": 50.57748,
+            "max": 1027.098517,
+            "p(90)": 267.35914940000004,
+            "p(95)": 363.8752779999999,
+            "avg": 101.512108255012,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "vus_max": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "checks": {
+            "passes": 26187,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "http_reqs": {
+            "rate": 167.55146013290317,
+            "count": 20053
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(95)": 431.36611939999995,
+            "avg": 114.17957634124659,
+            "min": 4.361472,
+            "med": 52.77511,
+            "max": 1190.188304,
+            "p(90)": 307.54333419999995
+        },
+        "vus": {
+            "value": 2,
+            "min": 0,
+            "max": 100
+        },
+        "http_req_receiving": {
+            "min": 0.012672,
+            "med": 0.135535,
+            "max": 157.138817,
+            "p(90)": 2.1981585999999997,
+            "p(95)": 4.990169599999998,
+            "avg": 0.9059465986635395
+        },
+        "data_sent": {
+            "rate": 53726.86755384084,
+            "count": 6430173
+        },
+        "http_req_duration{endpoint:login}": {
+            "min": 86.438146,
+            "med": 302.718163,
+            "max": 1190.188304,
+            "p(90)": 602.4012772,
+            "p(95)": 722.7345852000002,
+            "avg": 332.89032308019245,
+            "thresholds": {
+                "p(95)<1500": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0
+        },
+        "http_req_sending": {
+            "avg": 0.0324156273375555,
+            "min": 0.004242,
+            "med": 0.024513,
+            "max": 2.210484,
+            "p(90)": 0.05750879999999999,
+            "p(95)": 0.07114939999999993
+        },
+        "http_req_duration{endpoint:list_agents}": {
+            "min": 4.905791,
+            "med": 48.172202,
+            "max": 1181.510874,
+            "p(90)": 314.9034068,
+            "p(95)": 437.55707299999995,
+            "avg": 114.50040243111445,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_received": {
+            "count": 40129544,
+            "rate": 335299.64053595887
+        },
+        "iterations": {
+            "count": 1247,
+            "rate": 10.419222599398108
+        },
+        "http_req_duration": {
+            "p(95)": 431.36611939999995,
+            "avg": 114.17957634124659,
+            "min": 4.361472,
+            "med": 52.77511,
+            "max": 1190.188304,
+            "p(90)": 307.54333419999995
+        },
+        "iteration_duration": {
+            "min": 5212.974275,
+            "med": 6876.529652,
+            "max": 10619.475619,
+            "p(90)": 8074.665969,
+            "p(95)": 8413.6107868,
+            "avg": 6837.771022159575
+        },
+        "http_req_blocked": {
+            "max": 133.464864,
+            "p(90)": 0.0101316,
+            "p(95)": 0.013129199999999971,
+            "avg": 0.17564538837081675,
+            "min": 0.000972,
+            "med": 0.005603
+        },
+        "group_duration": {
+            "avg": 305.7154350331449,
+            "min": 17.101768,
+            "med": 187.6517605,
+            "max": 1477.521348,
+            "p(90)": 750.3288606000001,
+            "p(95)": 918.4900686499999
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 20053,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_connecting": {
+            "avg": 0.16647026459881326,
+            "min": 0,
+            "med": 0,
+            "max": 133.329608,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "setup_data": {
+        "agentIds": [
+            "06596513-b865-4a12-a33e-8e0d91c386eb",
+            "6bc72dae-ceec-4584-b1b8-0b8442290ba7",
+            "5358e87b-8156-4226-bc42-69b415246627",
+            "0d87a4f8-4688-4734-ad86-0cb2b0ace23e",
+            "eda0fa1f-d013-4c7b-bed5-e6f5be71abcf",
+            "b1bc2433-ac4f-4c79-a9a8-df0fbee952ca",
+            "89a1c373-05bb-43d5-ba0f-c760ffe20d09",
+            "3597c1a9-dafa-44c5-b098-88c1d8cf20f2",
+            "5f296f52-c6a8-4a58-964f-04e4e809019c",
+            "c8a97d05-6cb0-4b63-bc24-08951566a579",
+            "3d9c6e6c-0d29-41b9-ae75-7d1aec67ac22",
+            "85a527f9-3146-4662-a736-46f37c5ed422",
+            "c71acdcb-98f5-4f37-bf0d-84f8bd09b225",
+            "aee99240-e2d0-48ac-b9d8-088fb2615c47",
+            "5e68a522-85fb-4ccb-b213-3aefebf7b002",
+            "3bf11e23-f847-4a33-9d81-2dd3b4edb7b7",
+            "dde212a3-81a2-4d76-a3e5-38efb31057ed",
+            "4b854dfa-1f17-4ca9-961e-763fced73ff5",
+            "e65efc2c-03d3-44e1-9692-6c03b0ffd869"
+        ],
+        "users": [
+            "load.1793118548577.0@conduit.dev",
+            "load.1793118548577.1@conduit.dev",
+            "load.1793118548577.2@conduit.dev",
+            "load.1793118548577.3@conduit.dev",
+            "load.1793118548577.4@conduit.dev",
+            "load.1793118548577.5@conduit.dev",
+            "load.1793118548577.6@conduit.dev",
+            "load.1793118548577.7@conduit.dev",
+            "load.1793118548577.8@conduit.dev",
+            "load.1793118548577.9@conduit.dev",
+            "load.1793118548577.10@conduit.dev",
+            "load.1793118548577.11@conduit.dev",
+            "load.1793118548577.12@conduit.dev",
+            "load.1793118548577.13@conduit.dev",
+            "load.1793118548577.14@conduit.dev",
+            "load.1793118548577.15@conduit.dev",
+            "load.1793118548577.16@conduit.dev",
+            "load.1793118548577.17@conduit.dev",
+            "load.1793118548577.18@conduit.dev",
+            "load.1793118548577.19@conduit.dev",
+            "load.1793118548577.20@conduit.dev",
+            "load.1793118548577.21@conduit.dev",
+            "load.1793118548577.22@conduit.dev",
+            "load.1793118548577.23@conduit.dev",
+            "load.1793118548577.24@conduit.dev",
+            "load.1793118548577.25@conduit.dev",
+            "load.1793118548577.26@conduit.dev",
+            "load.1793118548577.27@conduit.dev",
+            "load.1793118548577.28@conduit.dev",
+            "load.1793118548577.29@conduit.dev",
+            "load.1793118548577.30@conduit.dev",
+            "load.1793118548577.31@conduit.dev",
+            "load.1793118548577.32@conduit.dev",
+            "load.1793118548577.33@conduit.dev",
+            "load.1793118548577.34@conduit.dev",
+            "load.1793118548577.35@conduit.dev",
+            "load.1793118548577.36@conduit.dev",
+            "load.1793118548577.37@conduit.dev",
+            "load.1793118548577.38@conduit.dev",
+            "load.1793118548577.39@conduit.dev",
+            "load.1793118548577.40@conduit.dev",
+            "load.1793118548577.41@conduit.dev",
+            "load.1793118548577.42@conduit.dev",
+            "load.1793118548577.43@conduit.dev",
+            "load.1793118548577.44@conduit.dev",
+            "load.1793118548577.45@conduit.dev",
+            "load.1793118548577.46@conduit.dev",
+            "load.1793118548577.47@conduit.dev",
+            "load.1793118548577.48@conduit.dev",
+            "load.1793118548577.49@conduit.dev",
+            "load.1793118548577.50@conduit.dev",
+            "load.1793118548577.51@conduit.dev",
+            "load.1793118548577.52@conduit.dev",
+            "load.1793118548577.53@conduit.dev",
+            "load.1793118548577.54@conduit.dev",
+            "load.1793118548577.55@conduit.dev",
+            "load.1793118548577.56@conduit.dev",
+            "load.1793118548577.57@conduit.dev",
+            "load.1793118548577.58@conduit.dev",
+            "load.1793118548577.59@conduit.dev",
+            "load.1793118548577.60@conduit.dev",
+            "load.1793118548577.61@conduit.dev",
+            "load.1793118548577.62@conduit.dev",
+            "load.1793118548577.63@conduit.dev",
+            "load.1793118548577.64@conduit.dev",
+            "load.1793118548577.65@conduit.dev",
+            "load.1793118548577.66@conduit.dev",
+            "load.1793118548577.67@conduit.dev",
+            "load.1793118548577.68@conduit.dev",
+            "load.1793118548577.69@conduit.dev",
+            "load.1793118548577.70@conduit.dev",
+            "load.1793118548577.71@conduit.dev",
+            "load.1793118548577.72@conduit.dev",
+            "load.1793118548577.73@conduit.dev",
+            "load.1793118548577.74@conduit.dev",
+            "load.1793118548577.75@conduit.dev",
+            "load.1793118548577.76@conduit.dev",
+            "load.1793118548577.77@conduit.dev",
+            "load.1793118548577.78@conduit.dev",
+            "load.1793118548577.79@conduit.dev",
+            "load.1793118548577.80@conduit.dev",
+            "load.1793118548577.81@conduit.dev",
+            "load.1793118548577.82@conduit.dev",
+            "load.1793118548577.83@conduit.dev",
+            "load.1793118548577.84@conduit.dev",
+            "load.1793118548577.85@conduit.dev",
+            "load.1793118548577.86@conduit.dev",
+            "load.1793118548577.87@conduit.dev",
+            "load.1793118548577.88@conduit.dev",
+            "load.1793118548577.89@conduit.dev",
+            "load.1793118548577.90@conduit.dev",
+            "load.1793118548577.91@conduit.dev",
+            "load.1793118548577.92@conduit.dev",
+            "load.1793118548577.93@conduit.dev",
+            "load.1793118548577.94@conduit.dev",
+            "load.1793118548577.95@conduit.dev",
+            "load.1793118548577.96@conduit.dev",
+            "load.1793118548577.97@conduit.dev",
+            "load.1793118548577.98@conduit.dev",
+            "load.1793118548577.99@conduit.dev"
+        ]
+    }
+}
