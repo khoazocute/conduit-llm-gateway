@@ -380,6 +380,35 @@ chiều. Nói cách khác: **proxy được chọn vì rẻ nhất lại là pro
 **Phép thử cũng xác nhận lại khoảng trống logging ở mục 9 một cách độc lập:** **0/32** lượt lỗi ghi
 được bất kỳ thông điệp lỗi nào. Hai lần quan sát riêng biệt cùng chỉ vào một chỗ.
 
+#### Chạy lại sau khi bật `fallbacks` cho LiteLLM (TASK-51, 27/10) — bổ sung, không sửa số ở trên
+
+Cùng script `fault_injection.sh`, cùng 5 item, cùng lỗi tiêm, 45 lượt, **$0,01923**. Thay đổi duy nhất
+so với lần chạy 20/10 nằm ở cấu hình tích hợp chính thức của LiteLLM (`proxy-configs/litellm/config.yaml`):
+
+- `fallbacks: conduit-pool → [claude-haiku, gemini-flash]`;
+- `retry_policy`: lỗi vĩnh viễn (xác thực, yêu cầu sai) **0 lần**, lỗi tạm thời giữ **2 lần** như D7.
+  Không có dòng này thì fallbacks vẫn chạy nhưng **chỉ sau ~46 s** (LiteLLM retry 401 tới hết timeout),
+  quá ngân sách 45 s của backend → người dùng vẫn nhận lỗi (đo tay 27/10: 47 s → 3,1 s).
+
+| Proxy | Phục hồi 20/10 | **Phục hồi 27/10** | Model trả lời thay | Độ trễ TB 27/10 |
+|---|---|---|---|---|
+| `litellm` | 0/15 (0%) | **15/15 (100%)** | `claude-haiku` ×15 | 4.398 ms |
+| `bifrost` | 13/15 (87%) | 14/15 (93%) | `claude-haiku` ×14 | 9.907 ms |
+| `portkey` | 0/15 (0%) | 0/15 (0%) | — | 486 ms |
+
+- **LiteLLM chuyển từ "thất bại chậm" sang phục hồi hoàn toàn.** Đề nghị "giữ `fallbacks`" ở mục giới
+  hạn giờ đã được thực hiện và kiểm chứng. Lưu ý: dự đoán P1 của D15 (đăng ký 20/10, cho cấu hình
+  *không* có fallbacks) **vẫn là SAI** — lần chạy này đo một cấu hình khác, không chấm lại P1.
+- **Bifrost**: lượt thất bại duy nhất lại là **đụng timeout 45 s** (`gsm8k_01` run 2, 45.015 ms) đúng như
+  20/10 — cơ chế failover hoạt động, đôi khi chậm hơn ngân sách thời gian.
+- **Portkey**: không đổi (cấu hình Design Y không có fallback), vẫn thất bại nhanh.
+- **Khoảng trống logging đã đóng (TASK-67):** **16/16** lượt lỗi lần này có thông điệp đọc được
+  (Portkey: `401 … Incorrect API key provided`; Bifrost: `timed out after 45s`), so với 0/32 trước đây.
+- Ghi chú D7: `retry_policy` là **lệch khỏi D7** cho cấu hình chính thức (D7 đặt cho thí nghiệm, đã
+  đóng); thí nghiệm 720 lượt không bị ảnh hưởng.
+
+Dữ liệu thô: `experiments/results/fault-injection-20261027-224918/`.
+
 **Giới hạn của chính phép thử này** (đăng ký trước, không phải thêm sau khi thấy số):
 
 1. Đây là **lỗi xác thực (401)**, không phải 5xx hay mất kết nối. Một proxy có thể **cố ý** không
@@ -505,7 +534,7 @@ Mục này để phiên làm việc sau không phải suy luận lại phần n�
 |---|---|---|
 | Đếm dòng `routing_decisions` theo `proxy_name` cho 19–20/10, so với 720 + 45 | Cần bật Docker/Postgres; `CLAUDE.md` mục 2 yêu cầu mọi lượt phải được ghi vào bảng này | Hùng |
 | Đối chiếu tổng chi phí (~$0,36) với dashboard OpenAI và Anthropic | Chỉ đọc được từ console của nhà cung cấp, không đọc được từ máy | Hùng |
-| Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | **Đã bật 27/10 (TASK-51)**, kèm `retry_policy` không retry lỗi 401 (không có thì fallback chỉ chạy sau ~46 s, quá timeout 45 s của backend). Kiểm tay 1 lượt: phục hồi qua `claude-haiku` trong 3,1 s. **Chưa chạy lại 45 lượt** — chờ Hùng đồng ý | Khoa |
+| Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | **Xong 27/10 (TASK-51)**: bật `fallbacks` + `retry_policy`, chạy lại 45 lượt ($0,019, Hùng đồng ý): LiteLLM phục hồi **15/15** (trước 0/15). Xem "Chạy lại sau khi bật `fallbacks`" ở mục Phép thử tiêm lỗi | Khoa |
 | Khoảng trống ghi log lỗi (mục 9): trường `error` rỗng ở 0/32 lượt lỗi | **Đã truy và sửa 27/10 (TASK-67)**: runner dừng đọc ở `event: error`, bỏ qua dòng `data:` mang thông điệp, và record không có trường `error`; backend chỉ gửi thông điệp qua SSE, không log. Không sửa số liệu cũ — 32 lượt đã chạy vẫn không có thông điệp | Khoa |
 
 Nếu đối chiếu chi phí với dashboard cho thấy chênh lệch, cách xử lý là **tính lại chi phí offline từ
