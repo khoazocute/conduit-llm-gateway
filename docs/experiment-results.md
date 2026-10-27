@@ -505,8 +505,8 @@ Mục này để phiên làm việc sau không phải suy luận lại phần n�
 |---|---|---|
 | Đếm dòng `routing_decisions` theo `proxy_name` cho 19–20/10, so với 720 + 45 | Cần bật Docker/Postgres; `CLAUDE.md` mục 2 yêu cầu mọi lượt phải được ghi vào bảng này | Hùng |
 | Đối chiếu tổng chi phí (~$0,36) với dashboard OpenAI và Anthropic | Chỉ đọc được từ console của nhà cung cấp, không đọc được từ máy | Hùng |
-| Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | Chưa bật; đây là phép kiểm hồi quy đã đăng ký | Hùng |
-| Khoảng trống ghi log lỗi (mục 9): trường `error` rỗng ở 0/32 lượt lỗi | Chưa truy nguyên nhân | Khoa |
+| Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | **Đã bật 27/10 (TASK-51)**, kèm `retry_policy` không retry lỗi 401 (không có thì fallback chỉ chạy sau ~46 s, quá timeout 45 s của backend). Kiểm tay 1 lượt: phục hồi qua `claude-haiku` trong 3,1 s. **Chưa chạy lại 45 lượt** — chờ Hùng đồng ý | Khoa |
+| Khoảng trống ghi log lỗi (mục 9): trường `error` rỗng ở 0/32 lượt lỗi | **Đã truy và sửa 27/10 (TASK-67)**: runner dừng đọc ở `event: error`, bỏ qua dòng `data:` mang thông điệp, và record không có trường `error`; backend chỉ gửi thông điệp qua SSE, không log. Không sửa số liệu cũ — 32 lượt đã chạy vẫn không có thông điệp | Khoa |
 
 Nếu đối chiếu chi phí với dashboard cho thấy chênh lệch, cách xử lý là **tính lại chi phí offline từ
 `model_pricing`**, không chạy lại thí nghiệm. Kết luận chỉ đổi nếu giá sai lệch hơn khoảng 4,5 lần
