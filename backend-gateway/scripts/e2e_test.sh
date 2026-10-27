@@ -14,6 +14,10 @@ USER_EMAIL="e2e.user.${RUN_ID}@conduit.dev"
 ADMIN_EMAIL="e2e.admin.${RUN_ID}@conduit.dev"
 OTHER_EMAIL="e2e.other.${RUN_ID}@conduit.dev"
 PASSWORD="password123"
+# Lenh psql de nang role (2 cho). Mac dinh qua docker-compose local; CI dat PSQL tro thang
+# vao service Postgres (khong co container conduit-postgres), vd:
+#   PSQL="psql postgresql://conduit:conduit@localhost:5432/conduit"
+PSQL="${PSQL:-docker exec conduit-postgres psql -U conduit -d conduit}"
 # D8: chuoi bi mat lam instructions cua agent; test kiem no KHONG lot ra cho nguoi mua/an danh.
 INSTR_SECRET="e2e-secret-instructions-${RUN_ID}"
 
@@ -154,7 +158,7 @@ split_body_code "$RESP"
 check "POST /agents as role=user -> 403" "403" "$CODE" "$BODY"
 
 # --- 9. Promote to creator via SQL, re-login ---
-docker exec conduit-postgres psql -U conduit -d conduit -c "UPDATE users SET role='creator' WHERE id='$USER_ID';" > /dev/null
+$PSQL -c "UPDATE users SET role='creator' WHERE id='$USER_ID';" > /dev/null
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$USER_EMAIL\",\"password\":\"$PASSWORD\"}")
@@ -196,7 +200,7 @@ RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$PASSWORD\",\"full_name\":\"E2E Admin\"}")
 split_body_code "$RESP"
 ADMIN_ID=$(json_get_nested_id "$BODY")
-docker exec conduit-postgres psql -U conduit -d conduit -c "UPDATE users SET role='admin' WHERE id='$ADMIN_ID';" > /dev/null
+$PSQL -c "UPDATE users SET role='admin' WHERE id='$ADMIN_ID';" > /dev/null
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$PASSWORD\"}")
