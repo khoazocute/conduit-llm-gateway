@@ -48,4 +48,23 @@ class HttpProxyChatClientTest {
         assertThat(HttpProxyChatClient.promptLength(List.of())).isZero();
         assertThat(HttpProxyChatClient.promptLength(List.of(new ChatTurn("assistant", "hi")))).isZero();
     }
+
+    @Test
+    void litellmPoolAnswerUsesTheDeploymentIdWhichIsTheAlias() {
+        assertThat(HttpProxyChatClient.litellmAlias("conduit-pool", "gpt-4o-mini")).isEqualTo("gpt-4o-mini");
+    }
+
+    @Test
+    void litellmFallbackAnswerUsesTheGroupEvenIfTheIdIsAHash() {
+        // TASK-51: sau fallback conduit-pool -> claude-haiku, nhom chinh la alias; id co the la
+        // hash tu sinh -> neu dung id thi khong tim duoc gia, cost = 0 trong im lang.
+        assertThat(HttpProxyChatClient.litellmAlias("claude-haiku", "2fde968bc1cf62ba"))
+                .isEqualTo("claude-haiku");
+    }
+
+    @Test
+    void litellmAliasIsNullWithoutHeaders() {
+        assertThat(HttpProxyChatClient.litellmAlias(null, null)).isNull();
+        assertThat(HttpProxyChatClient.litellmAlias("conduit-pool", "")).isNull();
+    }
 }

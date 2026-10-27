@@ -16,7 +16,13 @@ import org.springframework.stereotype.Component;
 @Setter
 public class ChatProxyProperties {
     private String activeProxy = "litellm";
-    private String defaultModel = "gpt-4o-mini";
+    // TASK-51: rong = dung mac dinh theo proxy (proxyDefaultModels). Dat CHAT_DEFAULT_MODEL thi
+    // gia tri do thang moi proxy - dry_run.sh dung de tai lap dung thi nghiem.
+    private String defaultModel = "";
+    // TASK-51: chat thuong qua LiteLLM phai vao nhom conduit-pool (cost-based-routing +
+    // fallbacks). Bifrost/Portkey khong co alias do -> khong khai thi roi ve FALLBACK_MODEL.
+    private Map<String, String> proxyDefaultModels = Map.of();
+    static final String FALLBACK_MODEL = "gpt-4o-mini";
     // D7: gioi han sinh token, gui kem moi request. <= 0 thi khong gui.
     private int maxTokens = 1024;
     // D7: greedy decoding - protocol pass@1 cua HumanEval yeu cau temperature 0, va
@@ -32,6 +38,13 @@ public class ChatProxyProperties {
     private Map<String, List<String>> proxyFallbackChains = Map.of();
     // H2/H3: chi doc khi activeProxy=portkey - xem HttpProxyChatClient.
     private String portkeyConfigPath = "../proxy-configs/portkey/config.json";
+
+    public String effectiveDefaultModel() {
+        if (defaultModel != null && !defaultModel.isBlank()) {
+            return defaultModel;
+        }
+        return proxyDefaultModels.getOrDefault(activeProxy, FALLBACK_MODEL);
+    }
 
     public String activeBaseUrl() {
         return proxyBaseUrls.get(activeProxy);

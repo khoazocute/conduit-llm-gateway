@@ -48,6 +48,12 @@ set -a
 source <(tr -d '\r' < "$ROOT_DIR/.env")
 set +a
 
+# May remap port (docker-compose.override.yml, VD may Khoa: Bifrost 18080 vi 8080 la Tomcat) phai
+# giu file override khi tao lai container, neu khong Bifrost bi dung o cong goc va khong len duoc.
+# `-f` tuong minh lam docker compose BO QUA override tu dong, nen phai ghep tay.
+BASE_COMPOSE=(-f docker-compose.yml)
+[ -f "$ROOT_DIR/docker-compose.override.yml" ] && BASE_COMPOSE+=(-f docker-compose.override.yml)
+
 # Giu lai key THAT de con tra ve dung gia tri cho nhanh nao can
 REAL_OPENAI_KEY="$OPENAI_API_KEY"
 
@@ -55,9 +61,9 @@ restore() {
   echo ""
   echo "=== Hoan tac: dung 3 container ve cau hinh that ==="
   stop_backend
-  (cd "$ROOT_DIR" && docker compose -f docker-compose.yml up -d --force-recreate litellm bifrost >/dev/null 2>&1) \
+  (cd "$ROOT_DIR" && docker compose "${BASE_COMPOSE[@]}" up -d --force-recreate litellm bifrost >/dev/null 2>&1) \
     && echo "  litellm + bifrost da quay ve doc .env" \
-    || echo "  !! HOAN TAC LOI - chay tay: docker compose -f docker-compose.yml up -d --force-recreate litellm bifrost" >&2
+    || echo "  !! HOAN TAC LOI - chay tay: docker compose ${BASE_COMPOSE[*]} up -d --force-recreate litellm bifrost" >&2
 }
 trap restore EXIT
 
@@ -80,7 +86,7 @@ stop_backend() {
 }
 
 echo "=== Bat loi: OPENAI_API_KEY khong hop le trong container litellm + bifrost ==="
-(cd "$ROOT_DIR" && docker compose -f docker-compose.yml -f docker-compose.faultinject.yml \
+(cd "$ROOT_DIR" && docker compose "${BASE_COMPOSE[@]}" -f docker-compose.faultinject.yml \
    up -d --force-recreate litellm bifrost) || { echo "Khong bat duoc loi" >&2; exit 1; }
 
 # Cho bifrost healthy lai (no co healthcheck); litellm chi can cong 4000 tra loi.

@@ -101,3 +101,25 @@ router_settings:
   # D7 (docs/roadmap.md mục 4): giống hệt 3 proxy.
   num_retries: 2
   timeout: 45
+  # TASK-51 (docs/tasks/2026-10-19/tasks.md), bat buoc sau phep thu D15: retry cua model group
+  # KHONG thay duoc fallbacks - khi key OpenAI hong, conduit-pool retry lai deployment OpenAI va
+  # that bai sau ~40 s (0/15 phuc hoi, experiment-results.md "Phep thu tiem loi"). Fallbacks chuyen
+  # sang model group KHAC nha cung cap, uu tien claude-haiku (Gemini ban mien phi hay 503, xem D15:
+  # Bifrost phuc hoi 12/13 luot qua claude-haiku).
+  # ⚠️ Model group fallback tra header x-litellm-model-id dang hash (deployment rieng le khong dat
+  # model_info.id) -> HttpProxyChatClient doc x-litellm-model-group de lay alias, neu khong se ghi
+  # model la chuoi hash, khong tim duoc gia, cost = 0 TRONG IM LANG.
+  fallbacks:
+    - conduit-pool: ["claude-haiku", "gemini-flash"]
+  # TASK-51: do 27/10 voi key OpenAI hong - fallbacks CO chay (claude-haiku tra loi trong 0,7 s)
+  # nhung chi sau ~46 s, vi LiteLLM retry loi 401 cho toi khi cham timeout 45 s. Backend cung
+  # cat ca luot o 45 s (HttpProxyChatClient.REQUEST_TIMEOUT) -> nguoi dung van nhan loi. Loi xac
+  # thuc/yeu cau sai la loi VINH VIEN, retry khong bao gio thanh cong -> 0 lan, chuyen ngay sang
+  # fallbacks. Loi TAM THOI (timeout, rate limit, 5xx) giu 2 lan nhu D7.
+  retry_policy:
+    AuthenticationErrorRetries: 0
+    BadRequestErrorRetries: 0
+    ContentPolicyViolationErrorRetries: 0
+    TimeoutErrorRetries: 2
+    RateLimitErrorRetries: 2
+    InternalServerErrorRetries: 2

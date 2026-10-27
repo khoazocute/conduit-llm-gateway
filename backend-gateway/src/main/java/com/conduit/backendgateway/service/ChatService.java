@@ -98,7 +98,7 @@ public class ChatService {
                 .map(m -> new ChatTurn(m.getRole().name(), m.getContent()))
                 .toList();
 
-        String model = chatProxyProperties.getDefaultModel();
+        String model = chatProxyProperties.effectiveDefaultModel();
         RoutingProxy activeProxy = RoutingProxy.valueOf(chatProxyProperties.getActiveProxy());
 
         long start = System.currentTimeMillis();
