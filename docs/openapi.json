@@ -72,7 +72,8 @@
         "properties": {
           "email": { "type": "string", "format": "email" },
           "password": { "type": "string", "minLength": 8 },
-          "full_name": { "type": "string" }
+          "full_name": { "type": "string" },
+          "role": { "type": "string", "enum": ["user", "creator"], "default": "user", "description": "D8: vai trò tự chọn khi đăng ký. Bỏ trống = user. 'admin' không được tự chọn (400 validation_failed, details.role)." }
         }
       },
       "LoginRequest": {

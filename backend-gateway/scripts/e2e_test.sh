@@ -70,6 +70,37 @@ USER_ACCESS=$(json_get "$BODY" "access_token")
 [ -n "$(echo "$BODY" | grep -o '"created_at":"[^"]*"')" ] && check "register: created_at populated (not null)" "true" "true" "" || check "register: created_at populated (not null)" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"refresh_token"' && check "register: no refresh_token leaked in JSON body" "absent" "present" "$BODY" || check "register: no refresh_token leaked in JSON body" "absent" "absent" ""
 
+echo "$BODY" | grep -q '"role":"user"' && check "register without role -> default role=user" "true" "true" "" || check "register without role -> default role=user" "true" "false" "$BODY"
+
+# --- 1b. D8 (2026-10-22): choose role at sign-up ---
+# Buoc 9 ben duoi van nang role bang SQL vi cac buoc sau dung chinh tai khoan do, va
+# script thi nghiem (run_experiment.py, e2e_workflow_test.sh) van dung duong SQL.
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.selfcreator.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Self Creator\",\"role\":\"creator\"}")
+split_body_code "$RESP"
+check "register with role=creator -> 201" "201" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"role":"creator"' && check "register with role=creator -> role=creator" "true" "true" "" || check "register with role=creator -> role=creator" "true" "false" "$BODY"
+SELF_CREATOR_ACCESS=$(json_get "$BODY" "access_token")
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/agents" \
+  -H "Authorization: Bearer $SELF_CREATOR_ACCESS" -H "Content-Type: application/json" \
+  -d '{"title":"Self-signup Creator Agent","price_vnd":1000,"default_credit_granted":10}')
+split_body_code "$RESP"
+check "self-registered creator can POST /agents -> 201" "201" "$CODE" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.selfadmin.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Self Admin\",\"role\":\"admin\"}")
+split_body_code "$RESP"
+check "register with role=admin -> 400 (admin not self-selectable)" "400" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"role"' && check "role=admin rejection names the role field" "true" "true" "" || check "role=admin rejection names the role field" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.badrole.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Bad Role\",\"role\":\"superuser\"}")
+split_body_code "$RESP"
+check "register with unknown role -> 400" "400" "$CODE" "$BODY"
+
 # --- 2. Duplicate register -> 409 ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -H "Content-Type: application/json" \

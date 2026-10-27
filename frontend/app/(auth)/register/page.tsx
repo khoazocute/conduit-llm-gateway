@@ -6,6 +6,13 @@ import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { ApiClientError } from "@/lib/api/client";
 import { homePathForRole } from "@/lib/roles";
+import type { SignupRole } from "@/lib/api/types";
+
+// D8 (2026-10-22): pick the role at sign-up. "admin" is never offered; the backend rejects it with 400.
+const ROLE_OPTIONS: { value: SignupRole; label: string; hint: string }[] = [
+  { value: "user", label: "Buy agents", hint: "Browse the marketplace, buy agents and chat with them." },
+  { value: "creator", label: "Create agents", hint: "Publish your own agents. Each one is reviewed by an admin before it goes live." },
+];
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -13,6 +20,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<SignupRole>("user");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +31,7 @@ export default function RegisterPage() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-      const user = await register(email, password, fullName);
+      const user = await register(email, password, fullName, role);
       router.push(homePathForRole(user.role));
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -80,6 +88,28 @@ export default function RegisterPage() {
             />
             {fieldErrors.password && (
               <p style={{ color: "var(--danger)", fontSize: "var(--t-1)", marginTop: 4 }}>{fieldErrors.password}</p>
+            )}
+          </div>
+          <div>
+            <div className="label">I want to</div>
+            <div className="seg" role="group" aria-label="Account type">
+              {ROLE_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  aria-pressed={role === o.value}
+                  className={role === o.value ? "is-active" : ""}
+                  onClick={() => setRole(o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <p className="faint" style={{ fontSize: "var(--t-1)", marginTop: 6 }}>
+              {ROLE_OPTIONS.find((o) => o.value === role)?.hint}
+            </p>
+            {fieldErrors.role && (
+              <p style={{ color: "var(--danger)", fontSize: "var(--t-1)", marginTop: 4 }}>{fieldErrors.role}</p>
             )}
           </div>
           <button type="submit" className="btn btn-primary" disabled={submitting} style={{ marginTop: 6, justifyContent: "center" }}>

@@ -1,4 +1,7 @@
 export type UserRole = "admin" | "creator" | "user";
+
+/** Role a person may pick at sign-up (D8). "admin" is never self-selectable. */
+export type SignupRole = Exclude<UserRole, "admin">;
 export type UserStatus = "active" | "banned";
 export type AgentType = "text";
 export type AgentStatus =
