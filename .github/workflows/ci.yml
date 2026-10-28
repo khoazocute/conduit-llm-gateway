@@ -118,4 +118,8 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      # Next.js sinh cac kieu toan cuc (vd. LayoutProps) vao .next/types. Tren may dev thu muc nay
+      # co san nho dev server, nhung CI clone moi tinh -> tsc bao "Cannot find name 'LayoutProps'"
+      # (lan chay CI dau tien 28/10). Sinh truoc roi moi typecheck.
+      - run: npx next typegen
       - run: npx tsc --noEmit

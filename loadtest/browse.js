@@ -3,7 +3,7 @@
 // trong LiteLLM de khong ton phi (docs/tasks/2026-10-19/tasks.md muc 6).
 //
 // Chay (backend o localhost:8081, can Docker):
-//   docker run --rm -i -v "$PWD/scripts/load-test:/scripts" grafana/k6:0.54.0 run \
+//   docker run --rm -i -v "$PWD/loadtest:/scripts" grafana/k6:0.54.0 run \
 //     -e BASE=http://host.docker.internal:8081/api /scripts/browse.js
 //
 // Moi VU dung tai khoan RIENG (tao trong setup): Conduit giu 1 phien refresh/user, nen dung chung
