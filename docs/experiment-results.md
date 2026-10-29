@@ -528,12 +528,12 @@ Mục này để phiên làm việc sau không phải suy luận lại phần n�
 | Hai công cụ phân tích khớp nhau | `decision_rule.py` và `export_tables.py` cùng p95 trên cả 3 proxy |
 | Test tự động của phần thí nghiệm | 68/68 pass |
 | `routing_decisions` cho mọi lượt chạy trên máy Hùng (TASK-46, 27/10) | **585/585**: đối chiếu từng `message_id` trong file kết quả với DB. Nửa Hùng 19/10: 180/180. Đợt mở rộng D14: 358/360 khớp theo `message_id`; 2 lượt còn lại là 2 lượt lỗi của Bifrost (`ifeval_16`, `ifeval_17` run1) **thiếu `message_id` trong file kết quả** nhưng **có dòng trong DB** (Bifrost 07:00–08:00 UTC ngày 20/10 đủ 120 dòng). Phép thử sự cố D15: 45/45 |
+| `routing_decisions` cho 180 lượt nửa Khoa (19/10, chạy trên máy Khoa; 29/10) | **180/180**: đối chiếu từng `message_id` trong 3 file `run_{litellm,bifrost,portkey}_20261019T13*.json` với DB máy Khoa; **60/60/60** theo proxy, 0 lượt thiếu `message_id`, 0 lượt lệch nhãn `proxy_name` |
 
 **Chưa kiểm, cần làm (không chặn kết luận):**
 
 | Mục | Vì sao còn mở | Ai |
 |---|---|---|
-| Đếm dòng `routing_decisions` cho **180 lượt nửa của Khoa (19/10)** | Các lượt này chạy trên máy Khoa nên dòng nằm trong DB của Khoa. Kỳ vọng 60 dòng mỗi proxy ngày 19/10 | Khoa |
 | Đối chiếu tổng chi phí (~$0,36) với dashboard OpenAI và Anthropic | Chỉ đọc được từ console của nhà cung cấp, không đọc được từ máy | Hùng |
 | Bật `fallbacks` cho LiteLLM rồi chạy lại phép thử sự cố (D15, 45 lượt, ~$0,01) | **Xong 27/10 (TASK-51)**: bật `fallbacks` + `retry_policy`, chạy lại 45 lượt ($0,019, Hùng đồng ý): LiteLLM phục hồi **15/15** (trước 0/15). Xem "Chạy lại sau khi bật `fallbacks`" ở mục Phép thử tiêm lỗi | Khoa |
 | Khoảng trống ghi log lỗi (mục 9): trường `error` rỗng ở 0/32 lượt lỗi | **Đã truy và sửa 27/10 (TASK-67)**: runner dừng đọc ở `event: error`, bỏ qua dòng `data:` mang thông điệp, và record không có trường `error`; backend chỉ gửi thông điệp qua SSE, không log. Không sửa số liệu cũ — 32 lượt đã chạy vẫn không có thông điệp **Còn mở (Hùng ghi 28/10):** 2 lượt lỗi của đợt mở rộng D14 **thiếu cả `message_id`** trong file kết quả — bản sửa TASK-67 chưa xử lý trường hợp lỗi xảy ra ở phía runner trước khi có tin nhắn | Khoa |

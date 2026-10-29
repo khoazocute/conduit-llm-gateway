@@ -1,7 +1,7 @@
 # Log tuần 19/10 → hạn 29/10 — Khoa
 
 Theo `docs/tasks/2026-10-19/tasks.md`. Pull `lhung` (beaa0da) ngày 27/10, làm ngày 27/10.
-`./mvnw test` **51/51**, test Python **72/72**.
+`./mvnw test` **51/51** (sau merge `lhung` + TASK-66: **89/89**), test Python **72/72**.
 
 ## Việc đã làm
 
@@ -12,7 +12,7 @@ Theo `docs/tasks/2026-10-19/tasks.md`. Pull `lhung` (beaa0da) ngày 27/10, làm 
 | **TASK-51** LiteLLM chính thức | ✅ **Phép thử sự cố chạy lại 27/10 (Hùng đồng ý): LiteLLM phục hồi 15/15** (20/10: 0/15), Bifrost 14/15, Portkey 0/15; 45 lượt, $0,019; ghi bổ sung vào `experiment-results.md`, không sửa số cũ. (1) Mặc định theo proxy: `default-model` để trống, `proxy-default-models: {litellm: conduit-pool}`; `CHAT_DEFAULT_MODEL` vẫn thắng nên `dry_run.sh` tái lập được thí nghiệm; Bifrost/Portkey giữ `gpt-4o-mini`. e2e **43/43**. (2) `fallbacks: conduit-pool → [claude-haiku, gemini-flash]`. (3) Phát hiện A. (4) Backend đọc `x-litellm-model-group` sau fallback (phát hiện B) | `config.yaml`, `application.yml`, `ChatProxyProperties.java`, `HttpProxyChatClient.java`, 5 test mới, `fault_injection.sh` | Duyệt `retry_policy` (đụng D7, xem phát hiện A) |
 | **TASK-53** test Purchase/Credit/Chat | ✅ 25 test, mock, không gọi LLM. Chat: lượt lỗi không trừ credit; trừ đúng `ceil` **theo từng dòng giá** (101 vào + 51 ra × 1,5 = 152 + 77 = **229**); không đủ credit thì không ghi usage/routing; model thiếu giá → `cost_upstream = 0` (ghi lại hành vi hiện tại); retry khi xung đột ví. Credit: 9 ca gồm retry 3 lần. Purchase: 10 ca gồm webhook gọi lại không cộng credit lần 2, chữ ký sai/thiếu/body bị sửa đều bị từ chối | `ChatServiceTest`, `CreditServiceTest`, `PurchaseServiceTest` | — |
 | **TASK-56** load test, phần chat | ✅ k6 qua Docker, alias giả `conduit-mock` (`mock_response`, $0). **Nhiều người dùng: 23.640 lượt, 0 lỗi, p95 211 ms.** Tìm ra và sửa phát hiện C | `loadtest/chat.js`, `loadtest/mock-pricing.sql`, `loadtest/results/`, `docs/load-test.md` | Thêm phần của Hùng vào `docs/load-test.md` mục 2 |
-| **TASK-66** system prompt | ⛔ **Chặn bởi TASK-65a** (chưa có trên GitHub tới 27/10). Đã làm phần không phụ thuộc: `ChatTurn.withSystemPrompt()` + 3 test (rỗng → request y hệt; có → lượt đầu là system; `promptLength()` không đổi kể cả instructions 5.000 ký tự). Còn 1 dòng nối vào `ChatService` + kiểm tay ≤ 10 lượt | `ChatTurn.java`, `ChatTurnTest.java` | Đẩy TASK-65a |
+| **TASK-66** system prompt | ✅ **Xong 29/10** sau khi merge TASK-65a của Hùng. `ChatService` lấy `instructions` của agent, đặt thành lượt `system` đầu danh sách qua `ChatTurn.withSystemPrompt`; rỗng/NULL → request y hệt lúc đo. 5 test (3 helper + 2 `ChatServiceTest`). **Kiểm tay qua app, 2 lượt `gpt-4o-mini`:** agent có `instructions` "Always answer with exactly one word, written in UPPERCASE Vietnamese." trả lời "What is 2 + 2?" bằng **`BỐN`**; agent không có → `2 + 2 equals 4.`. `instructions` tốn token **mỗi lượt**: 15 → 33 token vào, credit người dùng 35 → 55 | `ChatTurn.java`, `ChatTurnTest.java`, `ChatService.java`, `ChatServiceTest.java` | — |
 
 ## Phát hiện quan trọng
 
@@ -67,16 +67,17 @@ Tomcat) Bifrost được tạo lại ở 8080 và không lên. Đã sửa: tự 
 
 ## Cần Hùng
 
-1. **Đẩy TASK-65a** (V3 + `Agent.instructions`) — đang chặn TASK-66. Khi có, Khoa nối 1 dòng + kiểm tay.
-2. **Duyệt `retry_policy`** (phát hiện A) — lệch D7 cho cấu hình chính thức, không đụng thí nghiệm.
-3. Viết phần của Hùng vào `docs/load-test.md` mục 2.
+_Hùng đã làm hết (28/10):_ duyệt `retry_policy` → **D16** trong `roadmap.md`; điền mục 2 của
+`docs/load-test.md`; đẩy TASK-65a; đồng ý phép thử 45 lượt.
 
 ## Còn thiếu
 
-- TASK-66: nối `withSystemPrompt` vào `ChatService` + kiểm tay ≤ 10 lượt (sau 65a).
-- Review chéo TASK-64/65/52/55 của Hùng: **chưa có gì để review** (không có commit nào sau 22/10).
-- Lượt chat thua xung đột ví quá 8 lần vẫn mất dấu chi phí LLM (chỉ log `WARN`); khóa bi quan khi
-  trừ credit sẽ chặn hẳn — để bàn, không làm trong tuần này.
+- Lượt chat thua xung đột ví quá 8 lần vẫn mất dấu chi phí LLM (chỉ log `WARN`). **Hùng đề nghị (28/10):**
+  khi bỏ cuộc vẫn ghi `usage_logs status=error` kèm `cost_upstream`; lâu dài: khóa bi quan. **Đồng ý, chưa làm.**
+- `Thread.sleep` trong vòng retry trừ credit chạy trên luồng xử lý request (tối đa vài trăm ms/lần) — ghi
+  nhận là giới hạn (Hùng nhắc).
+- TASK-67 còn 2 chỗ: SSE đứt giữa chừng → `error` trống; lỗi phía runner → record thiếu `message_id`
+  (2 lượt D14, Hùng ghi). Chưa sửa.
 
 ## Bổ sung 27–28/10
 
@@ -94,3 +95,56 @@ Tomcat) Bifrost được tạo lại ở 8080 và không lên. Đã sửa: tự 
 - **Đính chính:** số liệu TASK-54 khi bỏ `@Version` đã sửa trong bảng trên. Commit `f39e96a` vẫn ghi
   "22 transactions recorded, balance dropped by 14" — **sai**; đúng là 24 giao dịch được ghi, số dư chỉ
   giảm như 2 lượt.
+
+## Bổ sung 29/10
+
+- **Merge `lhung`** (6766b32) vào `dangkhoa`: 2 xung đột tài liệu giải theo hướng dẫn của Hùng
+  (`load-test.md` lấy bản `lhung` — mục 1 giống từng ký tự bản của Khoa; `experiment-results.md` mục 13
+  giữ cả hai). Sau merge: `./mvnw test` 87/87, Python 72/72, Flyway áp V3.
+- **TASK-66 xong** (xem bảng trên).
+- **Đếm `routing_decisions` cho 180 lượt nửa Khoa 19/10** (Hùng nhờ): **180/180**, 60/60/60 theo proxy,
+  đối chiếu từng `message_id` với DB máy Khoa. Ghi vào `experiment-results.md` mục 13 (bảng "Đã kiểm").
+- **Review TASK-64/65/52/55 của Hùng:** đạt cả 4, ghi ở cuối `log-hung.md`.
+- Chi phí có phí thêm: 2 lượt (TASK-66), ~$0,00001.
+
+## Review — Hùng (28/10) — chép từ `log-hung.md`: TASK-51, 53, 54, 56 (chat), 66 (phần đã làm), 67 của Khoa
+
+> Ghi ở đây thay vì cuối `log-khoa.md` vì file đó chỉ có trên `dangkhoa`; tạo nó bên `lhung` sẽ thêm
+> một xung đột merge. Khoa chép sang log của mình khi merge nếu muốn.
+
+**Cách review:** merge `lhung` + `origin/dangkhoa` trên nhánh tạm ở máy Hùng (đã xóa sau), **tự chạy lại**:
+
+| Kiểm | Kết quả |
+|---|---|
+| `./mvnw test` trên code đã merge | **87/87** (50 của Hùng + 37 của Khoa) |
+| `python -m unittest discover -s experiments/tests` | **72/72** |
+| `e2e_test.sh` trên code đã merge | **66/66** — thay đổi chat của Khoa không làm hỏng Auth/Agent |
+| **TASK-54, phép thử ngược:** tạm bỏ `@Version` ở `CreditWallet.java:38` | **2/2 FAIL, `expected 832, was 986`** — đúng số Khoa báo. Đã hoàn tác |
+| TASK-51: `application.yml` bind `litellm → conduit-pool` | Có `ChatProxyPropertiesBindingTest` nạp file thật; `CHAT_DEFAULT_MODEL` vẫn thắng nên `dry_run.sh` tái lập được thí nghiệm |
+| Merge thử 2 nhánh | Code sạch; chỉ 2 file tài liệu xung đột (xem cuối) |
+
+**Kết luận: đạt cả 6 task.** Phát hiện C (lỗi tiền khi một người dùng chat song song) là phát hiện có
+giá trị nhất tuần, và bài học "test đồng thời phải đi qua đúng đường gọi thật" nên đưa vào báo cáo.
+
+**Nhận xét, không chặn merge:**
+
+1. **Phát hiện C, phần còn hở (Khoa đã tự ghi):** quá 8 lần xung đột thì LLM đã gọi (tốn tiền nhà cung
+   cấp) nhưng chỉ còn một dòng `WARN`. Đề nghị tối thiểu: khi bỏ cuộc, **vẫn ghi một dòng `usage_logs`
+   `status=error` kèm `cost_upstream`** (CLAUDE.md mục 5: chi phí không tính cho user nhưng phải "ghi log
+   riêng"), để chi phí không biến mất khỏi DB. Lâu dài: khóa bi quan (`PESSIMISTIC_WRITE`) trên ví ở
+   đường trừ credit của chat sẽ bỏ hẳn vòng retry.
+2. `Thread.sleep` trong luồng xử lý request: chấp nhận được ở quy mô khóa luận (tối đa vài trăm ms mỗi
+   lần), nhưng nên ghi vào giới hạn.
+3. Bảng "Chạy lại 27/10" trong `experiment-results.md`: đã đủ trung thực (ghi rõ P1 vẫn sai, chỉ đổi cấu
+   hình LiteLLM). D16 giờ ghi thêm lần chạy lại **không phải** so sánh lại 3 proxy cùng điều kiện.
+4. TASK-67: chỗ còn sót (SSE đứt giữa chừng, không `done` không `error` → `error` trống) — đồng ý để sau.
+5. Commit `f39e96a` ghi sai số liệu khi bỏ `@Version`; Khoa đã đính chính trong log. Không cần sửa
+   lịch sử git.
+
+**Hướng dẫn merge cho Khoa (PR của Hùng merge trước):** sau khi merge `main` vào `dangkhoa`:
+- `docs/load-test.md` (add/add): **lấy nguyên bản của `main`** — đó là file của Khoa với mục 2 đã điền,
+  99 dòng đầu trùng khớp từng ký tự với bản của Khoa.
+- `docs/experiment-results.md` mục 13: **giữ cả hai**. Lấy các dòng của Khoa (TASK-51, TASK-67 đã xong),
+  dòng "585/585" (bảng "Đã kiểm") và dòng mới "Đếm … 180 lượt nửa của Khoa" của Hùng; **bỏ** dòng cũ
+  "Đếm dòng `routing_decisions` theo `proxy_name` cho 19–20/10 … Hùng" vì phần của Hùng đã xong.
+- Load test của Hùng đã chuyển sang `loadtest/` cho cùng chỗ với `chat.js`.
