@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api/client";
-import type { AuthResponse, User } from "@/lib/api/types";
+import type { AuthResponse, SignupRole, User } from "@/lib/api/types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -11,7 +11,7 @@ interface AuthContextValue {
   user: User | null;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string, fullName: string) => Promise<User>;
+  register: (email: string, password: string, fullName: string, role?: SignupRole) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -56,11 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const register = useCallback(
-    async (email: string, password: string, fullName: string) => {
+    async (email: string, password: string, fullName: string, role: SignupRole = "user") => {
       const data = await apiFetch<AuthResponse>("/auth/register", {
         method: "POST",
         withCredentials: true,
-        body: { email, password, full_name: fullName },
+        body: { email, password, full_name: fullName, role },
       });
       applyAuthResponse(data);
       return data.user;

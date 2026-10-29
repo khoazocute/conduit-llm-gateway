@@ -99,4 +99,53 @@ Dữ liệu thô: `loadtest/results/2026-10-27-*.txt` (bản in đầy đủ c�
 
 ## 2. Phần đăng nhập, danh sách agent, ví (Hùng)
 
-_(Hùng điền.)_
+Điền 27/10. Kịch bản: `loadtest/browse.js`. **Không gọi LLM, không tốn phí.**
+
+Mỗi người dùng ảo có **tài khoản riêng** (tạo trong `setup`, vì Conduit giữ 1 phiên refresh mỗi
+user), đăng nhập, rồi duyệt 5 lượt: danh sách agent → chi tiết một agent ngẫu nhiên → ví, nghỉ 1 giây
+giữa các lượt. Tải tăng dần 30 giây, giữ 1 phút, giảm 15 giây.
+
+**Ngưỡng đạt (đặt trước khi chạy, trong `options.thresholds`):** request lỗi < 1%; p95 < 500 ms cho
+danh sách agent, chi tiết agent và ví; p95 < 1.500 ms cho đăng nhập (băm BCrypt nên chậm hơn có chủ
+đích); > 99% check đạt. Một check riêng xác nhận **trang chi tiết agent không bao giờ trả
+`instructions`** cho người không phải chủ agent (D8), kể cả khi có tải.
+
+### Kết quả
+
+| | 20 người dùng ảo | 100 người dùng ảo |
+|---|---|---|
+| Tổng request | 5.157 | 20.053 |
+| Thông lượng | 46,5 request/giây | 167,6 request/giây |
+| Request lỗi | **0%** | **0%** |
+| Check đạt (gồm "không lộ `instructions`") | 100% (6.741) | 100% (26.187) |
+| p95 danh sách agent | 23 ms | **438 ms** (ngưỡng 500) |
+| p95 chi tiết agent | 25 ms | 364 ms |
+| p95 ví | 20 ms | 303 ms |
+| p95 đăng nhập | 151 ms | 723 ms |
+| Ngưỡng | **Đạt hết** | **Đạt hết**, danh sách agent sát ngưỡng |
+
+- Không có request lỗi nào ở cả hai mức, và D8 vẫn đúng dưới tải.
+- Từ 20 lên 100 người dùng, thông lượng tăng 3,6 lần nhưng p95 của ba endpoint đọc tăng **15–19
+  lần** (đăng nhập tăng khoảng 5 lần, vì vốn đã chậm do BCrypt). Hệ thống bắt đầu chậm rõ ở khoảng
+  100 người dùng đồng thời **trên máy này**; danh sách agent là chỗ sát ngưỡng nhất.
+- Kịch bản đăng nhập lại mỗi lượt lặp, nên con số đăng nhập là mức bất lợi so với người dùng thật.
+
+### Giới hạn
+
+- Chạy trên **laptop**, backend + Postgres + Redis + k6 cùng một máy. Chỉ dùng để so sánh giữa các
+  mức tải, không đại diện cho môi trường deploy.
+- `setup` tạo 120 tài khoản `load.*@conduit.dev` trong DB local khi chạy đủ hai mức. Không đụng bảng
+  `routing_decisions`.
+
+### Cách chạy
+
+Cần Docker và backend ở `localhost:8081`; nên chạy `e2e_test.sh` trước để có agent published.
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD/loadtest:/scripts" grafana/k6:0.54.0 run \
+  -e BASE=http://host.docker.internal:8081/api -e VUS=20 \
+  --summary-export=/scripts/results/browse-summary.json /scripts/browse.js
+```
+
+`MSYS_NO_PATHCONV=1` chỉ cần trên git-bash Windows. Số liệu thô:
+`loadtest/results/2026-10-27-hung-browse-20vu.json`, `loadtest/results/2026-10-27-hung-browse-100vu.json`.

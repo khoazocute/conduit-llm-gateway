@@ -7,6 +7,7 @@ import type { Agent } from "@/lib/api/types";
 export interface AgentFormValues {
   title: string;
   introduction: string;
+  instructions: string;
   price_vnd: number;
   default_credit_granted: number;
 }
@@ -26,6 +27,7 @@ function formatVnd(amount: number) {
 export function AgentForm({ agentId, initialValues, submitLabel, onSubmit, errorMessage }: AgentFormProps) {
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [introduction, setIntroduction] = useState(initialValues?.introduction ?? "");
+  const [instructions, setInstructions] = useState(initialValues?.instructions ?? "");
   const [priceVnd, setPriceVnd] = useState(String(initialValues?.price_vnd ?? 0));
   const [defaultCredit, setDefaultCredit] = useState(String(initialValues?.default_credit_granted ?? 0));
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +39,7 @@ export function AgentForm({ agentId, initialValues, submitLabel, onSubmit, error
       await onSubmit({
         title,
         introduction,
+        instructions,
         price_vnd: Number(priceVnd),
         default_credit_granted: Number(defaultCredit),
       });
@@ -72,6 +75,19 @@ export function AgentForm({ agentId, initialValues, submitLabel, onSubmit, error
                 rows={5}
                 placeholder="Describe what this agent does..."
               />
+            </div>
+            <div>
+              <div className="label">Instructions (system prompt)</div>
+              <textarea
+                className="textarea"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                rows={6}
+                placeholder="How should this agent behave? e.g. You are a patient math tutor. Answer step by step..."
+              />
+              <div className="faint mono" style={{ fontSize: "var(--t-1)", marginTop: 6 }}>
+                Sent to the model at the start of every chat. Buyers never see it; admins read it during review.
+              </div>
             </div>
           </div>
         </section>
@@ -146,6 +162,7 @@ export function agentToFormValues(agent: Agent): AgentFormValues {
   return {
     title: agent.title,
     introduction: agent.introduction ?? "",
+    instructions: agent.instructions ?? "",
     price_vnd: agent.price_vnd,
     default_credit_granted: agent.default_credit_granted,
   };

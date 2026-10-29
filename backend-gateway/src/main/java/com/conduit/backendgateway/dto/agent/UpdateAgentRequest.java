@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 public record UpdateAgentRequest(
         String title,
         String introduction,
+        String instructions,
         @Min(0) @JsonProperty("price_vnd") Integer priceVnd,
         @Min(0) @JsonProperty("default_credit_granted") Integer defaultCreditGranted) {
 }

@@ -60,8 +60,10 @@ public class AgentController {
     }
 
     @GetMapping("/{agentId}")
-    public AgentResponse getById(@PathVariable UUID agentId) {
-        return agentService.getById(agentId);
+    public AgentResponse getById(
+            @AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID agentId) {
+        // principal = null khi chua dang nhap (route permitAll) -> ban cong khai.
+        return agentService.getById(agentId, principal);
     }
 
     @PatchMapping("/{agentId}")

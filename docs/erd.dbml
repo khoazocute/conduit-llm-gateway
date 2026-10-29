@@ -112,6 +112,7 @@ Table agents {
   creator_id uuid [not null, ref: > users.id]
   title varchar [not null]
   introduction text
+  instructions text [note: 'D8 (V3): system prompt rieng; chi chu agent + admin doc duoc']
   agent_type agent_type [not null, default: 'text']
   price_vnd int [not null, default: 0]
   default_credit_granted int [not null, default: 0]

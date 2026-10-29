@@ -2,6 +2,7 @@ package com.conduit.backendgateway.service;
 
 import com.conduit.backendgateway.domain.CreditWallet;
 import com.conduit.backendgateway.domain.User;
+import com.conduit.backendgateway.domain.enums.UserRole;
 import com.conduit.backendgateway.domain.enums.UserStatus;
 import com.conduit.backendgateway.dto.auth.AuthResponse;
 import com.conduit.backendgateway.dto.auth.LoginRequest;
@@ -53,6 +54,8 @@ public class AuthService {
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setFullName(request.fullName());
+        // Da validate o RegisterRequest (@Pattern user|creator); null -> mac dinh user.
+        user.setRole(request.role() == null ? UserRole.user : UserRole.valueOf(request.role()));
         user = userRepository.saveAndFlush(user);
 
         CreditWallet wallet = new CreditWallet();

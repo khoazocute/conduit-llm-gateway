@@ -1,0 +1,125 @@
+# CI cho Conduit (TASK-55). Ba job chay song song, KHONG goi LLM co phi o bat ky buoc nao
+# (CLAUDE.md muc 2, D1): e2e_workflow_test.sh can du 3 proxy va goi LLM that nen de ngoai CI.
+name: CI
+
+on:
+  push:
+    branches: [main, lhung, dangkhoa]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (unit + Auth/Agent acceptance)
+    runs-on: ubuntu-latest
+    # Giong docker-compose.yml: Postgres+pgvector cong 5432, Redis cong host 26379
+    # (application.yml doc localhost:26379). Moi secret deu co gia tri mac dinh cho dev.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: conduit
+          POSTGRES_USER: conduit
+          POSTGRES_PASSWORD: conduit
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U conduit -d conduit"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["26379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend-gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # BackendGatewayApplicationTests khoi dong context that: Flyway chay V1..V3 va
+      # Hibernate validate tren Postgres cua service ben tren.
+      - name: Unit + context tests
+        run: ./mvnw -B test
+
+      - name: Start backend
+        run: |
+          nohup ./mvnw -B -q spring-boot:run > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:8081/api/agents && exit 0
+            sleep 3
+          done
+          echo "Backend khong len sau 180s"; cat /tmp/backend.log; exit 1
+
+      # Security acceptance phan Auth/Agent: JWT, ABAC sua agent, an instructions (D8),
+      # logout khi access token het han... Khong goi LLM.
+      - name: Auth + Agent acceptance (e2e_test.sh)
+        env:
+          PSQL: psql postgresql://conduit:conduit@localhost:5432/conduit
+        run: bash scripts/e2e_test.sh
+
+      - name: Backend log (khi loi)
+        if: failure()
+        run: cat /tmp/backend.log || true
+
+  experiments:
+    name: Experiment tooling (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: experiments/requirements.txt
+
+      - name: Install
+        run: |
+          python -m pip install -r experiments/requirements.txt
+          # 2 verifier IFEval tach cau can corpus punkt (xem experiments/requirements.txt).
+          python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt')"
+
+      # Bo cham, luat quyet dinh, runner plan, validate bo de. Chay offline, mien phi.
+      - name: Unit tests
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -m unittest discover -s experiments/tests -v
+
+      - name: Validate prompt set
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python experiments/prompts/validate_prompts.py
+
+  frontend:
+    name: Frontend (lint + typecheck)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      # Next.js sinh cac kieu toan cuc (vd. LayoutProps) vao .next/types. Tren may dev thu muc nay
+      # co san nho dev server, nhung CI clone moi tinh -> tsc bao "Cannot find name 'LayoutProps'"
+      # (lan chay CI dau tien 28/10). Sinh truoc roi moi typecheck.
+      - run: npx next typegen
+      - run: npx tsc --noEmit
