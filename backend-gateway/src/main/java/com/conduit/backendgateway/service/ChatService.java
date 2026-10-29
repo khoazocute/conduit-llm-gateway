@@ -5,6 +5,8 @@ import com.conduit.backendgateway.adapter.ChatProxyProperties;
 import com.conduit.backendgateway.adapter.ChatTurn;
 import com.conduit.backendgateway.adapter.ProxyChatClient;
 import com.conduit.backendgateway.adapter.ProxyChatException;
+import com.conduit.backendgateway.domain.Agent;
+import com.conduit.backendgateway.domain.Conversation;
 import com.conduit.backendgateway.domain.Message;
 import com.conduit.backendgateway.domain.ModelPricing;
 import com.conduit.backendgateway.domain.RoutingDecision;
@@ -17,6 +19,7 @@ import com.conduit.backendgateway.domain.enums.UnitType;
 import com.conduit.backendgateway.domain.enums.UsageStatus;
 import com.conduit.backendgateway.dto.conversation.MessageResponse;
 import com.conduit.backendgateway.exception.InsufficientCreditException;
+import com.conduit.backendgateway.repository.AgentRepository;
 import com.conduit.backendgateway.repository.MessageRepository;
 import com.conduit.backendgateway.repository.ModelPricingRepository;
 import com.conduit.backendgateway.repository.RoutingDecisionRepository;
@@ -51,6 +54,7 @@ public class ChatService {
     private final UsageLogRepository usageLogRepository;
     private final RoutingDecisionRepository routingDecisionRepository;
     private final ChatProxyProperties chatProxyProperties;
+    private final AgentRepository agentRepository;
     // Self-injection so @Transactional billing below goes through the Spring
     // AOP proxy (see CreditService for the same pattern/reasoning).
     private final ChatService self;
@@ -64,6 +68,7 @@ public class ChatService {
             UsageLogRepository usageLogRepository,
             RoutingDecisionRepository routingDecisionRepository,
             ChatProxyProperties chatProxyProperties,
+            AgentRepository agentRepository,
             @Lazy ChatService self) {
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
@@ -73,6 +78,7 @@ public class ChatService {
         this.usageLogRepository = usageLogRepository;
         this.routingDecisionRepository = routingDecisionRepository;
         this.chatProxyProperties = chatProxyProperties;
+        this.agentRepository = agentRepository;
         this.self = self;
     }
 
@@ -89,7 +95,7 @@ public class ChatService {
     }
 
     private void doSendMessage(UUID conversationId, UUID userId, String content, SseEmitter emitter) {
-        conversationService.getOwned(conversationId, userId); // ABAC check
+        Conversation conversation = conversationService.getOwned(conversationId, userId); // ABAC check
 
         Message userMessage = new Message();
         userMessage.setConversationId(conversationId);
@@ -97,10 +103,17 @@ public class ChatService {
         userMessage.setContent(content);
         messageRepository.saveAndFlush(userMessage);
 
-        List<ChatTurn> turns = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId).stream()
+        List<ChatTurn> history = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId).stream()
                 .filter(m -> m.getContent() != null)
                 .map(m -> new ChatTurn(m.getRole().name(), m.getContent()))
                 .toList();
+        // TASK-66 (D8): instructions cua agent thanh luot "system" o DAU danh sach. Rong/NULL thi
+        // request y het luc do thuc nghiem. Khong lam lech dinh tuyen Portkey: promptLength() chi
+        // dem tin nhan user cuoi. instructions ton token moi luot va tinh vao credit nguoi dung.
+        String instructions = agentRepository.findById(conversation.getAgentId())
+                .map(Agent::getInstructions)
+                .orElse(null);
+        List<ChatTurn> turns = ChatTurn.withSystemPrompt(instructions, history);
 
         String model = chatProxyProperties.effectiveDefaultModel();
         RoutingProxy activeProxy = RoutingProxy.valueOf(chatProxyProperties.getActiveProxy());

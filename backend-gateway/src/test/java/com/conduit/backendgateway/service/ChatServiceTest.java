@@ -17,6 +17,9 @@ import com.conduit.backendgateway.adapter.ProxyChatClient;
 import com.conduit.backendgateway.adapter.ProxyChatException;
 import com.conduit.backendgateway.domain.CreditTransaction;
 import com.conduit.backendgateway.domain.CreditWallet;
+import com.conduit.backendgateway.adapter.ChatTurn;
+import com.conduit.backendgateway.domain.Agent;
+import com.conduit.backendgateway.domain.Conversation;
 import com.conduit.backendgateway.domain.Message;
 import com.conduit.backendgateway.domain.ModelPricing;
 import com.conduit.backendgateway.domain.RoutingDecision;
@@ -28,6 +31,7 @@ import com.conduit.backendgateway.domain.enums.RoutingProxy;
 import com.conduit.backendgateway.domain.enums.UnitType;
 import com.conduit.backendgateway.domain.enums.UsageStatus;
 import com.conduit.backendgateway.exception.InsufficientCreditException;
+import com.conduit.backendgateway.repository.AgentRepository;
 import com.conduit.backendgateway.repository.MessageRepository;
 import com.conduit.backendgateway.repository.ModelPricingRepository;
 import com.conduit.backendgateway.repository.RoutingDecisionRepository;
@@ -63,6 +67,8 @@ class ChatServiceTest {
     private final UsageLogRepository usageLogRepository = mock(UsageLogRepository.class);
     private final RoutingDecisionRepository routingDecisionRepository = mock(RoutingDecisionRepository.class);
     private final ChatProxyProperties properties = new ChatProxyProperties();
+    private final AgentRepository agentRepository = mock(AgentRepository.class);
+    private final Agent agent = new Agent();
 
     private ChatService chatService;
     private RecordingEmitter emitter;
@@ -71,6 +77,14 @@ class ChatServiceTest {
     void setUp() {
         properties.setActiveProxy("litellm");
         properties.setProxyDefaultModels(Map.of("litellm", "conduit-pool"));
+
+        agent.setId(UUID.randomUUID());
+        Conversation conversation = new Conversation();
+        conversation.setId(CONVERSATION);
+        conversation.setUserId(USER);
+        conversation.setAgentId(agent.getId());
+        when(conversationService.getOwned(CONVERSATION, USER)).thenReturn(conversation);
+        when(agentRepository.findById(agent.getId())).thenReturn(java.util.Optional.of(agent));
 
         // `self` di qua proxy Spring khi chay that (de @Transactional co tac dung); o day dung mot
         // ban that thu hai cung dung chung cac mock - recordSuccessfulTurn/recordFailedTurn khong
@@ -97,7 +111,8 @@ class ChatServiceTest {
 
     private ChatService newChatService(ChatService self) {
         return new ChatService(conversationService, messageRepository, proxyChatClient, creditService,
-                modelPricingRepository, usageLogRepository, routingDecisionRepository, properties, self);
+                modelPricingRepository, usageLogRepository, routingDecisionRepository, properties,
+                agentRepository, self);
     }
 
     @Test
@@ -180,6 +195,38 @@ class ChatServiceTest {
 
         verify(creditService, times(ChatService.BILLING_MAX_ATTEMPTS)).debit(any(), anyLong(), any(), any(), any(), anyString());
         assertThat(emitter.events).anyMatch(e -> e.contains("error"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void agentInstructionsAreSentAsTheFirstSystemTurn() {
+        // TASK-66 (D8): instructions cua agent thanh luot system o dau danh sach gui cho proxy.
+        agent.setInstructions("You are a terse math tutor.");
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("4", "gpt-4o-mini", 10, 1, 300));
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        ArgumentCaptor<List<ChatTurn>> turns = ArgumentCaptor.forClass(List.class);
+        verify(proxyChatClient).complete(eq("conduit-pool"), turns.capture());
+        assertThat(turns.getValue()).hasSize(2);
+        assertThat(turns.getValue().get(0)).isEqualTo(new ChatTurn("system", "You are a terse math tutor."));
+        assertThat(turns.getValue().get(1)).isEqualTo(new ChatTurn("user", "hello"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void agentWithoutInstructionsSendsNoSystemTurn() {
+        // Rong/NULL -> request y het luc do thuc nghiem 720 luot.
+        agent.setInstructions(null);
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("4", "gpt-4o-mini", 10, 1, 300));
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        ArgumentCaptor<List<ChatTurn>> turns = ArgumentCaptor.forClass(List.class);
+        verify(proxyChatClient).complete(eq("conduit-pool"), turns.capture());
+        assertThat(turns.getValue()).containsExactly(new ChatTurn("user", "hello"));
     }
 
     @Test
