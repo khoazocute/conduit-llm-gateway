@@ -42,7 +42,14 @@ app:
     # H3: gpt-4o-mini la mac dinh chinh thuc (gemini-flash chi la tam luc test Gemini
     # tuan truoc). Env override de thu routing that (VD conduit-pool, H1) ma khong
     # phai sua file/commit gia tri tam.
-    default-model: ${CHAT_DEFAULT_MODEL:gpt-4o-mini}
+    # TASK-51 (2026-10-27): truoc day mac dinh gpt-4o-mini cho MOI proxy -> chat thuong qua LiteLLM
+    # goi thang alias gpt-4o-mini, KHONG qua conduit-pool (khong cost-based-routing, khong
+    # fallbacks); thi nghiem dung conduit-pool chi nho dry_run.sh dat bien moi truong. Gio de rong
+    # = lay theo proxy-default-models ben duoi; dat CHAT_DEFAULT_MODEL thi gia tri do thang (giu
+    # nguyen cach dry_run.sh tai lap thi nghiem).
+    default-model: ${CHAT_DEFAULT_MODEL:}
+    proxy-default-models:
+      litellm: conduit-pool
     # D7 (docs/experiment-design.md muc 3): max_tokens gui kem MOI request, giong nhau ca 3 proxy.
     # Truoc 2026-10-16 backend chua gui bao gio nen D7 chua tung duoc thuc thi qua duong app.
     # 1024 (nang tu 512 ngay 2026-10-16, D12 bo sung). Ly do do duoc: claude-haiku

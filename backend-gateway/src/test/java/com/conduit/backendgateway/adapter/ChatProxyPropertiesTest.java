@@ -60,4 +60,23 @@ class ChatProxyPropertiesTest {
 
         assertThat(properties.aliasOf("anthropic/claude-sonnet-5")).isEqualTo("claude-sonnet");
     }
+
+    @Test
+    void litellmDefaultsToTheCostRoutedPoolOthersKeepTheCheapModel() {
+        properties.setProxyDefaultModels(Map.of("litellm", "conduit-pool"));
+        properties.setActiveProxy("litellm");
+        assertThat(properties.effectiveDefaultModel()).isEqualTo("conduit-pool");
+        properties.setActiveProxy("bifrost");
+        assertThat(properties.effectiveDefaultModel()).isEqualTo("gpt-4o-mini");
+        properties.setActiveProxy("portkey");
+        assertThat(properties.effectiveDefaultModel()).isEqualTo("gpt-4o-mini");
+    }
+
+    @Test
+    void explicitDefaultModelWinsSoDryRunCanReproduceTheExperiment() {
+        properties.setProxyDefaultModels(Map.of("litellm", "conduit-pool"));
+        properties.setActiveProxy("litellm");
+        properties.setDefaultModel("gpt-4o-mini");
+        assertThat(properties.effectiveDefaultModel()).isEqualTo("gpt-4o-mini");
+    }
 }

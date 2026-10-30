@@ -89,3 +89,28 @@ giá trị nhất tuần, và bài học "test đồng thời phải đi qua đ�
   dòng "585/585" (bảng "Đã kiểm") và dòng mới "Đếm … 180 lượt nửa của Khoa" của Hùng; **bỏ** dòng cũ
   "Đếm dòng `routing_decisions` theo `proxy_name` cho 19–20/10 … Hùng" vì phần của Hùng đã xong.
 - Load test của Hùng đã chuyển sang `loadtest/` cho cùng chỗ với `chat.js`.
+
+## Review — Khoa (29/10): TASK-64, 65 (a+b), 52, 55 của Hùng
+
+**Cách review:** merge `origin/lhung` (6766b32) vào `dangkhoa` (a0c39b8), đọc code từng task, chạy lại:
+`./mvnw test` **87/87** trên code đã merge (89/89 sau khi thêm TASK-66), Python **72/72**, Flyway áp V3
+thành công trên DB máy Khoa. Kiểm ABAC của 65b **qua app thật** (không gọi LLM) bằng một agent có
+`instructions` do creator tạo, admin duyệt, người mua mua.
+
+| Task | Kết luận | Đã kiểm |
+|---|---|---|
+| **TASK-64** role lúc đăng ký | ✅ Đạt | `@Pattern(user\|creator)` trên `RegisterRequest.role` → `admin` bị **400** cùng dạng lỗi validation, bỏ trống → `user` (`AuthService.register`). `e2e_test.sh` có ca `role=admin → 400` và kiểm lỗi nêu đúng trường `role`; script này chạy trong CI |
+| **TASK-65a** V3 + `Agent.instructions` | ✅ Đạt | Migration chỉ `ALTER TABLE agents ADD COLUMN instructions text`, không `ddl-auto`; entity có trường; Hibernate validate pass. Mở khóa được TASK-66 (đã nối, commit f259da6) |
+| **TASK-65b** chặn lộ `instructions` | ✅ Đạt | **Qua app:** `GET /agents/{id}` người mua → không có trường, ẩn danh → không có, chủ agent → có, admin → có; `GET /agents` không item nào có. **Đọc code:** mọi chỗ gọi `AgentResponse.withInstructions` đều sau `requireOwnership` hoặc nằm dưới `/admin/**` (`hasRole("ADMIN")`); thư viện người mua (`PurchaseService.listPurchasedAgents`) dùng bản công khai `from()`. Sửa `instructions` chỉ được ở `draft`/`rejected` → agent đã lên chợ **không đổi được system prompt mà bỏ qua bước admin duyệt** |
+| **TASK-52** test Auth/Agent/User | ✅ Đạt | 31 test (Auth 12, Agent 15 + tham số hóa `submit`, User 4) phủ đủ các ca trong `tasks.md`. Riêng "`admin` bị từ chối" kiểm ở mức DTO nên nằm ở `e2e_test.sh` (có trong CI), không ở unit test — hợp lý |
+| **TASK-55** CI | ✅ Đạt (theo file) | 3 job; backend có service **Postgres `pgvector:pg16` + Redis** nên `CreditServiceConcurrencyTest` (cần DB thật) và `ChatProxyPropertiesBindingTest` chạy được; Python có tải `punkt_tab`; `mvnw` có bit thực thi (100755). ⚠️ Khoa **không tự xem được** kết quả "CI xanh" (máy không có `gh`) — xem lần chạy CI trên nhánh `dangkhoa` sau khi push |
+
+**Nhận xét, không chặn merge:**
+
+1. Dòng 585/585 của Hùng ghi 2 lượt lỗi D14 (`ifeval_16`, `ifeval_17`) **có dòng trong DB nhưng thiếu
+   `message_id` trong file kết quả** → khớp chẩn đoán phía Khoa: bản sửa TASK-67 lấy được thông điệp lỗi
+   SSE, nhưng khi lỗi xảy ra **ở phía runner** (exception trước khi đọc được tin nhắn) thì record vẫn thiếu
+   `message_id`. Ghi là còn mở ở `experiment-results.md` mục 13, chưa sửa.
+2. Đề nghị của Hùng (ghi `usage_logs status=error` kèm `cost_upstream` khi bỏ cuộc sau 8 lần xung đột ví):
+   **đồng ý, chưa làm** trong tuần này — ghi vào phần còn thiếu của `log-khoa.md`.
+3. Không kiểm giao diện frontend của TASK-64/65b bằng tay (chỉ đọc diff); phần backend đã kiểm qua app.

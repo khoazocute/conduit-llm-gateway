@@ -5,6 +5,8 @@ import com.conduit.backendgateway.adapter.ChatProxyProperties;
 import com.conduit.backendgateway.adapter.ChatTurn;
 import com.conduit.backendgateway.adapter.ProxyChatClient;
 import com.conduit.backendgateway.adapter.ProxyChatException;
+import com.conduit.backendgateway.domain.Agent;
+import com.conduit.backendgateway.domain.Conversation;
 import com.conduit.backendgateway.domain.Message;
 import com.conduit.backendgateway.domain.ModelPricing;
 import com.conduit.backendgateway.domain.RoutingDecision;
@@ -17,6 +19,7 @@ import com.conduit.backendgateway.domain.enums.UnitType;
 import com.conduit.backendgateway.domain.enums.UsageStatus;
 import com.conduit.backendgateway.dto.conversation.MessageResponse;
 import com.conduit.backendgateway.exception.InsufficientCreditException;
+import com.conduit.backendgateway.repository.AgentRepository;
 import com.conduit.backendgateway.repository.MessageRepository;
 import com.conduit.backendgateway.repository.ModelPricingRepository;
 import com.conduit.backendgateway.repository.RoutingDecisionRepository;
@@ -27,13 +30,21 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
+    static final int BILLING_MAX_ATTEMPTS = 8;
+    private static final long BILLING_BACKOFF_BASE_MS = 10;
+    private static final long BILLING_BACKOFF_CAP_MS = 400;
 
     private final ConversationService conversationService;
     private final MessageRepository messageRepository;
@@ -43,6 +54,7 @@ public class ChatService {
     private final UsageLogRepository usageLogRepository;
     private final RoutingDecisionRepository routingDecisionRepository;
     private final ChatProxyProperties chatProxyProperties;
+    private final AgentRepository agentRepository;
     // Self-injection so @Transactional billing below goes through the Spring
     // AOP proxy (see CreditService for the same pattern/reasoning).
     private final ChatService self;
@@ -56,6 +68,7 @@ public class ChatService {
             UsageLogRepository usageLogRepository,
             RoutingDecisionRepository routingDecisionRepository,
             ChatProxyProperties chatProxyProperties,
+            AgentRepository agentRepository,
             @Lazy ChatService self) {
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
@@ -65,6 +78,7 @@ public class ChatService {
         this.usageLogRepository = usageLogRepository;
         this.routingDecisionRepository = routingDecisionRepository;
         this.chatProxyProperties = chatProxyProperties;
+        this.agentRepository = agentRepository;
         this.self = self;
     }
 
@@ -81,7 +95,7 @@ public class ChatService {
     }
 
     private void doSendMessage(UUID conversationId, UUID userId, String content, SseEmitter emitter) {
-        conversationService.getOwned(conversationId, userId); // ABAC check
+        Conversation conversation = conversationService.getOwned(conversationId, userId); // ABAC check
 
         Message userMessage = new Message();
         userMessage.setConversationId(conversationId);
@@ -89,12 +103,19 @@ public class ChatService {
         userMessage.setContent(content);
         messageRepository.saveAndFlush(userMessage);
 
-        List<ChatTurn> turns = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId).stream()
+        List<ChatTurn> history = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId).stream()
                 .filter(m -> m.getContent() != null)
                 .map(m -> new ChatTurn(m.getRole().name(), m.getContent()))
                 .toList();
+        // TASK-66 (D8): instructions cua agent thanh luot "system" o DAU danh sach. Rong/NULL thi
+        // request y het luc do thuc nghiem. Khong lam lech dinh tuyen Portkey: promptLength() chi
+        // dem tin nhan user cuoi. instructions ton token moi luot va tinh vao credit nguoi dung.
+        String instructions = agentRepository.findById(conversation.getAgentId())
+                .map(Agent::getInstructions)
+                .orElse(null);
+        List<ChatTurn> turns = ChatTurn.withSystemPrompt(instructions, history);
 
-        String model = chatProxyProperties.getDefaultModel();
+        String model = chatProxyProperties.effectiveDefaultModel();
         RoutingProxy activeProxy = RoutingProxy.valueOf(chatProxyProperties.getActiveProxy());
 
         long start = System.currentTimeMillis();
@@ -103,16 +124,53 @@ public class ChatService {
             result = proxyChatClient.complete(model, turns);
         } catch (ProxyChatException e) {
             int elapsed = (int) (System.currentTimeMillis() - start);
+            // TASK-67: thong diep loi truoc day chi di qua SSE roi mat - DB khong co cot nao giu
+            // no. Ghi log de luot loi luon de lai dau vet, ke ca khi khong ai doc SSE.
+            log.warn("Chat provider error: proxy={} model={} conversation={} elapsedMs={}: {}",
+                    activeProxy, model, conversationId, elapsed, e.getMessage());
             self.recordFailedTurn(conversationId, model, activeProxy, elapsed);
             emitError(emitter, "Chat provider error: " + e.getMessage());
             return;
         }
 
         try {
-            Message assistantMessage = self.recordSuccessfulTurn(userId, conversationId, model, activeProxy, result);
+            Message assistantMessage = recordSuccessfulTurnWithRetry(userId, conversationId, model, activeProxy, result);
             emitSuccess(emitter, result.content(), assistantMessage);
         } catch (InsufficientCreditException e) {
             emitError(emitter, "Insufficient credit balance");
+        }
+    }
+
+    // TASK-56 (load test 27/10): cung 1 nguoi dung chat song song -> ~50% luot loi "Row was updated or
+    // deleted by another transaction". Retry trong CreditService KHONG cuu duoc o day: debit chay ben
+    // trong transaction cua recordSuccessfulTurn, nen ca 3 lan thu deu nam trong CUNG transaction da
+    // bi danh dau rollback va van doc so du cu -> chac chan thua lai. Te hon: LLM DA duoc goi (ton
+    // tien nha cung cap) ma khong ghi usage_logs, khong tru credit. Retry phai o tang nay: moi lan la
+    // mot transaction MOI qua proxy `self`, doc lai so du moi nhat; tru credit + ghi log van nguyen tu.
+    private Message recordSuccessfulTurnWithRetry(
+            UUID userId, UUID conversationId, String model, RoutingProxy activeProxy, ChatCompletionResult result) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return self.recordSuccessfulTurn(userId, conversationId, model, activeProxy, result);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                if (attempt >= BILLING_MAX_ATTEMPTS) {
+                    log.warn("Billing gave up after {} optimistic-lock conflicts: user={} conversation={}",
+                            attempt, userId, conversationId);
+                    throw e;
+                }
+                // Cho ngau nhien, tang dan: retry ngay lap tuc thi cac luong tranh chap dam vao nhau
+                // lai lan nua (do 27/10: 20 luong, khong cho -> 11/20 thua ca 5 lan).
+                backoff(attempt);
+            }
+        }
+    }
+
+    private static void backoff(int attempt) {
+        long ceilingMs = Math.min(BILLING_BACKOFF_CAP_MS, BILLING_BACKOFF_BASE_MS << attempt);
+        try {
+            Thread.sleep(java.util.concurrent.ThreadLocalRandom.current().nextLong(ceilingMs + 1));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 

@@ -217,11 +217,11 @@ Chi phí thật dự kiến cả tuần: chỉ TASK-51 (~45 lượt, ~$0,01) và
 - [ ] TASK-64 role lúc đăng ký, `e2e_test.sh` pass
 - [ ] TASK-65b `instructions`, có test chứng minh người mua không thấy
 - [ ] TASK-46 + 68 kết quả đối chiếu ghi vào `experiment-results.md` mục 13
-- [ ] TASK-54 test đồng thời, fail khi bỏ `@Version`
-- [ ] TASK-67 lượt lỗi có thông điệp
-- [ ] TASK-51 chat thường qua `conduit-pool`, phép thử sự cố chạy lại
-- [ ] TASK-66 system prompt vào chat, `promptLength()` không đổi
-- [ ] TASK-52, 53 test service pass
+- [x] TASK-54 test đồng thời, fail khi bỏ `@Version` — Khoa 27/10
+- [x] TASK-67 lượt lỗi có thông điệp — Khoa 27/10
+- [x] TASK-51 chat thường qua `conduit-pool`, phép thử sự cố chạy lại — Khoa 27/10, LiteLLM 15/15
+- [x] TASK-66 system prompt vào chat, `promptLength()` không đổi — Khoa 29/10, kiểm qua app (`BỐN`)
+- [x] TASK-52, 53 test service pass — 53: Khoa 27/10; 52: Hùng (Khoa review 29/10: đạt); `./mvnw test` 89/89 sau merge
 - [ ] TASK-55 CI xanh
-- [ ] TASK-56 báo cáo load test
-- [ ] Review chéo ghi vào cuối `log-*.md`, PR vào `main`, Notion cập nhật
+- [x] TASK-56 báo cáo load test — `docs/load-test.md` đủ mục 1 (Khoa) + mục 2 (Hùng)
+- [ ] Review chéo ghi vào cuối `log-*.md` ✅ (Hùng 28/10, Khoa 29/10), PR vào `main` ⏳, Notion cập nhật ⏳

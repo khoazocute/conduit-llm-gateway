@@ -33,6 +33,12 @@ public class HttpProxyChatClient implements ProxyChatClient {
     // chosen by routing_strategy - the real one is only in this response header, and it already
     // matches our alias (model_info.id in config.yaml was set to equal it), no aliasOf() needed.
     private static final String LITELLM_MODEL_ID_HEADER = "x-litellm-model-id";
+    // TASK-51: after a `fallbacks` hop (conduit-pool -> claude-haiku) the answer comes from a
+    // standalone model group whose name IS our alias, while its deployment id may be an
+    // auto-generated hash (no model_info.id) that matches nothing in model_pricing -> cost 0
+    // silently. So: outside the pool, the group name is the reliable alias.
+    private static final String LITELLM_MODEL_GROUP_HEADER = "x-litellm-model-group";
+    static final String LITELLM_POOL_GROUP = "conduit-pool";
 
     // Portkey OSS reads its Config object from THIS request header, not from an Authorization
     // bearer token (H2, docs/portkey-routing-notes.md) - and, unlike LiteLLM's os.environ/VAR, it
@@ -181,9 +187,10 @@ public class HttpProxyChatClient implements ProxyChatClient {
     // including after a fallback. LiteLLM's grouped alias (H1) needs the header instead - see
     // LITELLM_MODEL_ID_HEADER above.
     private String resolveReturnedModel(JsonNode response, HttpHeaders headers, String requestedAlias) {
-        String litellmModelId = headers.getFirst(LITELLM_MODEL_ID_HEADER);
-        if (litellmModelId != null && !litellmModelId.isBlank()) {
-            return litellmModelId;
+        String litellmAlias = litellmAlias(
+                headers.getFirst(LITELLM_MODEL_GROUP_HEADER), headers.getFirst(LITELLM_MODEL_ID_HEADER));
+        if (litellmAlias != null) {
+            return litellmAlias;
         }
         JsonNode routing = response.path("extra_fields").path("routing_info");
         if (routing.hasNonNull("provider") && routing.hasNonNull("model")) {
@@ -204,6 +211,17 @@ public class HttpProxyChatClient implements ProxyChatClient {
             return response.hasNonNull("model") ? response.get("model").asText() : requestedAlias;
         }
         return response.hasNonNull("model") ? properties.aliasOf(response.get("model").asText()) : requestedAlias;
+    }
+
+    // Inside the cost-routed pool the group is "conduit-pool" and the deployment id (model_info.id
+    // in config.yaml) is the alias; after a fallback hop the group itself is the alias.
+    static String litellmAlias(String modelGroup, String modelId) {
+        boolean hasGroup = modelGroup != null && !modelGroup.isBlank();
+        boolean hasId = modelId != null && !modelId.isBlank();
+        if (hasGroup && !LITELLM_POOL_GROUP.equals(modelGroup)) {
+            return modelGroup;
+        }
+        return hasId ? modelId : null;
     }
 
     // Length of the latest user message in characters (code points, same as Python len() used
