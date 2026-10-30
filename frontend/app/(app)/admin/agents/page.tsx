@@ -53,6 +53,16 @@ function PendingAgentCard({
       <p style={{ fontSize: "var(--t-3)", margin: "0 0 14px" }}>
         {agent.introduction ?? "No description provided."}
       </p>
+      <div className="label">Instructions (system prompt)</div>
+      <pre
+        className="mono"
+        style={{
+          fontSize: "var(--t-2)", whiteSpace: "pre-wrap", margin: "0 0 14px", padding: 10,
+          background: "var(--bg-1)", border: "1px solid var(--border-hard)", borderRadius: "var(--r-md)",
+        }}
+      >
+        {agent.instructions?.trim() ? agent.instructions : "No instructions set."}
+      </pre>
       <textarea
         className="textarea"
         placeholder="Reason (required if rejecting)..."

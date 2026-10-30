@@ -14,6 +14,12 @@ USER_EMAIL="e2e.user.${RUN_ID}@conduit.dev"
 ADMIN_EMAIL="e2e.admin.${RUN_ID}@conduit.dev"
 OTHER_EMAIL="e2e.other.${RUN_ID}@conduit.dev"
 PASSWORD="password123"
+# Lenh psql de nang role (2 cho). Mac dinh qua docker-compose local; CI dat PSQL tro thang
+# vao service Postgres (khong co container conduit-postgres), vd:
+#   PSQL="psql postgresql://conduit:conduit@localhost:5432/conduit"
+PSQL="${PSQL:-docker exec conduit-postgres psql -U conduit -d conduit}"
+# D8: chuoi bi mat lam instructions cua agent; test kiem no KHONG lot ra cho nguoi mua/an danh.
+INSTR_SECRET="e2e-secret-instructions-${RUN_ID}"
 
 COOKIE_JAR=$(mktemp)
 
@@ -70,6 +76,40 @@ USER_ACCESS=$(json_get "$BODY" "access_token")
 [ -n "$(echo "$BODY" | grep -o '"created_at":"[^"]*"')" ] && check "register: created_at populated (not null)" "true" "true" "" || check "register: created_at populated (not null)" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"refresh_token"' && check "register: no refresh_token leaked in JSON body" "absent" "present" "$BODY" || check "register: no refresh_token leaked in JSON body" "absent" "absent" ""
 
+echo "$BODY" | grep -q '"role":"user"' && check "register without role -> default role=user" "true" "true" "" || check "register without role -> default role=user" "true" "false" "$BODY"
+
+# --- 1b. D8 (2026-10-22): choose role at sign-up ---
+# Buoc 9 ben duoi van nang role bang SQL vi cac buoc sau dung chinh tai khoan do, va
+# script thi nghiem (run_experiment.py, e2e_workflow_test.sh) van dung duong SQL.
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.selfcreator.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Self Creator\",\"role\":\"creator\"}")
+split_body_code "$RESP"
+check "register with role=creator -> 201" "201" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"role":"creator"' && check "register with role=creator -> role=creator" "true" "true" "" || check "register with role=creator -> role=creator" "true" "false" "$BODY"
+SELF_CREATOR_ACCESS=$(json_get "$BODY" "access_token")
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/agents" \
+  -H "Authorization: Bearer $SELF_CREATOR_ACCESS" -H "Content-Type: application/json" \
+  -d '{"title":"Self-signup Creator Agent","price_vnd":1000,"default_credit_granted":10}')
+split_body_code "$RESP"
+check "self-registered creator can POST /agents -> 201" "201" "$CODE" "$BODY"
+# Chu agent CHUA dat instructions van phai nhan truong (""), de frontend phan biet voi ban cong
+# khai (khong co truong) va khong ghi de mat system prompt khi luu.
+echo "$BODY" | grep -q '"instructions":""' && check "D8: owner view always carries instructions field (empty when unset)" "true" "true" "" || check "D8: owner view always carries instructions field (empty when unset)" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.selfadmin.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Self Admin\",\"role\":\"admin\"}")
+split_body_code "$RESP"
+check "register with role=admin -> 400 (admin not self-selectable)" "400" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"role"' && check "role=admin rejection names the role field" "true" "true" "" || check "role=admin rejection names the role field" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.badrole.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"Bad Role\",\"role\":\"superuser\"}")
+split_body_code "$RESP"
+check "register with unknown role -> 400" "400" "$CODE" "$BODY"
+
 # --- 2. Duplicate register -> 409 ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -H "Content-Type: application/json" \
@@ -118,7 +158,7 @@ split_body_code "$RESP"
 check "POST /agents as role=user -> 403" "403" "$CODE" "$BODY"
 
 # --- 9. Promote to creator via SQL, re-login ---
-docker exec conduit-postgres psql -U conduit -d conduit -c "UPDATE users SET role='creator' WHERE id='$USER_ID';" > /dev/null
+$PSQL -c "UPDATE users SET role='creator' WHERE id='$USER_ID';" > /dev/null
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$USER_EMAIL\",\"password\":\"$PASSWORD\"}")
@@ -129,10 +169,11 @@ echo "$BODY" | grep -q '"role":"creator"' && check "re-login reflects promoted r
 # --- 10. Create agent as creator -> 201, draft ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/agents" \
   -H "Authorization: Bearer $CREATOR_ACCESS" -H "Content-Type: application/json" \
-  -d '{"title":"E2E Agent","introduction":"An automated test agent","price_vnd":1000,"default_credit_granted":10}')
+  -d "{\"title\":\"E2E Agent\",\"introduction\":\"An automated test agent\",\"instructions\":\"$INSTR_SECRET\",\"price_vnd\":1000,\"default_credit_granted\":10}")
 split_body_code "$RESP"
 check "POST /agents as creator -> 201" "201" "$CODE" "$BODY"
 AGENT_ID=$(json_get_nested_id "$BODY")
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner sees own instructions on create" "true" "true" "" || check "D8: owner sees own instructions on create" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"status":"draft"' && check "new agent status = draft" "true" "true" "" || check "new agent status = draft" "true" "false" "$BODY"
 echo "$BODY" | grep -q '"created_at":null' && check "agent created_at populated (not null)" "true" "false" "$BODY" || check "agent created_at populated (not null)" "true" "true" ""
 
@@ -159,7 +200,7 @@ RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
   -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$PASSWORD\",\"full_name\":\"E2E Admin\"}")
 split_body_code "$RESP"
 ADMIN_ID=$(json_get_nested_id "$BODY")
-docker exec conduit-postgres psql -U conduit -d conduit -c "UPDATE users SET role='admin' WHERE id='$ADMIN_ID';" > /dev/null
+$PSQL -c "UPDATE users SET role='admin' WHERE id='$ADMIN_ID';" > /dev/null
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$PASSWORD\"}")
@@ -176,6 +217,7 @@ RESP=$(curl -s -w "\n%{http_code}" "$BASE/admin/agents/pending" -H "Authorizatio
 split_body_code "$RESP"
 check "admin GET /admin/agents/pending -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$AGENT_ID" && check "pending list includes our agent" "true" "true" "" || check "pending list includes our agent" "true" "false" "$BODY"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: admin sees instructions in pending list (to review them)" "true" "true" "" || check "D8: admin sees instructions in pending list (to review them)" "true" "false" "$BODY"
 
 # --- 17. Admin approves ---
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/admin/agents/$AGENT_ID/approve" -H "Authorization: Bearer $ADMIN_ACCESS")
@@ -188,6 +230,40 @@ RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents")
 split_body_code "$RESP"
 check "GET /agents (public, no auth) -> 200" "200" "$CODE" "$BODY"
 echo "$BODY" | grep -q "$AGENT_ID" && check "public listing includes published agent" "true" "true" "" || check "public listing includes published agent" "true" "false" "$BODY"
+
+# --- 18b. D8: instructions must NEVER reach buyers, other creators or anonymous visitors ---
+# GET /agents va GET /agents/{id} la permitAll va dung chung AgentResponse -> day la cho de lo nhat.
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: public listing hides instructions" "absent" "present" "$BODY" || check "D8: public listing hides instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID")
+split_body_code "$RESP"
+check "D8: anonymous GET /agents/{id} -> 200" "200" "$CODE" "$BODY"
+echo "$BODY" | grep -q '"instructions"' && check "D8: anonymous GET /agents/{id} has no instructions field" "absent" "present" "$BODY" || check "D8: anonymous GET /agents/{id} has no instructions field" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"e2e.buyer.${RUN_ID}@conduit.dev\",\"password\":\"$PASSWORD\",\"full_name\":\"E2E Buyer\"}")
+split_body_code "$RESP"
+BUYER_ACCESS=$(json_get "$BODY" "access_token")
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $BUYER_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: logged-in buyer cannot see instructions" "absent" "present" "$BODY" || check "D8: logged-in buyer cannot see instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $SELF_CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: another creator cannot see instructions" "absent" "present" "$BODY" || check "D8: another creator cannot see instructions" "absent" "absent" ""
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner GET /agents/{id} sees instructions" "true" "true" "" || check "D8: owner GET /agents/{id} sees instructions" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/$AGENT_ID" -H "Authorization: Bearer $ADMIN_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: admin GET /agents/{id} sees instructions" "true" "true" "" || check "D8: admin GET /agents/{id} sees instructions" "true" "false" "$BODY"
+
+RESP=$(curl -s -w "\n%{http_code}" "$BASE/agents/mine" -H "Authorization: Bearer $CREATOR_ACCESS")
+split_body_code "$RESP"
+echo "$BODY" | grep -q "$INSTR_SECRET" && check "D8: owner GET /agents/mine includes instructions" "true" "true" "" || check "D8: owner GET /agents/mine includes instructions" "true" "false" "$BODY"
 
 # --- 19. PATCH published agent by owner -> 409 ---
 RESP=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE/agents/$AGENT_ID" \
