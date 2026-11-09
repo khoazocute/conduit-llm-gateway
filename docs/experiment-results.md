@@ -544,3 +544,114 @@ Nếu đối chiếu chi phí với dashboard cho thấy chênh lệch, cách x�
 
 **Dữ liệu và công cụ của phần đánh giá được coi là đóng.** Thay đổi sau thời điểm này chỉ nên là
 bổ sung (ví dụ kết quả phép thử hồi quy D15), không sửa số liệu hay luật đã áp.
+
+---
+
+## 14. BỔ SUNG (10/11/2026): baseline "một model cố định" (D18, TASK-72)
+
+> **Mục bổ sung, không sửa số liệu nào ở các mục 1–13 và không chọn lại proxy.** Thiết kế đăng ký
+> trước ở `docs/roadmap.md` D18 (09/11), chạy đúng như đã ghi. Kết luận `litellm` giữ nguyên: luật 4
+> bước đã áp trên 720 lượt. Mục này chỉ trả lời câu hỏi thảo luận "định tuyến có đáng tiền hơn chọn
+> cứng một model không".
+
+**Cách chạy.** Qua app như D3, proxy `litellm`, `CHAT_DEFAULT_MODEL` lần lượt `gpt-4o-mini` →
+`claude-haiku` → `gpt-4o` (alias riêng lẻ, không qua `conduit-pool` nên không có `fallbacks`), 80 item
+của D14 × **1 lần**, `max_tokens=1024`, `temperature=0`, 0-shot. Mỗi nhánh chạy 1 lượt `mmlu_01` để
+kiểm `model_selected` rồi chạy tiếp bằng `--resume`. Cả 240 lượt đều do đúng model của nhánh trả lời
+(`baseline_report.py` từ chối phân tích nếu có lượt do model khác trả lời). Dữ liệu thô:
+`experiments/results/d18-baseline-20261110/<model>/`, bảng và biểu đồ ở `.../tables/`.
+
+**Chi phí thực: $0,2553 cho 241 lượt tính phí** (`gpt-4o-mini` $0,0098 · `claude-haiku` $0,0938 ·
+`gpt-4o` $0,1517), khớp `usage_logs`. Ước tính trước khi chạy $0,26, trần đã xác nhận $0,40.
+Lượt thứ 241 là `humaneval_12` của nhánh `claude-haiku`: model **đã trả lời và đã tính phí**
+($0,000669), nhưng runner lỗi ngay sau đó vì máy chạy hết bộ nhớ ảo (`WinError 1455`). Đây là lỗi phía
+máy chạy, không phải lỗi provider hay proxy. Lượt này đã được chạy lại (đạt). File thô giữ cả hai bản
+ghi; `baseline_report.py` giữ lượt thành công và báo số lượt bị thay (1). Nếu tính lượt lỗi đó là sai
+thì `claude-haiku` còn 72/80 = 90,0%; đường biên và cận trên bên dưới không đổi.
+
+### 14.1. Sáu điểm (D18 mục 6)
+
+| Điểm | Lượt | Đạt | Độ chính xác | Chi phí TB/lượt | Chi phí/câu đạt | Trên đường biên Pareto |
+|---|---|---|---|---|---|---|
+| `litellm` (720 lượt) | 240 | 201 | 83,8% | $0,0001233 | $0,000147 | **Không**¹ |
+| `bifrost` (720 lượt) | 240 | 210 | 87,5% | $0,0005616 | $0,000636 | Có |
+| `portkey` (720 lượt) | 240 | 221 | 92,1% | $0,0007929 | $0,000861 | Có |
+| Chỉ `gpt-4o-mini` | 80 | 68 | 85,0% | $0,0001221 | $0,000144 | Có |
+| Chỉ `claude-haiku` | 80 | 73 | 91,3% | $0,0011644 | $0,001276 | Không (bị `portkey` trội) |
+| Chỉ `gpt-4o` | 80 | 73 | 91,3% | $0,0018965 | $0,002078 | Không (bị `portkey` trội) |
+| *Cận trên lý thuyết (mục 14.2)* | *80 item* | *78* | *97,5%* | *$0,0003259/item* | *$0,000334* | *không xét* |
+
+Đường biên Pareto theo đúng định nghĩa D18: điểm không bị điểm nào khác **vừa** rẻ hơn **vừa** chính
+xác hơn. Biểu đồ: `experiments/results/d18-baseline-20261110/tables/cost_accuracy.png`.
+
+¹ **LiteLLM bị loại khỏi đường biên bởi chính model nó dùng.** Nhánh "chỉ `gpt-4o-mini`" rẻ hơn
+$0,0000012/lượt (1%) và đúng hơn 1,25 đpt. Cả hai khoảng chênh đều nằm trong sàn nhiễu (mục 7.4: 2,9
+đpt) và lệch từng item chỉ 3/80 (mục 14.3). Hai điểm này thực chất là **một điểm**: LiteLLM gửi 240/240
+lượt sang `gpt-4o-mini` (mục 3). Theo D18 mục 8 vẫn ghi đúng như luật đường biên cho ra, không làm tròn
+cho đẹp.
+
+Độ chính xác theo từng bộ (`tables/by_category.csv`):
+
+| Điểm | MMLU | GSM8K | HumanEval | IFEval |
+|---|---|---|---|---|
+| Chỉ `gpt-4o-mini` | 16/20 | 16/20 | 19/20 | 17/20 |
+| Chỉ `claude-haiku` | 18/20 | **19/20** | **20/20** | 16/20 |
+| Chỉ `gpt-4o` | 18/20 | 18/20 | 18/20 | **19/20** |
+
+### 14.2. Cận trên lý thuyết (D18 mục 7)
+
+Với mỗi item, lấy model **rẻ nhất trả lời đúng** trong 3 baseline (theo chi phí thực trên chính item
+đó); item không model nào đúng thì tính chi phí của `gpt-4o-mini`.
+
+- **78/80 = 97,5%**, chi phí **$0,0003259/item**, $0,000334/câu đạt.
+- Model được chọn: `gpt-4o-mini` 68 item, `claude-haiku` 9, `gpt-4o` 1 (`ifeval_19`, $0,0081, chiếm
+  31% tổng chi phí cận trên). Không model nào đúng: `ifeval_03`, `mmlu_01`.
+- Đây là bộ định tuyến "biết trước đáp án" (oracle), **không đạt được trong thực tế**. Nó chỉ đo khoảng
+  trống còn lại cho định tuyến trên đúng 3 model này.
+
+### 14.3. Kiểm đo đúng (D18 mục 5)
+
+Nhánh "chỉ `gpt-4o-mini`" so từng item với kết quả đa số 3 lần (đạt ≥ 2/3) của LiteLLM trong 720 lượt:
+**lệch 3/80 item, trong ngưỡng 4/80** đã đăng ký.
+
+| Item | LiteLLM (720 lượt) | Chỉ `gpt-4o-mini` (10/11) |
+|---|---|---|
+| `gsm8k_17` | 0/3 đạt | đạt |
+| `ifeval_12` | 1/3 đạt | đạt |
+| `ifeval_19` | 3/3 đạt | trượt |
+
+Hai trong ba ca là IFEval, khớp quan sát ở mục 7.4 (IFEval nhạy nhất với dao động nhỏ). Ca `gsm8k_17`
+là ca GSM8K đầu tiên đổi kết quả. Trong 720 lượt, GSM8K không có ca nào, nhưng lần này cách 3 tuần
+chứ không phải 3 lượt liên tiếp.
+
+### 14.4. Đọc kết quả
+
+1. **Ở mức chính xác cao, định tuyến có đáng tiền.** Portkey đạt 92,1%, ngang "chỉ `gpt-4o`" và "chỉ
+   `claude-haiku`" (91,3%; chênh 0,8 đpt, dưới sàn nhiễu) với chi phí bằng **42%** và **68%** hai baseline
+   đó. Portkey trội chặt cả hai baseline đắt.
+2. **Ở đầu rẻ, chọn cứng `gpt-4o-mini` là đủ.** LiteLLM và "chỉ `gpt-4o-mini`" là cùng một điểm.
+   Bifrost hơn "chỉ `gpt-4o-mini`" 2,5 đpt (**dưới** sàn nhiễu 2,9 đpt) với chi phí gấp **4,6 lần**.
+   Trên bộ đề này, chưa đo được Bifrost có lợi về độ chính xác so với chọn cứng model rẻ.
+3. **Khoảng trống đến cận trên lớn, và không proxy nào tiến gần.** Cận trên 97,5% với chi phí bằng 41%
+   của Portkey: chỉ cần chuyển đúng 10/80 item lên model đắt hơn. Portkey gửi 165/240 lượt (69%) sang
+   `claude-haiku`/`gpt-4o` mà chỉ đạt 92,1%. Các luật định tuyến tĩnh (theo độ dài câu hỏi, độ khó ước
+   lượng) chưa nhắm trúng các item mà model rẻ làm sai.
+4. **Không đổi kết luận đã khóa.** Luật 4 bước không có bước "nằm trên đường biên". LiteLLM vẫn qua cổng
+   80% và rẻ nhất ở bước 2 (mục 1). Mục này dùng cho phần thảo luận và mục 5.2.6 của báo cáo.
+
+### 14.5. Giới hạn (ghi từ trước khi chạy, D18 mục 9)
+
+- 1 lần/item nên **không đo được độ nhất quán** của baseline. Độ chính xác của baseline có nhiễu cỡ sàn
+  ở mục 7.4 (khoảng ±2,9 đpt), lớn hơn độ chính xác trung bình 3 lần của các proxy.
+- Cận trên chỉ tính trên 3 model, không phải mọi model có thể có. Nó dùng chi phí thực của một lượt nên
+  nhạy với item đắt bất thường (`ifeval_19`).
+- Baseline chạy ngày 10/11, sau 720 lượt khoảng 3 tuần. Provider có thể đã đổi model phía sau alias.
+  Mức lệch 3/80 ở mục 14.3 cho thấy độ trôi đó nhỏ, nhưng không loại trừ được.
+
+**Tái lập (offline, miễn phí):**
+
+```bash
+PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/results/d18-baseline-20261110/*/run_*.json
+PYTHONIOENCODING=utf-8 python experiments/analysis/baseline_report.py --baseline-dir experiments/results/d18-baseline-20261110
+python -m unittest discover -s experiments/tests   # 83/83, gồm 11 test của baseline_report.py
+```

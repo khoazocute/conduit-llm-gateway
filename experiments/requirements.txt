@@ -13,3 +13,6 @@ absl-py           # instructions.py dung absl.logging
 immutabledict     # instructions_registry.py
 langdetect        # verifier language:response_language
 nltk              # tach cau/tu cho cac verifier length_constraints
+
+# --- chi de ve bieu do chi phi-chinh xac (analysis/baseline_report.py, D18); --no-chart thi khong can ---
+matplotlib
