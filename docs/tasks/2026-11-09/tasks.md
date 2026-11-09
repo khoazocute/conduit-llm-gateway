@@ -119,9 +119,11 @@ Không chạy lặp `e2e_workflow_test.sh`. Hosting: chưa phát sinh (deploy sa
 
 ## 8. Phân công viết báo cáo
 
-Theo đúng cách Khoa đã chia trong bản draft (`docs/reports/Draft_KLTN.docx.md`, phần "Phân công và theo
-dõi tiến độ" + dòng "Phụ trách" của từng mục). Bản làm việc chung: Google Doc của nhóm (Hùng giữ link).
-Định dạng theo Phụ lục 2 đã cài sẵn trong file; sửa phần của người kia thì bật theo dõi thay đổi.
+Theo đúng cách Khoa đã chia trong bản draft (phần "Phân công và theo dõi tiến độ" + dòng "Phụ trách"
+của từng mục). **Bản chính duy nhất là Google Doc của nhóm:**
+https://docs.google.com/document/d/18ky1idkHIBWLbfEenLUjVD6Z5MSEgT7udwrbyw3vrk0/edit
+(bản `.md` xuất ra trước đây đã xóa khỏi repo để khỏi lệch với Doc). Định dạng theo Phụ lục 2 đã cài sẵn
+trong Doc; sửa phần của người kia thì bật chế độ đề xuất (Suggesting).
 
 ### 8.1. Ai viết mục nào
 
