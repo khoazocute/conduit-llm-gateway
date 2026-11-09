@@ -36,10 +36,8 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
   - Tầng trung: Claude Haiku
   - Tầng đắt: GPT-4o, Claude Sonnet
 - **Bộ đánh giá: 4 bộ benchmark công khai, 0-shot, 10 item/bộ = 40 item** (D10, chốt 2026-10-14): MMLU (accuracy), GSM8K (exact match), HumanEval (**pass@1**, chạy test thật), IFEval (ràng buộc kiểm bằng code). Metric dùng đúng chuẩn của paper gốc — xem `docs/benchmark-survey.md`. **Đã loại MT-Bench** (metric chuẩn của nó là GPT-4 làm trọng tài). Bộ 30 prompt tiếng Việt tự soạn (`docs/eval-prompts.md`) **đổi vai** thành phép thử riêng cho chỗ nhạy ngôn ngữ của Bifrost, không còn là bộ đánh giá chính.
-- **Mỗi item chạy 3 lần trên mỗi proxy** → 40 × 3 proxy × 3 lần = 360 lượt gọi API thật. Mục đích: đo tỷ lệ nhất quán (consistency rate) của quyết định routing, không chỉ đo giá trị trung bình.
-- **Chấm chất lượng:**
-  - Closed-QA: đúng/sai khách quan, tự động hóa được (so đáp án).
-  - Prompt mở: rubric 3 tiêu chí (on-task / độ dài phù hợp / không lỗi), mỗi tiêu chí 0–1 điểm, **chấm mù** (ẩn tên proxy), 30% mẫu được 2 người chấm độc lập để báo cáo % agreement.
+- **Mỗi item chạy 3 lần trên mỗi proxy** → 40 × 3 proxy × 3 lần = 360 lượt gọi API thật. Mục đích: đo tỷ lệ nhất quán (consistency rate) của quyết định routing, không chỉ đo giá trị trung bình. **D14 (2026-10-20) mở rộng lên 20 item/bộ = 80 item = 720 lượt** — đây là bộ số chính thức.
+- **Chấm chất lượng:** tự động 100% theo metric chuẩn của từng bộ (D10). ~~Rubric 3 tiêu chí, chấm mù, chấm kép 30%~~ đã bỏ cùng bộ prompt tự soạn — không còn chấm tay.
 - **Quy tắc quyết định chọn proxy (khóa trước khi chạy, thứ tự ưu tiên):**
   1. Loại proxy có tỷ lệ đúng closed-QA < 80%.
   2. Trong số còn lại, chọn proxy có chi phí trung bình/prompt thấp nhất.
@@ -76,7 +74,7 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
 | Load testing | k6 hoặc Locust |
 
 **LLM providers (Must-have):** OpenAI, Anthropic. Google Gemini chỉ dùng cho fallback (Should-have).
-**Payment:** Mock Payment Gateway tự dựng (Must-have, bắt buộc chạy được độc lập). VNPay sandbox (Should-have, nâng cấp qua cùng lớp Payment Adapter, không sửa code còn lại). **Không làm MoMo** (ngoài phạm vi — yêu cầu hồ sơ pháp nhân doanh nghiệp).
+**Payment:** Mock Payment Gateway tự dựng (Must-have, bắt buộc chạy được độc lập). VNPay sandbox (**Could-have từ 2026-11-09, D19** — trước là Should-have; nếu làm thì nâng cấp qua cùng lớp Payment Adapter, không sửa code còn lại). **Không làm MoMo** (ngoài phạm vi — yêu cầu hồ sơ pháp nhân doanh nghiệp).
 
 ---
 
@@ -132,14 +130,14 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Kiểm duyệt agent từ Admin
 - Mock Payment Gateway end-to-end (webhook giả lập, idempotent, cộng credit đúng)
 
-**Should-have (chỉ làm sau khi Must-have ổn định):**
-- RAG cơ bản (pgvector, chunking, retrieval)
-- VNPay sandbox (nâng cấp từ Mock qua cùng Payment Adapter)
-- Fallback sang Gemini
+**Should-have (chỉ làm sau khi Must-have ổn định) — phạm vi chỉnh theo D19 (2026-11-09):**
+- RAG cơ bản (pgvector, chunking, retrieval) — cắt khỏi bản nháp báo cáo nếu phần nạp tài liệu chưa xong 14/11
+- Trang admin hiển thị routing (tỷ lệ model, chi phí, tiết kiệm so với "luôn `gpt-4o`", số lần fallback) — thêm theo D19 để demo thấy được đóng góp chính
+- Fallback sang Gemini (đã có trong `fallbacks` của LiteLLM, TASK-60 kiểm lại)
 - Image generation (DALL-E 3) — kiến trúc Image Adapter thiết kế song song Text Adapter nhưng triển khai sau
 - Widget iframe, dashboard doanh thu, rating/comment
 
-**Could-have:** Re-ranking RAG bằng cross-encoder. (BYOK và semantic caching đã bị loại khỏi phạm vi hoàn toàn — không triển khai dưới bất kỳ hình thức nào.)
+**Could-have:** VNPay sandbox (hạ từ Should-have theo D19, chỉ làm sau 27/11), re-ranking RAG bằng cross-encoder. (BYOK và semantic caching đã bị loại khỏi phạm vi hoàn toàn — không triển khai dưới bất kỳ hình thức nào.)
 
 **Ngoài phạm vi:** video generation, MoMo, production-scale.
 
@@ -165,18 +163,18 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 Đã dựng xong trước (không tính vào tuần của ai riêng): docker-compose 6 container (Postgres+pgvector, pgAdmin, Redis, 3 proxy) verify chạy được; Flyway migration full schema (`V1`, `V2`) verify Hibernate validate pass; JPA entity + repository cho toàn bộ 12 bảng Must-have (cả 2 vertical) — mỗi người chỉ cần viết service/controller/frontend. Hướng dẫn setup từng bước (bao gồm cách xem bảng qua pgAdmin) nằm ở README.md, không lặp lại ở đây.
 
 **Vertical Auth+Agent (Hùng) — ĐÃ XONG cả backend lẫn frontend, đã push `main` (commit `52b42ff`):**
-- Backend: JWT (access + refresh token revocable qua Redis, 1 session/user), `SecurityConfig`/`JwtService`/`JwtAuthenticationFilter`, Auth API, Agent API (ABAC + state machine `draft→pending→published/rejected→unpublished`, **`unpublished` submit lại được về `pending`** — fix gap ban đầu), Admin API. Test tự động: `backend-gateway/scripts/e2e_test.sh` (40 check, chạy pass) + `JwtServiceTest` unit test.
+- Backend: JWT (access + refresh token revocable qua Redis, 1 session/user), `SecurityConfig`/`JwtService`/`JwtAuthenticationFilter`, Auth API, Agent API (ABAC + state machine `draft→pending→published/rejected→unpublished`, **`unpublished` submit lại được về `pending`** — fix gap ban đầu), Admin API. Test tự động: `backend-gateway/scripts/e2e_test.sh` (**66 check** từ Phase F, chạy trong CI) + unit test (`JwtServiceTest`, `AuthServiceTest`, `AgentServiceTest`, `UserServiceTest`).
 - Frontend: Next.js 16 (route group `(app)`/`(auth)`), login/register, marketplace, creator dashboard, admin (duyệt agent/user). Style dùng chung: theme dev-console dark, class CSS thuần (không dùng thư viện component nào — tránh lỗi `render`-prop từng gặp với shadcn/Base UI) — **xem `docs/design-system.md` trước khi làm UI mới, kể cả vertical Khoa**, nguồn thật nằm ở `frontend/app/globals.css`.
 - Lưu ý hạ tầng: port host của Redis trong `docker-compose.yml` là `26379` (không phải 6379 mặc định, Windows/Hyper-V hay đổi dải cổng bị loại trừ theo thời gian — nếu lại đụng port, đổi sang port khác và cập nhật `application.yml` theo).
 - ~~Gap: chưa có API cho user tự nâng cấp role → creator~~ — **đã chốt hướng 2026-10-22 (D8):** chọn role (`user` hoặc `creator`) ngay lúc đăng ký, không có luồng nâng cấp sau; admin vẫn chỉ tạo qua SQL. Việc triển khai: `docs/tasks/2026-10-19/tasks.md` (H1).
 
 **Vertical Credit+Chat+Payment (Khoa) — ĐÃ MERGE vào `main` (PR #1, `e8d2bfd`), Hùng đã pull về và test workflow xuyên 2 vertical (2026-09-19):**
 - Có: ví credit + ledger, mua agent qua Mock Payment (webhook HMAC `X-Webhook-Signature`, idempotent), chat SSE qua proxy (`ChatService`/`HttpProxyChatClient`, proxy đang chọn tĩnh `app.chat.active-proxy: litellm` — routing thật là việc tuần 9–10), `AesGcmCipher` cho API key, admin API key + model pricing; frontend: `/wallet`, `/agents/[id]/chat`, `/admin/api-keys`, `/admin/model-pricing`, nút mua agent.
-- Test workflow: `backend-gateway/scripts/e2e_workflow_test.sh` (34 check: creator tạo agent → admin duyệt → user mua → webhook sai/thiếu chữ ký bị 400 → webhook đúng cộng credit → **callback trùng không cộng lần 2** → mở chat → provider lỗi báo qua SSE và **không trừ credit**). Kèm `scripts/e2e_test.sh` (40 check, Auth+Agent) — cả hai phải pass trước khi merge.
-- **Chưa test được chat thành công thật:** `.env` chỉ có API key placeholder (`sk-...changeme`) nên upstream trả "API key not valid" — nhánh lỗi đã test, nhánh thành công (có usage → trừ credit → ghi `usage_logs`/`routing_decisions`) cần key thật, chưa chạy.
+- Test workflow: `backend-gateway/scripts/e2e_workflow_test.sh` (43 check từ TASK-51: creator tạo agent → admin duyệt → user mua → webhook sai/thiếu chữ ký bị 400 → webhook đúng cộng credit → **callback trùng không cộng lần 2** → mở chat → provider lỗi báo qua SSE và **không trừ credit**). Kèm `scripts/e2e_test.sh` (66 check, Auth+Agent) — cả hai phải pass trước khi merge.
+- ~~Chưa test được chat thành công thật~~ — **đã chạy thật** (thí nghiệm 720 lượt, TASK-66, demo 31/10): có usage → trừ credit theo `model_pricing` → ghi `usage_logs`/`routing_decisions`.
 - Phân vai UI theo role (sau khi test tay 2026-09-19): login/register chuyển về `/dashboard` (creator/admin) hoặc `/library` (buyer) — `homePathForRole()` ở `frontend/lib/roles.ts`; `/dashboard` chỉ cho creator/admin (buyer bị đẩy sang `/library`). **Buyer chỉ thấy agent đã mua** qua trang `/library` ← endpoint mới `GET /purchases` (chỉ `payment_status=paid`, mới nhất trước, có phân trang). `/admin/users` có tìm kiếm `q` (email/họ tên, không phân biệt hoa thường), phân trang, sắp xếp mới nhất trước, đánh dấu tài khoản đang đăng nhập và **chặn admin tự ban chính mình** (403). Contract `docs/openapi.json` đã cập nhật (+`GET /purchases`, +`q`) — báo Khoa vì `/purchases` nằm trong tag của vertical Khoa.
 - Logout phải chạy được **kể cả khi access token đã hết hạn** (`/auth/**` là permitAll nên `principal` có thể null → trước đây NPE 500 và cookie refresh còn sống, phiên tự sống lại khi tải lại trang). Nay `AuthService.logout(userId, refreshToken)` nhận diện phiên bằng refresh cookie, luôn thu hồi trên Redis, luôn xoá cookie, trả 204 idempotent; frontend `logout()` không ném lỗi và chuyển về `/login`. Có test hồi quy trong `e2e_test.sh`. `GlobalExceptionHandler.handleUnexpected` giờ log stack trace (trước đây 500 bị nuốt im lặng).
-- Quan sát khi chat thật với Gemini (chưa xử lý, để Khoa/nhóm quyết): (1) Gemini Flash thỉnh thoảng trả 503 quá tải — LiteLLM retry 2 lần (~15s) rồi báo lỗi; backend ghi `usage_logs.status=error`, không trừ credit (đúng thiết kế). `litellm` chưa cấu hình `fallbacks` (log: `Available Model Group Fallbacks=None`) — fallback/failover chính là thứ thực nghiệm tuần 7–10 đánh giá giữa 3 proxy, nên không tự thêm vào backend trước đó; hiện cũng chỉ có key Gemini thật. (2) `introduction` của agent **không** được gửi làm system prompt (`ChatService` chỉ gửi lịch sử hội thoại), nên agent trả lời chung chung/dài và tốn credit (~1 credit/token ×1.5; một câu "1+1" tốn ~300–580 credit vì Gemini tính cả token suy luận). Nếu muốn agent có "vai" riêng cần quyết định nguồn system prompt (ERD hiện chỉ có `introduction`).
+- Quan sát khi chat thật với Gemini (2026-09-19) — **đều đã xử lý**: (1) LiteLLM chưa có `fallbacks` → nay chat thường đi qua `conduit-pool` với `fallbacks: [claude-haiku, gemini-flash]` + `retry_policy` (TASK-51, D16), phục hồi 15/15 khi OpenAI lỗi. (2) `introduction` không được gửi làm system prompt → nay agent có cột `instructions` (D8, Flyway V3), `ChatService` chèn thành lượt `system` đầu tiên (TASK-66).
 - 2 lỗi đã sửa khi test (thuộc tầng Auth của Hùng, ảnh hưởng SSE của Khoa): (1) `JwtAuthenticationFilter` phải chạy cả trên ASYNC dispatch (`shouldNotFilterAsyncDispatch()=false`) — nếu không, khi `SseEmitter` kết thúc, stream bị cắt/401; (2) `SecurityConfig` cho phép ERROR dispatch (`dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()`) — nếu không, lỗi validation trên endpoint `text/event-stream` (vd. `content` rỗng) bị che thành 401 thay vì 400.
 
 **Bẫy môi trường khi chạy local (đã gặp thật):**
@@ -186,7 +184,7 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
 - Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
 
-**Lộ trình còn lại:** Hùng và Khoa **cùng làm phần đánh giá proxy**, mỗi hạng mục có 1 người viết + 1 người phản biện (đổi vai giữa các hạng mục); chấm mù cần cả hai người (mẫu chấm kép). Chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D8, rủi ro, câu hỏi GVHD — file này đã lên repo, cả hai cùng đọc/sửa được qua PR).
+**Lộ trình còn lại:** chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D20, rủi ro). Mỗi hạng mục có 1 người viết + 1 người phản biện. **Phase A–F đã xong (F merge `main` 30/10). Đang ở Phase G, mốc thật duy nhất: nộp bản nháp báo cáo khóa luận ngày 27/11/2026** (D19); ngày bảo vệ chưa có. Báo cáo là việc chính đến 27/11; deploy và VNPay để sau.
 
 **Quy ước làm việc theo tuần (đổi từ 2026-09-29 — thay hẳn cách làm cũ, không paste log vào chat nữa):**
 mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên repo (không phải `docs-local/`), gồm:
@@ -194,11 +192,11 @@ mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên 
 - `log-hung.md` / `log-khoa.md` — nhật ký làm việc của mỗi người, tự viết dần trong tuần rồi commit kèm code (thay cho việc dán nguyên khối Markdown vào chat) — bảng "việc/kết quả/file/người kia cần làm" + mục "phát hiện quan trọng"/"cần bàn cùng nhau".
 - Review: người phản biện đọc `tasks.md` (được giao gì) + `log-*.md` của người kia (báo cáo gì) + tự chạy lại code/test thật để đối chiếu, rồi ghi kết luận thẳng vào cuối chính file `log-*.md` đó, dưới mục `## Review — <người review> (<ngày>)` — không tạo file riêng.
 
-Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-10-19/`** (phần đánh giá proxy đã đóng ở `docs/tasks/2026-10-12/`; kết luận và số liệu ở `docs/experiment-results.md`) để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. **Kết luận các buổi họp GVHD nằm ở `docs/meetings/<ngày>.md`** — đọc buổi gần nhất trước khi quyết bất cứ việc gì thuộc phần đánh giá proxy. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
+Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-11-09/`** (Phase G, kế hoạch đến hạn nộp bản nháp 27/11; tuần `2026-11-02/` không được giao nên không có tiến triển, việc đã chuyển hết sang tuần này; Phase F đóng ở `docs/tasks/2026-10-19/`) (phần đánh giá proxy đã đóng ở `docs/tasks/2026-10-12/`; kết luận và số liệu ở `docs/experiment-results.md`) để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. **Kết luận các buổi họp GVHD nằm ở `docs/meetings/<ngày>.md`** — đọc buổi gần nhất trước khi quyết bất cứ việc gì thuộc phần đánh giá proxy. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
 
-**Kết quả thực nghiệm (xong 2026-10-20): chọn `litellm`**, quyết ở bước 2 của luật 4 bước trên 720 lượt (83,8% / 87,5% / 92,1%; rẻ hơn Bifrost 4,55×, Portkey 6,43×), **kèm điều kiện bật `fallbacks` khi tích hợp** (D15: LiteLLM phục hồi 0/15 khi OpenAI lỗi, Bifrost 13/15). **Kết luận đổi theo ngưỡng chất lượng** (đặt 85% thì ra Bifrost) nhưng ngưỡng 80% đã khóa từ commit đầu tiên — xem `docs/experiment-results.md` mục 7.6. D10–D15 (bộ đề, thiết kế Y, luật dự phòng, mở rộng cỡ mẫu, tiêm lỗi) ở `docs/roadmap.md` mục 4.
+**Kết quả thực nghiệm (xong 2026-10-20): chọn `litellm`**, quyết ở bước 2 của luật 4 bước trên 720 lượt (83,8% / 87,5% / 92,1%; rẻ hơn Bifrost 4,55×, Portkey 6,43×), **kèm điều kiện bật `fallbacks` khi tích hợp** (D15: LiteLLM phục hồi 0/15 khi OpenAI lỗi, Bifrost 13/15). **Kết luận đổi theo ngưỡng chất lượng** (đặt 85% thì ra Bifrost) nhưng ngưỡng 80% đã khóa từ commit đầu tiên — xem `docs/experiment-results.md` mục 7.6. D10–D15 (bộ đề, thiết kế Y, luật dự phòng, mở rộng cỡ mẫu, tiêm lỗi) ở `docs/roadmap.md` mục 4. **Đã thực hiện điều kiện:** bật `fallbacks` + `retry_policy` (D16), chạy lại phép thử 27/10 → LiteLLM phục hồi 15/15.
 
-**Bảng quyết định D1–D8 (chi tiết ở `docs/roadmap.md` mục 4), tóm tắt:**
+**Bảng quyết định (chi tiết ở `docs/roadmap.md` mục 4), tóm tắt.** Lưu ý: **D2 cũ đã bị thay bằng Design Y** (2026-10-14), **D4 và D6 hết hiệu lực** vì D10 bỏ chấm tay — giữ dưới đây chỉ để biết lịch sử.
 - **D1 (đã chốt 2026-09-21):** Hùng chịu chi phí API key, dùng tối thiểu (xem "Chính sách chi phí API key" ở mục 2).
 - **D3 (đã chốt 2026-09-23):** đường ghi log thí nghiệm đi qua app Conduit thật (`POST /agents/{id}/chat`), không gọi thẳng 3 proxy — khớp lời dặn của thầy Bình ("áp dụng proxy đó cho dự án của em").
 - **D4 (đã chốt 2026-09-23):** 6 prompt code chấm rubric 3 tiêu chí như prompt mở (không chấm bằng test tự động).
@@ -207,6 +205,11 @@ Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì
 - **D2 (đã chốt 2026-09-29):** mục tiêu routing chung = ưu tiên model rẻ nhất + có phương án dự phòng khi lỗi; mỗi proxy biểu đạt bằng cơ chế riêng (LiteLLM `cost-based-routing` tự chọn; Bifrost/Portkey dùng chuỗi/rule tĩnh rẻ→đắt). Không dùng Bifrost Complexity Router. Đây là kỷ luật thiết kế thí nghiệm, **không phải đóng góp kỹ thuật**.
 - **D7 (đã chốt 2026-09-29, bổ sung 2026-10-03):** `num_retries=2`, `timeout=45s` giống nhau cả 3 proxy. Lượt lỗi ghi `usage_logs.status=error`, không tính phí, tính là 1 trong 3 lần lặp, **không** tính vào chi phí trung bình ở bước 2 của luật quyết định (nếu tính ở $0 sẽ thưởng cho proxy hay lỗi); `error_rate` báo cáo riêng.
 - **D8 (đã chốt 2026-10-22, nhóm tự quyết vì GVHD bận):** (1) role chọn lúc đăng ký (`user`/`creator`, không cho `admin`); (2) system prompt riêng của agent = cột mới `agents.instructions` (Flyway V3), kiểu *Claude Project*, **chỉ trả về cho chủ agent và admin**, `introduction` giữ vai trò mô tả công khai; (3) đính kèm file vào agent = RAG, Should-have, làm sau Phase F. Chi tiết: `docs/roadmap.md` mục 4.
+- **D16 (đã chốt 2026-10-28):** LiteLLM chính thức dùng `retry_policy` — lỗi vĩnh viễn retry 0 lần để chuyển ngay sang `fallbacks`, lỗi tạm thời 2 lần. D7 chỉ áp cho thí nghiệm.
+- **D17 (chưa chốt):** chi phí hosting khi deploy — chốt trước 28/11.
+- **D18 (đã chốt 2026-11-09, đăng ký trước khi chạy):** đo thêm 3 baseline "một model cố định" (`gpt-4o-mini`, `claude-haiku`, `gpt-4o`) × 80 item × 1 lần = 240 lượt (~$0,20), vẽ đường biên Pareto chi phí–chính xác và tính cận trên lý thuyết. **Không dùng để chọn lại proxy**, không phải hướng V2 (không train gì). Hùng xác nhận chi phí trước khi chạy.
+- **D19 (đã chốt 2026-11-09):** nộp bản nháp báo cáo **27/11**; VNPay hạ xuống Could-have; thêm trang admin hiển thị routing vào Should-have; RAG cắt khỏi bản nháp nếu phần nạp tài liệu chưa xong 14/11; deploy sau 27/11.
+- **D20 (đã chốt 2026-11-09):** báo cáo trình bày đóng góp (vẫn duy nhất là phần đánh giá proxy) thành 3 phần: quy trình đánh giá tái lập được, kết quả so sánh + baseline, các phát hiện vận hành.
 
 **Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận. **Không thêm dòng `Co-Authored-By: Claude` (hay bất kỳ attribution/"Generated with Claude Code" nào) vào commit message hoặc mô tả PR** — quy tắc của Hùng, ưu tiên hơn gợi ý mặc định của công cụ.
 
@@ -214,7 +217,7 @@ Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì
 |---|---|---|
 | 1 | ERD (`docs/erd.dbml`) + OpenAPI contract (`docs/openapi.json`) | Hùng & Khoa (joint) — ✅ xong |
 | 2–5 | Vertical Auth+Agent (backend + frontend) | Hùng — ✅ xong, đã push `main` |
-| 2–5 | Vertical Credit+Chat+Payment (backend + frontend) | Khoa — ✅ đã merge `main`, workflow xuyên 2 vertical đã test (chat thành công thật còn chờ API key thật) |
+| 2–5 | Vertical Credit+Chat+Payment (backend + frontend) | Khoa — ✅ đã merge `main`, workflow xuyên 2 vertical đã test, chat thành công thật đã chạy |
 | 6–7 | Chuẩn bị thực nghiệm: chốt bộ đánh giá + metric chuẩn | Hùng & Khoa — **thiết kế lại 2026-10-14**: 4 bộ benchmark công khai thay bộ 30 prompt tự soạn, metric chuẩn tự động thay rubric chấm mù (D10/D11, xem `docs/experiment-design.md`) |
 | 7–8 | Setup hạ tầng 3 proxy (deploy, cấu hình pool 5 model, logging vào `routing_decisions`) | Hùng (infra Docker đã xong, routing strategy thật + logging còn phụ thuộc backend) |
 | **9–10** | **Chạy thực nghiệm: mỗi người 15 prompt × 3 proxy × 3 lần trên phần của mình. Tổng hợp, áp dụng quy tắc quyết định, chọn proxy chính thức.** | **Hùng & Khoa (JOINT)** |
@@ -223,6 +226,8 @@ Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì
 | 13 | (Should-have nếu kịp) RAG / VNPay / image gen | Khoa |
 | 14 | Testing: unit, integration, security acceptance, load test k6 | Hùng & Khoa |
 | 15–16 | Deploy, viết báo cáo, demo | Hùng & Khoa |
+
+Bảng trên là **kế hoạch gốc**, giữ để đối chiếu. Lịch đang chạy: `docs/roadmap.md` mục 5 và folder tuần hiện tại.
 
 ---
 
