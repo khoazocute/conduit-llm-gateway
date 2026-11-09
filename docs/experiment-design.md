@@ -331,3 +331,18 @@ Chi tiết + phân công: `docs/tasks/2026-10-12/tasks.md`.
 
 **Tier không cần ghi cột riêng** trong `routing_decisions`: map tier → model là **1:1** nên tier
 **suy được từ `selected_model`**. Khỏi phải gọi `/api/logs` của Bifrost sau mỗi lượt.
+
+---
+
+## 11. Phân tích bổ sung sau khi đã chọn proxy (không chọn lại)
+
+Thí nghiệm chính đã đóng 20/10 (kết luận `litellm`). Các phân tích dưới đây **đăng ký trước khi chạy**
+trong `docs/roadmap.md` mục 4, và **không được dùng để chọn lại proxy**:
+
+| # | Hỏi gì | Trạng thái |
+|---|---|---|
+| D15 | Proxy nào phục hồi khi OpenAI lỗi | ✅ chạy 20/10, chạy lại 27/10 sau D16 |
+| D18 | Định tuyến có đáng tiền hơn **một model cố định** không: 3 baseline (`gpt-4o-mini`, `claude-haiku`, `gpt-4o`) × 80 item, đường biên Pareto, cận trên lý thuyết | ⬜ đăng ký 09/11, chưa chạy |
+
+D18 đo trực tiếp phần mà giới hạn 1 ở mục 9 nói là không tách được: một proxy định tuyến có hơn
+được việc cứ gửi mọi câu vào model mà nó hay chọn hay không.

@@ -1,5 +1,9 @@
 # Tuần 2026-11-02 → 2026-11-08 — việc được giao
 
+> ⚠️ **Tuần này không được giao thực tế** (tin nhắn task chưa gửi Khoa), không có tiến triển nào trên
+> repo hay Notion. Toàn bộ việc đã chuyển sang **`docs/tasks/2026-11-09/tasks.md`**, kèm lịch mới theo
+> hạn nộp bản nháp 27/11 (D19). File này giữ lại để đối chiếu, không làm theo các hạn bên dưới.
+
 **Phase F đã xong** (merge `main` 30/10, CI xanh). Tuần này bắt đầu **Phase G**: Should-have, deploy,
 báo cáo, demo. Tracker: Notion "KLTN (26 - 27)" → Task Tracking (TASK-57 → 63, thêm TASK-69 → 71).
 
