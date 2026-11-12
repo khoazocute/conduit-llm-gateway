@@ -56,4 +56,5 @@ Số chính (chi tiết `experiment-results.md` mục 14):
   khai, cần chèn tay.
 - Chưa có số liệu: so sánh độ trễ với gọi thẳng API nhà cung cấp (RQ3, ghi "chưa đo" ở 3.7.1); cấu hình
   máy của Khoa cho 180 lượt ngày 19/10 (ghi "chưa được ghi lại" ở 3.7.2). Khoa gửi CPU/RAM/OS để điền.
+- **LiteLLM lúc bình thường = gọi thẳng `gpt-4o-mini`** (240/240), chỉ đổi model khi nhà cung cấp lỗi nhờ `fallbacks`. Vì sao không tự viết adapter + fallback: ghi ở `experiment-results.md` mục 15, có 3 câu hỏi mở cần bàn (cách đóng khung kết luận, có hỏi GVHD không).
 - Dòng "Phụ trách" của mục 5.1 trong Doc vẫn ghi số cũ "(6.1–6.3, 6.5, 6.7)", chưa sửa.

@@ -655,3 +655,82 @@ PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/r
 PYTHONIOENCODING=utf-8 python experiments/analysis/baseline_report.py --baseline-dir experiments/results/d18-baseline-20261110
 python -m unittest discover -s experiments/tests   # 83/83, gồm 11 test của baseline_report.py
 ```
+
+---
+
+## 15. BỔ SUNG (12/11/2026): LiteLLM có thực sự định tuyến không, và vì sao không tự viết
+
+> **Mục thảo luận, không sửa số liệu và không chọn lại proxy.** Ghi lại câu hỏi phát sinh sau D18 (mục 14)
+> để làm nguồn cho mục 5.5 (Thảo luận) và phần giới hạn của báo cáo. **Chưa chốt cách trình bày**: nhóm sẽ
+> bàn lại, có thể hỏi GVHD (xem 15.5).
+
+### 15.1. LiteLLM chỉ đổi model khi nhà cung cấp lỗi
+
+Đếm `model_selected` của LiteLLM trong dữ liệu đã có (không gọi thêm API):
+
+| Tình huống | Dữ liệu | LiteLLM chọn |
+|---|---|---|
+| Chạy bình thường | `d14-full-720/merged.json` | `gpt-4o-mini` **240/240** |
+| Khóa OpenAI hỏng, **chưa** bật `fallbacks` (20/10) | `fault-injection-20261020-150950/` | **lỗi 15/15**, không sang model nào |
+| Khóa OpenAI hỏng, **đã** bật `fallbacks` + `retry_policy` (27/10) | `fault-injection-20261027-224918/` | `claude-haiku` **15/15**, thành công |
+
+- `cost-based-routing` luôn chọn bản triển khai rẻ nhất trong `conduit-pool`. `gpt-4o-mini` luôn rẻ nhất,
+  nên lúc bình thường LiteLLM **không định tuyến**: nó tương đương gọi thẳng `gpt-4o-mini`. Đây là đúng thiết
+  kế của chiến lược, không phải lỗi cấu hình.
+- Chênh lệch giữa LiteLLM (83,8%; $0,0001233) và "chỉ `gpt-4o-mini`" (85,0%; $0,0001221) ở mục 14 là nhiễu
+  đo: cùng model, hai thời điểm, lệch 3/80 item.
+- LiteLLM chỉ chuyển model khi nhà cung cấp lỗi, và chỉ nhờ `fallbacks` (danh sách tĩnh), không phải nhờ
+  chọn theo nội dung câu hỏi. Không có `fallbacks`, retry trong nhóm vẫn quay lại deployment OpenAI đang hỏng.
+
+### 15.2. Vì sao LiteLLM vẫn thắng: hệ quả của luật quyết định
+
+Luật đã khóa: qua cổng 80% thì chọn proxy **rẻ nhất**. Với luật này, một proxy luôn chọn model rẻ nhất sẽ
+thắng mỗi khi model rẻ nhất **tự** qua cổng; `gpt-4o-mini` đạt khoảng 84–85% nên qua. Kết luận "chọn
+LiteLLM" vì vậy phản ánh việc **ưu tiên chi phí**, không phải bằng chứng LiteLLM định tuyến tốt hơn hai
+proxy kia. Mục 7.6 đã ghi kết luận đổi theo ngưỡng (cổng 85% thì ra Bifrost). Luật không sửa (khóa từ commit
+`9d6dfd7`), chỉ cần nói rõ hệ quả này trong báo cáo.
+
+### 15.3. Giá trị thật của LiteLLM với Conduit
+
+So với gọi thẳng `gpt-4o-mini`, LiteLLM không thêm chất lượng và không giảm chi phí. Nó thêm hai thứ, cả
+hai đều có bằng chứng:
+
+1. **Chịu được sự cố nhà cung cấp**: 15/15 lượt phục hồi qua `claude-haiku` khi OpenAI hỏng. Gọi thẳng một
+   nhà cung cấp thì trường hợp này là lỗi 100% (tương đương phép thử 20/10: 0/15).
+2. **Một lớp chuẩn hóa nhiều nhà cung cấp**: backend chỉ dùng định dạng OpenAI; đổi model, thêm nhà cung
+   cấp hay đổi chiến lược là sửa cấu hình, không sửa code.
+
+### 15.4. Phương án thứ tư chưa được so: tự viết adapter + fallback
+
+Backend đã tách sẵn qua giao diện `ProxyChatClient`. Một bản tự viết sẽ thay `HttpProxyChatClient` bằng ba
+adapter (OpenAI, Anthropic, Gemini) và một vòng lặp fallback. Phải tự làm những việc dự án hiện đang dựa
+vào LiteLLM: dịch request (vị trí system prompt, `max_tokens` bắt buộc ở Anthropic, `contents/parts` ở
+Gemini), chuẩn hóa usage và mã lỗi, retry theo loại lỗi (D16), fallback chéo nhà cung cấp, báo model đã trả
+lời để tính tiền. Với chế độ không streaming hiện tại, ước lượng vài trăm dòng Java (**chưa viết thử**);
+streaming làm khối lượng tăng đáng kể.
+
+| | Tự viết | LiteLLM |
+|---|---|---|
+| Chất lượng, chi phí lúc bình thường | như nhau | như nhau |
+| Khi API nhà cung cấp đổi | tự sửa | đổi tên model trong config (đã gặp: `claude-3-5-haiku` bị gỡ 23/09; Sonnet 5 từ chối `temperature`, D12) |
+| Thêm nhà cung cấp, chiến lược, cân bằng tải nhiều khóa | viết thêm code | sửa config |
+| Độ minh bạch | hiểu rõ toàn bộ | có hành vi mờ đã gặp: header trả hash làm cost = 0 không báo lỗi (TASK-51); retry chạy trước fallback, mất ~46 s (D16) |
+| Rủi ro phụ thuộc | không | có thật: v1.82.7/v1.82.8 bị tấn công chuỗi cung ứng; phải ghim bản nên không dùng được Auto Router (cần ≥ v1.94) |
+| Hạ tầng | không thêm | thêm 1 container |
+
+Ở quy mô hiện tại (3 nhà cung cấp, không streaming, 1 danh sách fallback), tự viết là phương án khả thi.
+Lợi thế của proxy rõ hơn khi hệ thống lớn lên (nhiều nhà cung cấp, nhiều khóa, streaming, theo dõi chi phí
+tập trung). Đề tài vẫn dùng proxy vì đóng góp của khóa luận là **đánh giá proxy mã nguồn mở để tích hợp**
+(CLAUDE.md mục 1, hướng GVHD đã chốt); tự viết router là hướng khác, gần hướng V2 đã bị bác. Các phát hiện
+vận hành (D20 phần 3) vẫn đúng nếu sau này đổi sang bản tự viết.
+
+### 15.5. Câu hỏi còn mở (bàn sau)
+
+1. Báo cáo đóng khung kết luận thế nào: "chọn LiteLLM" như kết quả của luật ưu tiên chi phí, kèm giá trị
+   thật ở 15.3, thay vì "LiteLLM định tuyến tốt nhất"?
+2. Có đưa phương án "tự viết adapter + fallback" (15.4) vào phần thảo luận như phương án thứ tư chưa đo
+   không, và có cần hỏi GVHD trước vì nó chạm vào cách đóng khung đóng góp chính?
+3. Phần hướng phát triển: định tuyến theo nội dung (khoảng cách tới cận trên 97,5%, mục 14.2) đặt ở mức
+   nào để không quay về hướng V2?
+
+**Không đề xuất chạy thêm thí nghiệm nào** cho các câu hỏi trên: đây là phần diễn giải.
