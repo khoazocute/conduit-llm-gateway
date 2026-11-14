@@ -1,5 +1,6 @@
 package com.conduit.backendgateway.rag;
 
+import java.util.Map;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -41,5 +42,16 @@ public class HttpAiServiceClient implements AiServiceClient {
                 .body(form)
                 .retrieve()
                 .body(ChunkEmbeddingResult.class);
+    }
+
+    @Override
+    public QueryEmbedding embedQuery(String text) {
+        return restClient.post()
+                .uri("/embed")
+                .header("X-Internal-Token", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("text", text))
+                .retrieve()
+                .body(QueryEmbedding.class);
     }
 }

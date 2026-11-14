@@ -68,6 +68,8 @@ class ChatServiceTest {
     private final RoutingDecisionRepository routingDecisionRepository = mock(RoutingDecisionRepository.class);
     private final ChatProxyProperties properties = new ChatProxyProperties();
     private final AgentRepository agentRepository = mock(AgentRepository.class);
+    // Mac dinh mock tra null = agent khong co tai lieu RAG -> request nhu truoc 57b.
+    private final KnowledgeRetrievalService knowledgeRetrievalService = mock(KnowledgeRetrievalService.class);
     private final Agent agent = new Agent();
 
     private ChatService chatService;
@@ -112,7 +114,7 @@ class ChatServiceTest {
     private ChatService newChatService(ChatService self) {
         return new ChatService(conversationService, messageRepository, proxyChatClient, creditService,
                 modelPricingRepository, usageLogRepository, routingDecisionRepository, properties,
-                agentRepository, self);
+                agentRepository, knowledgeRetrievalService, self);
     }
 
     @Test
@@ -227,6 +229,30 @@ class ChatServiceTest {
         ArgumentCaptor<List<ChatTurn>> turns = ArgumentCaptor.forClass(List.class);
         verify(proxyChatClient).complete(eq("conduit-pool"), turns.capture());
         assertThat(turns.getValue()).containsExactly(new ChatTurn("user", "hello"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void ragReferenceContextIsAUserTurnRightBeforeTheQuestionNeverTheSystemTurn() {
+        // TASK-57b (CLAUDE.md muc 7): ngu canh RAG la luot "user" rieng ngay truoc cau hoi; system
+        // van chi chua instructions; cau hoi that van la luot cuoi. Truy hoi theo DUNG agent cua hoi thoai.
+        agent.setInstructions("You are a terse math tutor.");
+        when(knowledgeRetrievalService.referenceContextFor(agent.getId(), "hello")).thenReturn("CONTEXT");
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("4", "gpt-4o-mini", 10, 1, 300));
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        ArgumentCaptor<List<ChatTurn>> turns = ArgumentCaptor.forClass(List.class);
+        verify(proxyChatClient).complete(eq("conduit-pool"), turns.capture());
+        assertThat(turns.getValue()).containsExactly(
+                new ChatTurn("system", "You are a terse math tutor."),
+                new ChatTurn("user", "CONTEXT"),
+                new ChatTurn("user", "hello"));
+        // Ngu canh khong duoc luu thanh tin nhan: chi 2 lan luu (tin user + tin assistant).
+        ArgumentCaptor<Message> saved = ArgumentCaptor.forClass(Message.class);
+        verify(messageRepository, org.mockito.Mockito.atLeastOnce()).saveAndFlush(saved.capture());
+        assertThat(saved.getAllValues()).extracting(Message::getContent).doesNotContain("CONTEXT");
     }
 
     @Test

@@ -183,5 +183,41 @@ class ChunkEmbedEndpointTest(unittest.TestCase):
             self.assertEqual(self.post("a.txt", b"hello").status_code, 502)
 
 
+class EmbedQueryEndpointTest(unittest.TestCase):
+    """TASK-57b: embedding câu hỏi chat."""
+
+    def setUp(self):
+        patcher = mock.patch.dict(os.environ, {"AI_SERVICE_TOKEN": TOKEN, "MAX_QUERY_CHARS": "10"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.client = TestClient(main.app)
+
+    def post(self, payload, token=TOKEN):
+        headers = {"X-Internal-Token": token} if token is not None else {}
+        return self.client.post("/embed", json=payload, headers=headers)
+
+    def test_query_is_normalised_truncated_and_embedded_once(self):
+        with mock.patch.object(main, "embed", return_value=([[0.1] * EMBEDDING_DIMENSIONS], 3)) as fake:
+            response = self.post({"text": "  hoc   phi\nla bao nhieu "})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(fake.call_args.args[0], ["hoc phi la"])  # gộp khoảng trắng, cắt 10 ký tự
+        body = response.json()
+        self.assertEqual(len(body["embedding"]), EMBEDDING_DIMENSIONS)
+        self.assertEqual(body["prompt_tokens"], 3)
+
+    def test_wrong_token_or_empty_text_never_calls_embedding(self):
+        with mock.patch.object(main, "embed") as fake:
+            self.assertEqual(self.post({"text": "x"}, token="wrong").status_code, 401)
+            self.assertEqual(self.post({"text": "x"}, token=None).status_code, 401)
+            self.assertEqual(self.post({"text": "   "}).status_code, 422)
+            self.assertEqual(self.post({"text": 5}).status_code, 422)
+            self.assertEqual(self.post({}).status_code, 422)
+            fake.assert_not_called()
+
+    def test_embedding_failure_is_502(self):
+        with mock.patch.object(main, "embed", side_effect=EmbeddingError("HTTP 503")):
+            self.assertEqual(self.post({"text": "x"}).status_code, 502)
+
+
 if __name__ == "__main__":
     unittest.main()

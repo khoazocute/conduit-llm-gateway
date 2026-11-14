@@ -46,6 +46,9 @@ app:
     token: ${AI_SERVICE_TOKEN:dev-only-ai-service-token}
   knowledge-base:
     max-file-bytes: 5242880
+  # TASK-57b: so doan tai lieu gan cau hoi nhat dua vao chat lam "ngu canh tham khao". 0 = tat RAG.
+  rag:
+    top-k: ${RAG_TOP_K:4}
   jwt:
     secret: ${JWT_SECRET:dev-only-change-me-please-32-bytes-minimum-secret-key}
     access-token-expiration-minutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:20}

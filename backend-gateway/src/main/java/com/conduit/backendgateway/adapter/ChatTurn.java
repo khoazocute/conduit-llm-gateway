@@ -22,4 +22,31 @@ public record ChatTurn(String role, String content) {
         withSystem.addAll(turns);
         return List.copyOf(withSystem);
     }
+
+    /**
+     * TASK-57b: chen khoi "ngu canh tham khao" (RAG) thanh mot luot "user" RIENG, ngay TRUOC tin
+     * nhan user cuoi. Khong dat vao "system" (CLAUDE.md muc 7: khong phai chi thi he thong), va cau
+     * hoi that van la luot cuoi nen promptLength() (dinh tuyen Portkey) khong doi. Khong luu DB.
+     * null/rong thi tra NGUYEN danh sach cu.
+     */
+    public static List<ChatTurn> withReferenceContext(String referenceContext, List<ChatTurn> turns) {
+        if (referenceContext == null || referenceContext.isBlank()) {
+            return turns;
+        }
+        int lastUser = -1;
+        for (int i = turns.size() - 1; i >= 0; i--) {
+            if ("user".equals(turns.get(i).role())) {
+                lastUser = i;
+                break;
+            }
+        }
+        if (lastUser < 0) {
+            return turns;
+        }
+        List<ChatTurn> withContext = new ArrayList<>(turns.size() + 1);
+        withContext.addAll(turns.subList(0, lastUser));
+        withContext.add(new ChatTurn("user", referenceContext));
+        withContext.addAll(turns.subList(lastUser, turns.size()));
+        return List.copyOf(withContext);
+    }
 }

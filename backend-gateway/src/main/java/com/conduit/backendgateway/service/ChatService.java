@@ -55,6 +55,7 @@ public class ChatService {
     private final RoutingDecisionRepository routingDecisionRepository;
     private final ChatProxyProperties chatProxyProperties;
     private final AgentRepository agentRepository;
+    private final KnowledgeRetrievalService knowledgeRetrievalService;
     // Self-injection so @Transactional billing below goes through the Spring
     // AOP proxy (see CreditService for the same pattern/reasoning).
     private final ChatService self;
@@ -69,6 +70,7 @@ public class ChatService {
             RoutingDecisionRepository routingDecisionRepository,
             ChatProxyProperties chatProxyProperties,
             AgentRepository agentRepository,
+            KnowledgeRetrievalService knowledgeRetrievalService,
             @Lazy ChatService self) {
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
@@ -79,6 +81,7 @@ public class ChatService {
         this.routingDecisionRepository = routingDecisionRepository;
         this.chatProxyProperties = chatProxyProperties;
         this.agentRepository = agentRepository;
+        this.knowledgeRetrievalService = knowledgeRetrievalService;
         this.self = self;
     }
 
@@ -113,7 +116,11 @@ public class ChatService {
         String instructions = agentRepository.findById(conversation.getAgentId())
                 .map(Agent::getInstructions)
                 .orElse(null);
-        List<ChatTurn> turns = ChatTurn.withSystemPrompt(instructions, history);
+        // TASK-57b (RAG): doan tai lieu cua DUNG agent cua hoi thoai, thanh luot "ngu canh tham khao"
+        // ngay truoc cau hoi. Agent khong co tai lieu -> null -> request y het truoc day.
+        String referenceContext = knowledgeRetrievalService.referenceContextFor(conversation.getAgentId(), content);
+        List<ChatTurn> turns = ChatTurn.withSystemPrompt(
+                instructions, ChatTurn.withReferenceContext(referenceContext, history));
 
         String model = chatProxyProperties.effectiveDefaultModel();
         RoutingProxy activeProxy = RoutingProxy.valueOf(chatProxyProperties.getActiveProxy());

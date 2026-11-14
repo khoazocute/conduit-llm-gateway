@@ -33,4 +33,36 @@ public interface KnowledgeBaseRepository extends JpaRepository<KnowledgeBase, UU
     @Query(value = "SELECT count(*) FROM kb_chunks WHERE knowledge_base_id = :knowledgeBaseId",
             nativeQuery = true)
     long countChunks(@Param("knowledgeBaseId") UUID knowledgeBaseId);
+
+    // TASK-57b: agent co tai lieu san sang khong. Khong co thi chat KHONG goi embedding (khong ton
+    // phi, request y het luc do thuc nghiem).
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM kb_chunks c JOIN knowledge_bases kb"
+            + " ON kb.id = c.knowledge_base_id WHERE c.agent_id = :agentId AND kb.status = 'ready')",
+            nativeQuery = true)
+    boolean hasReadyChunks(@Param("agentId") UUID agentId);
+
+    // TASK-57b: top-k doan gan cau hoi nhat (khoang cach cosine, toan tu <=> cua pgvector).
+    // Loc CUNG theo agent_id (tenant isolation, CLAUDE.md muc 7) - agentId lay tu hoi thoai phia
+    // server, khong bao gio tu noi dung nguoi dung gui.
+    @Query(value = "SELECT c.chunk_text AS chunkText, c.source_file AS sourceFile,"
+            + " c.chunk_index AS chunkIndex, (c.embedding <=> CAST(:queryEmbedding AS vector)) AS distance"
+            + " FROM kb_chunks c JOIN knowledge_bases kb ON kb.id = c.knowledge_base_id"
+            + " WHERE c.agent_id = :agentId AND kb.status = 'ready'"
+            + " ORDER BY c.embedding <=> CAST(:queryEmbedding AS vector)"
+            + " LIMIT :limit",
+            nativeQuery = true)
+    List<RetrievedChunk> findNearestChunks(
+            @Param("agentId") UUID agentId,
+            @Param("queryEmbedding") String queryEmbedding,
+            @Param("limit") int limit);
+
+    interface RetrievedChunk {
+        String getChunkText();
+
+        String getSourceFile();
+
+        Integer getChunkIndex();
+
+        Double getDistance();
+    }
 }

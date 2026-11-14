@@ -9,6 +9,9 @@ FastAPI cho RAG (Should-have). TASK-57a: nạp tài liệu.
   → embedding → trả `{model, prompt_tokens, chunks: [{index, text, embedding[1536]}]}`.
   **Chỉ backend gọi.** Service không có quyền vào DB: backend kiểm ABAC, lưu file vào kho S3,
   rồi tự ghi `kb_chunks`.
+- `POST /embed` (JSON `{"text": ...}`, header `X-Internal-Token`) — TASK-57b: embedding **một câu hỏi
+  chat** (gộp khoảng trắng, cắt `MAX_QUERY_CHARS` = 2000 ký tự) → `{model, prompt_tokens, embedding}`.
+  Backend chỉ gọi khi agent của hội thoại có tài liệu `ready`.
 
 Embedding gọi **qua LiteLLM** (`/v1/embeddings`, alias `text-embedding-3-small` trong
 `proxy-configs/litellm/config.yaml`), không gọi thẳng OpenAI (CLAUDE.md mục 5). Tất cả đoạn của một

@@ -38,4 +38,24 @@ class ChatTurnTest {
                 .isEqualTo(HttpProxyChatClient.promptLength(HISTORY))
                 .isEqualTo(5);
     }
+
+    @Test
+    void referenceContextGoesRightBeforeTheLastUserTurnAndKeepsPromptLength() {
+        // TASK-57b: luot "user" rieng ngay truoc cau hoi cuoi; promptLength (dinh tuyen Portkey) khong doi.
+        List<ChatTurn> history = List.of(
+                new ChatTurn("user", "q1"), new ChatTurn("assistant", "a1"), new ChatTurn("user", "hello"));
+
+        List<ChatTurn> turns = ChatTurn.withReferenceContext("CONTEXT", history);
+
+        assertThat(turns).containsExactly(new ChatTurn("user", "q1"), new ChatTurn("assistant", "a1"),
+                new ChatTurn("user", "CONTEXT"), new ChatTurn("user", "hello"));
+        assertThat(HttpProxyChatClient.promptLength(turns)).isEqualTo(HttpProxyChatClient.promptLength(history));
+    }
+
+    @Test
+    void noReferenceContextReturnsTheSameList() {
+        List<ChatTurn> history = List.of(new ChatTurn("user", "hello"));
+        assertThat(ChatTurn.withReferenceContext(null, history)).isSameAs(history);
+        assertThat(ChatTurn.withReferenceContext(" ", history)).isSameAs(history);
+    }
 }
