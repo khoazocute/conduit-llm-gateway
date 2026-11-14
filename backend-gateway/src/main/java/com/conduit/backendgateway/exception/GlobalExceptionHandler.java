@@ -11,6 +11,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -77,6 +79,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidAgentStatusTransition(InvalidAgentStatusTransitionException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of("invalid_status_transition", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidKnowledgeFileException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidKnowledgeFile(InvalidKnowledgeFileException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("invalid_file", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException ex) {
+        // Multipart thieu phan "file" -> 400, khong roi xuong 500 chung.
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("invalid_file", "Missing multipart part: " + ex.getRequestPartName()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ErrorResponse.of("file_too_large", "Uploaded file is too large"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

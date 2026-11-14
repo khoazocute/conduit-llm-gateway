@@ -17,6 +17,8 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<!-- TASK-57a: luu file kien thuc RAG vao kho S3-compatible (CLAUDE.md muc 3). -->
+		<awssdk.version>2.57.0</awssdk.version>
 	</properties>
 
 	<dependencies>
@@ -73,6 +75,28 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<!-- S3 client dong bo dung HTTP client cua JDK: bo apache/netty de khong keo them
+		     thu vien HTTP rieng (netty co the lech ban voi reactor-netty cua WebFlux). -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>${awssdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>apache-client</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>netty-nio-client</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>url-connection-client</artifactId>
+			<version>${awssdk.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>

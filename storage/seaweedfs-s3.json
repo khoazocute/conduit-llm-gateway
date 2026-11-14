@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "conduit-dev",
+      "credentials": [
+        { "accessKey": "conduit-dev", "secretKey": "conduit-dev-secret" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

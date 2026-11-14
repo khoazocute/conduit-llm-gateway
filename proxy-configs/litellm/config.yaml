@@ -99,6 +99,16 @@ model_list:
       mock_response: "This is a canned reply used for load testing. No provider was called."
     model_info:
       id: conduit-mock
+
+  # TASK-57a (RAG): embedding cho kb_chunks (vector(1536)). ai-service goi /v1/embeddings qua LiteLLM,
+  # khong goi thang OpenAI (CLAUDE.md muc 5). Ten model_name rieng -> khong nam trong conduit-pool,
+  # khong anh huong routing/fallbacks cua thi nghiem. Gia text-embedding-3-small: $0.02 / 1M token.
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      mode: embedding
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
 

@@ -13,6 +13,12 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+  # TASK-57a: file kien thuc RAG toi da 5 MB (app.knowledge-base.max-file-bytes kiem lai).
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   data:
     redis:
       host: localhost
@@ -26,6 +32,20 @@ server:
     context-path: /api
 
 app:
+  # TASK-57a (RAG): kho file S3-compatible (CLAUDE.md muc 3). Dev: SeaweedFS trong docker-compose,
+  # tai khoan dev khai o storage/seaweedfs-s3.json. Deploy: dat bien moi truong tro sang S3 that.
+  storage:
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:8333}
+    region: ${STORAGE_REGION:us-east-1}
+    bucket: ${STORAGE_BUCKET:conduit-kb}
+    access-key: ${STORAGE_ACCESS_KEY:conduit-dev}
+    secret-key: ${STORAGE_SECRET_KEY:conduit-dev-secret}
+  # ai-service (Python): chia doan + embedding qua LiteLLM. Token phai trung AI_SERVICE_TOKEN ben do.
+  ai-service:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8000}
+    token: ${AI_SERVICE_TOKEN:dev-only-ai-service-token}
+  knowledge-base:
+    max-file-bytes: 5242880
   jwt:
     secret: ${JWT_SECRET:dev-only-change-me-please-32-bytes-minimum-secret-key}
     access-token-expiration-minutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:20}
