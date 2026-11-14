@@ -156,6 +156,14 @@ public class ChatService {
                 if (attempt >= BILLING_MAX_ATTEMPTS) {
                     log.warn("Billing gave up after {} optimistic-lock conflicts: user={} conversation={}",
                             attempt, userId, conversationId);
+                    // TASK-70: LLM DA tra loi (ton tien nha cung cap) nhung khong tru duoc credit.
+                    // Van ghi usage_logs status=error kem cost_upstream de chi phi khong bien mat khoi
+                    // DB (CLAUDE.md muc 5: khong tinh cho user, nhung ghi log rieng). KHONG tru vi.
+                    try {
+                        self.recordAbandonedBillingTurn(conversationId, activeProxy, result);
+                    } catch (RuntimeException logError) {
+                        log.error("Could not record abandoned billing turn: conversation={}", conversationId, logError);
+                    }
                     throw e;
                 }
                 // Cho ngau nhien, tang dan: retry ngay lap tuc thi cac luong tranh chap dam vao nhau
@@ -267,6 +275,58 @@ public class ChatService {
         routingDecision.setPredictedCost(BigDecimal.ZERO);
         routingDecision.setLatencyMs(elapsedMs);
         routingDecisionRepository.saveAndFlush(routingDecision);
+    }
+
+    // TASK-70: luot LLM da tra loi nhung bo cuoc tru credit (qua BILLING_MAX_ATTEMPTS lan xung dot vi).
+    // Ghi tin nhan (khong noi dung - nguoi dung nhan loi, khong nhan cau tra loi), usage_logs
+    // status=error kem cost_upstream that, routing_decisions (CLAUDE.md muc 2: moi luot goi phai ghi).
+    // credit_charged/revenue_credit = 0: KHONG tru vi nguoi dung.
+    @Transactional
+    protected void recordAbandonedBillingTurn(UUID conversationId, RoutingProxy activeProxy, ChatCompletionResult result) {
+        Message assistantMessage = new Message();
+        assistantMessage.setConversationId(conversationId);
+        assistantMessage.setRole(MessageRole.assistant);
+        assistantMessage.setContent(null);
+        assistantMessage.setModelUsed(result.model());
+        assistantMessage.setLatencyMs(result.latencyMs());
+        assistantMessage = messageRepository.saveAndFlush(assistantMessage);
+
+        LlmProvider provider = inferProvider(result.model());
+        BigDecimal costUpstream = upstreamCost(provider, result.model(), result.tokenInput(), result.tokenOutput());
+
+        UsageLog usageLog = new UsageLog();
+        usageLog.setMessageId(assistantMessage.getId());
+        usageLog.setProvider(provider);
+        usageLog.setModel(result.model());
+        usageLog.setTokenInput(result.tokenInput());
+        usageLog.setTokenOutput(result.tokenOutput());
+        usageLog.setCostUpstream(costUpstream);
+        usageLog.setRevenueCredit(BigDecimal.ZERO);
+        usageLog.setLatencyMs(result.latencyMs());
+        usageLog.setStatus(UsageStatus.error);
+        usageLogRepository.saveAndFlush(usageLog);
+
+        RoutingDecision routingDecision = new RoutingDecision();
+        routingDecision.setMessageId(assistantMessage.getId());
+        routingDecision.setProxyName(activeProxy);
+        routingDecision.setSelectedModel(result.model());
+        routingDecision.setPredictedCost(costUpstream);
+        routingDecision.setTokenInput(result.tokenInput());
+        routingDecision.setTokenOutput(result.tokenOutput());
+        routingDecision.setLatencyMs(result.latencyMs());
+        routingDecisionRepository.saveAndFlush(routingDecision);
+    }
+
+    // Cung cong thuc cost_upstream voi recordSuccessfulTurn: token x gia theo tung dong model_pricing.
+    private BigDecimal upstreamCost(LlmProvider provider, String model, Integer tokenInput, Integer tokenOutput) {
+        BigDecimal cost = BigDecimal.ZERO;
+        if (tokenInput != null) {
+            cost = cost.add(unitPrice(provider, model, UnitType.token_input).multiply(BigDecimal.valueOf(tokenInput)));
+        }
+        if (tokenOutput != null) {
+            cost = cost.add(unitPrice(provider, model, UnitType.token_output).multiply(BigDecimal.valueOf(tokenOutput)));
+        }
+        return cost;
     }
 
     // Luu y: ModelPricingRepository.findFirstByProviderAndModelAndEffectiveFrom...

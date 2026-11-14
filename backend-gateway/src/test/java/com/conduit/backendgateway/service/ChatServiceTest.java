@@ -230,6 +230,33 @@ class ChatServiceTest {
     }
 
     @Test
+    void abandonedBillingAfterEightConflictsStillLogsTheUpstreamCostWithoutCharging() {
+        // TASK-70: gia lap 8 lan xung dot vi lien tiep (BILLING_MAX_ATTEMPTS). LLM da tra loi nen
+        // chi phi nha cung cap phai con trong DB: 1 dong usage_logs status=error kem cost_upstream,
+        // 1 dong routing_decisions; vi KHONG bi tru (khong lan debit nao thanh cong).
+        assertThat(ChatService.BILLING_MAX_ATTEMPTS).isEqualTo(8);
+        when(proxyChatClient.complete(eq("conduit-pool"), any()))
+                .thenReturn(new ChatCompletionResult("hi", "gpt-4o-mini", 100, 50, 700));
+        when(creditService.debit(any(), anyLong(), any(), any(), any(), anyString()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(CreditWallet.class, UUID.randomUUID()));
+
+        chatService.sendMessage(CONVERSATION, USER, "hello", emitter);
+
+        verify(creditService, times(8)).debit(any(), anyLong(), any(), any(), any(), anyString());
+        UsageLog usage = captureUsageLog(); // dung 1 dong
+        assertThat(usage.getStatus()).isEqualTo(UsageStatus.error);
+        // 100 x 0.00000015 + 50 x 0.0000006 = 0.000015 + 0.00003 = 0.000045 USD
+        assertThat(usage.getCostUpstream()).isEqualByComparingTo("0.000045");
+        assertThat(usage.getRevenueCredit()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(usage.getTokenInput()).isEqualTo(100);
+        assertThat(usage.getTokenOutput()).isEqualTo(50);
+        RoutingDecision decision = captureRoutingDecision();
+        assertThat(decision.getSelectedModel()).isEqualTo("gpt-4o-mini");
+        assertThat(decision.getPredictedCost()).isEqualByComparingTo("0.000045");
+        assertThat(emitter.events).anyMatch(e -> e.contains("error"));
+    }
+
+    @Test
     void unknownModelPriceIsChargedWithDefaultMarkupButZeroUpstreamCost() {
         // Ghi lai hanh vi hien tai (verify_results.py duoc viet de bat dung truong hop nay): model
         // khong co dong model_pricing -> cost_upstream = 0 nhung van tru credit theo markup 1.5.
