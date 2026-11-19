@@ -181,7 +181,7 @@ prompt là trường `instructions` riêng (D8).
 - [ ] TASK-68 đóng — 10/11
 - [ ] TASK-62a dàn ý theo mẫu khoa — 11/11
 - [ ] TASK-60, TASK-70 — 11/11
-- [ ] TASK-72 chạy + phân tích + ghi `experiment-results.md` — 14/11
+- [x] TASK-72 chạy + phân tích + ghi `experiment-results.md` — 14/11 (xong 10/11, $0,2553)
 - [ ] Quyết RAG vào bản nháp hay không — 14/11
 - [ ] TASK-73, TASK-57b, TASK-58 — 19–20/11
 - [ ] TASK-62b, 62c bản nháp từng người — 21/11
