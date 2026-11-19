@@ -734,3 +734,73 @@ vận hành (D20 phần 3) vẫn đúng nếu sau này đổi sang bản tự vi
    nào để không quay về hướng V2?
 
 **Không đề xuất chạy thêm thí nghiệm nào** cho các câu hỏi trên: đây là phần diễn giải.
+
+---
+
+## 16. BỔ SUNG (20/11/2026): Bảng chỉ số chuẩn cho 3 proxy (theo yêu cầu GVHD)
+
+> **Cách trình bày lại số liệu 720 lượt, không có số mới, không chọn lại proxy.** Lý do: GVHD góp ý
+> con số "accuracy > 80%" khó hiểu, vì nó gộp 4 bộ đề chấm theo 4 kiểu khác nhau. Thầy yêu cầu lập
+> bảng 3 proxy × các chỉ số có **tên chuẩn** trong đánh giá LLM, và **làm rõ từng chỉ số**. Thầy gửi
+> kèm một đoạn chat phân loại các nhóm metric đánh giá LLM thường dùng; đối chiếu ở 16.3.
+> **Từ nay báo cáo và slide dùng bảng 16.1 làm bảng kết quả chính**; con số gộp chỉ dùng khi nói về
+> bước 1 của luật quyết định, và luôn đặt cạnh bảng này.
+
+### 16.1. Bảng chính
+
+Mỗi ô chất lượng tính trên 60 lượt (20 item × 3 lần) của đúng bộ đề đó; lượt lỗi tính là sai (D7).
+
+| Nhóm | Chỉ số (tên chuẩn) | Bộ đề | LiteLLM | Bifrost | Portkey | Tốt khi |
+|---|---|---|---|---|---|---|
+| Chất lượng | **Accuracy** | MMLU (kiến thức) | 80,0% | 90,0% | **95,0%** | cao |
+| | **Exact Match** | GSM8K (toán đố) | 75,0% | 85,0% | **90,0%** | cao |
+| | **Pass@1** | HumanEval (code) | **95,0%** | **95,0%** | 93,3% | cao |
+| | **Instruction-following accuracy, prompt-level strict** | IFEval | 85,0% | 80,0% | **90,0%** | cao |
+| | **Instruction-following accuracy, instruction-level strict** | IFEval | **90,6%** (87/96) | 87,5% (84/96) | **90,6%** (87/96) | cao |
+| Vận hành | **Latency trung bình** | cả 80 item | 2.469 ms | 2.941 ms | **2.278 ms** | thấp |
+| | **Latency p95** | cả 80 item | **6.348 ms** | 7.166 ms | 6.887 ms | thấp |
+| | **Cost per query** | cả 80 item | **$0,000123** | $0,000562 | $0,000793 | thấp |
+| | **Error rate** | cả 80 item | **0%** | 0,8% (2/240) | **0%** | thấp |
+| | **Routing consistency** (nhóm tự định nghĩa) | cả 80 item | **1,00** | 0,975 | **1,00** | cao |
+| | TTFT, Throughput | — | chưa đo | chưa đo | chưa đo | |
+
+Ghi chú tính toán:
+- Latency trung bình và p95 tính trên **mọi** lượt có số đo, kể cả 2 lượt lỗi của Bifrost, để khớp mục 2.
+  Chỉ tính lượt thành công thì Bifrost là 2.905 ms và 7.042 ms; thứ tự giữa 3 proxy không đổi.
+- Instruction-level: 2 lượt lỗi của Bifrost tính mọi ràng buộc của item đó là không đạt (84/96).
+- Nguồn: `d14-full-720/merged.json`; theo bộ đề cũng có ở `d18-baseline-20261110/tables/by_category.csv`.
+
+### 16.2. Làm rõ từng chỉ số
+
+| Chỉ số | Đo cái gì | Tính thế nào | Nguồn định nghĩa |
+|---|---|---|---|
+| Accuracy (MMLU) | Trả lời đúng câu trắc nghiệm kiến thức | Lấy chữ cái A–D model chốt, so với đáp án; không có đáp án rõ thì tính sai. Tỷ lệ = khớp / 60 | Hendrycks và cộng sự, 2021 |
+| Exact Match (GSM8K) | Giải toán đố nhiều bước ra đúng số | Lấy số cuối trong câu trả lời, so với đáp án. Tỷ lệ = khớp / 60 | Cobbe và cộng sự, 2021 (trích số cuối là quy ước 0-shot của nhóm) |
+| Pass@1 (HumanEval) | Code viết ra chạy đúng | Ghép code với bộ test gốc, chạy thật; test qua là đạt. 1 mẫu/lượt, temperature 0 | Chen và cộng sự, 2021 |
+| Instruction-following, prompt-level strict | Làm đúng **mọi** yêu cầu định dạng của câu hỏi | Verifier chính thức của Google; đạt chỉ khi mọi ràng buộc đều đúng | Zhou và cộng sự, 2023 |
+| Instruction-following, instruction-level strict | Tỷ lệ yêu cầu làm đúng | Số ràng buộc đúng / tổng số ràng buộc | Zhou và cộng sự, 2023 |
+| Latency trung bình, p95 | Người dùng chờ bao lâu; p95 là mức chờ của 5% lượt chậm nhất | Backend đo từ lúc gửi tới proxy đến lúc nhận đủ câu trả lời (`messages.latency_ms`) | Thực hành vận hành (độ trễ đuôi) |
+| Cost per query | Tiền thượng nguồn mỗi câu hỏi | Token vào × đơn giá vào + token ra × đơn giá ra (`model_pricing`), trung bình trên lượt thành công | Nhóm tính theo usage nhà cung cấp |
+| Error rate | Tỷ lệ người dùng nhận lỗi thay vì câu trả lời | Lượt lỗi / 240 | Thực hành vận hành |
+| Routing consistency | Cùng câu hỏi, proxy có chọn cùng model qua 3 lần không | Số item chọn cùng model cả 3 lần / 80 | **Nhóm tự định nghĩa** |
+
+### 16.3. Đối chiếu với các nhóm metric đánh giá LLM thường dùng
+
+| Nhóm metric | Đề tài | Lý do |
+|---|---|---|
+| Truyền thống có đáp án chuẩn (Accuracy, EM, F1, Pass@k) | **Dùng**: Accuracy, Exact Match, Pass@1 | Các bộ đề có đáp án hoặc test chuẩn |
+| BLEU, ROUGE, METEOR, BERTScore | Không dùng | Không có bài nào cần so độ giống chữ với câu tham chiếu |
+| RAG (Context Precision/Recall, Faithfulness, Answer Relevance) | Không dùng cho phần proxy | Thí nghiệm proxy không có bước truy xuất; nhóm này dành cho phần RAG (mục 5.4.2 báo cáo) nếu có |
+| LLM-as-a-Judge, đánh giá bởi con người, Elo | Không dùng, **có chủ đích** | Tránh thiên vị của giám khảo, giữ chấm 100% tự động và tái lập được (D10, đã loại MT-Bench) |
+| Tuân thủ chỉ dẫn | **Dùng**: IFEval, chấm bằng code thay cho giám khảo | |
+| An toàn (toxicity, jailbreak, hallucination) | Không dùng | Không phải trục đánh giá proxy |
+| Hiệu năng hệ thống (TTFT, latency, throughput, cost) | **Dùng một phần**: latency, cost, error rate | TTFT chưa đo được vì backend chưa truyền token theo luồng; throughput chưa đo (ứng viên mở rộng đo hiệu năng proxy) |
+
+### 16.4. Điểm phải nói thẳng khi đưa bảng này
+
+**Nếu áp ngưỡng 80% cho từng chỉ số chất lượng thay vì cho con số gộp, LiteLLM trượt Exact Match của
+GSM8K (75%), Bifrost vừa chạm ngưỡng ở IFEval prompt-level (80%).** Luật đã khóa áp 80% cho tỷ lệ đạt
+gộp của 240 lượt (bước 1), nên kết luận chọn LiteLLM **không đổi**. Nhưng bảng tách theo chỉ số làm lộ
+điểm này, nên phải nêu chủ động khi trình bày, cùng với mục 7.6 (kết luận đổi theo ngưỡng) và 15.2
+(LiteLLM thắng nhờ ưu tiên chi phí). Diễn đạt lại bước 1 cho người đọc: *proxy phải đạt ít nhất 80% số
+bài kiểm tra chuẩn, gộp 4 loại năng lực, mỗi loại 60 lượt*.
