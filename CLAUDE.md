@@ -8,13 +8,16 @@ Khóa luận tốt nghiệp UIT. Sinh viên: Nguyễn Văn Lê Hùng (23520570),
 
 ## 1. Đề tài là gì, và đóng góp chính là gì
 
-Conduit là một LLM Gateway Portal kiêm sàn AI Agent Marketplace cho thị trường Việt Nam. Nhưng **hệ thống Conduit không phải là đóng góp khoa học** — nó là testbed. Đóng góp khoa học duy nhất của khóa luận là:
+Conduit là một LLM Gateway Portal kiêm sàn AI Agent Marketplace cho thị trường Việt Nam.
 
-> **Đánh giá thực nghiệm và lựa chọn 1 trong 3 routing proxy mã nguồn mở (LiteLLM, Bifrost, Portkey AI Gateway) để tích hợp vào Conduit, dựa trên thí nghiệm có kiểm soát và một quy tắc quyết định đã khóa trước khi chạy.**
+> ⚠️ **ĐỊNH HƯỚNG ĐỔI NGÀY 2026-11-20 (họp GVHD, D21).** Trước đó (D20) đóng góp duy nhất là đánh giá proxy. Nay đề tài có **3 đóng góp** — biên bản: `docs/meetings/2026-11-20.md`, quyết định: `docs/roadmap.md` D21. Mọi chỗ khác trong file này còn nói "đóng góp duy nhất là đánh giá proxy" là lời cũ, hiểu theo D21.
 
-Mọi phần khác của hệ thống (marketplace, credit wallet, ABAC, RAG, thanh toán...) tồn tại **để phần đánh giá proxy có môi trường thật để chạy và kiểm chứng**, không phải để tự thân là đóng góp.
+**Ba đóng góp của khóa luận (D21):**
+1. **Mô hình routing và đánh giá mô hình routing ⇒ chọn model.** Chính là phần đánh giá 3 routing proxy mã nguồn mở (LiteLLM, Bifrost, Portkey AI Gateway) bằng thí nghiệm có kiểm soát và luật quyết định khóa trước khi chạy (mục 2). **Đã xong, giữ nguyên, không chọn lại proxy** (kết quả: `litellm`). Trình bày theo bảng chỉ số chuẩn (`docs/experiment-results.md` mục 16).
+2. **Nền tảng để người dùng tự tạo RAG trên dữ liệu của họ, cấu hình được trên giao diện.** Thứ tự ưu tiên: **(a) chọn vector DB hoặc graph DB → (b) chọn phương pháp chunking hoặc index → (c) cấu hình pipeline** (vd. câu hỏi → phân tích câu hỏi → tạo truy vấn DB → hỏi LLM → …). (a) và (b) **bắt buộc trước 27/11**; trực quan hóa vector/đồ thị, bộ nhớ ngắn/dài hạn, pipeline kéo thả để sau 27/11. Thầy nhấn mạnh "chunking + pipeline". Kế hoạch: `docs/tasks/2026-11-16/tasks.md`.
+3. **Ứng dụng demo triển khai đóng góp 1 và 2**, tức chính hệ thống Conduit (marketplace, ví credit, thanh toán giả lập, chat qua proxy, RAG).
 
-**Nguyên tắc kỷ luật scope quan trọng nhất:** nếu một task không giúp phần đánh giá proxy chạy được hoặc không thuộc vòng nghiệp vụ khép kín tối thiểu (tạo agent → mua agent → chat qua proxy → trừ credit), nó thuộc Should-have/Could-have, không phải việc làm ngay.
+**Nguyên tắc kỷ luật scope:** việc làm ngay phải phục vụ một trong 3 đóng góp trên, hoặc vòng nghiệp vụ khép kín tối thiểu (tạo agent → mua agent → chat qua proxy → trừ credit). Còn lại là Should-have/Could-have.
 
 ### Hướng đã bị BỎ — không được làm lại
 Đề tài từng có 2 phiên bản trước:
@@ -65,8 +68,9 @@ Nếu thấy bất kỳ tài liệu/code cũ nào nhắc đến RouterBench, Rou
 | Frontend Portal | Next.js + React + TailwindCSS |
 | Backend Gateway | Spring Boot 3 (`3.5.6` cụ thể — `start.spring.io` đã ngừng hỗ trợ sinh project Boot 3.x, `backend-gateway/pom.xml` viết tay), Spring AI, Spring Security (JWT), Spring WebFlux (streaming SSE) |
 | DB Migration | Flyway (`backend-gateway/src/main/resources/db/migration/`) — schema tạo qua migration, KHÔNG dùng `ddl-auto: update`/`create` |
-| AI Service (Should-have — RAG) | Python + FastAPI |
-| Database | PostgreSQL + pgvector |
+| AI Service (RAG, đóng góp 2 theo D21) | Python + FastAPI — **đề xuất** đặt engine RAG ở đây, backend gọi qua adapter HTTP; **chốt nơi đặt ngày 21/11** cùng bản RAG Khoa đang có (`docs/tasks/2026-11-16/tasks.md`) |
+| Database | PostgreSQL + pgvector (vector store của RAG) |
+| Graph DB (RAG, D21) | **Neo4j (đề xuất)** cho lựa chọn "graph database" của RAG — chưa có trong `docker-compose.yml` |
 | DB UI (dev) | pgAdmin (docker-compose service `pgadmin`, `localhost:5050`) — dùng để xem bảng/query nhanh, không phải thành phần deploy production |
 | Cache | Redis (JWT session, rate limit counters) |
 | Object Storage | S3-compatible |
@@ -130,9 +134,12 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - **Triển khai + đánh giá 3 proxy theo thiết kế ở mục 2** — đây là việc không được trễ
 - Kiểm duyệt agent từ Admin
 - Mock Payment Gateway end-to-end (webhook giả lập, idempotent, cộng credit đúng)
+- **RAG cấu hình được (đóng góp 2, D21, từ 2026-11-20):** creator chọn **vector DB hoặc graph DB** và chọn **phương pháp chunking hoặc index** trên giao diện; có đánh giá để chọn chunking tối ưu; kèm test bảo mật RAG (mục 7). Pipeline cấu hình được (dạng chuỗi bước tuyến tính) là phần nâng cao, làm nếu kịp trước 27/11.
+
+**Sau 27/11 (bản bảo vệ), theo D21:** pipeline kéo thả, trực quan hóa vector/đồ thị, bộ nhớ ngắn/dài hạn, kết hợp vector + graph.
 
 **Should-have (chỉ làm sau khi Must-have ổn định) — phạm vi chỉnh theo D19 (2026-11-09):**
-- RAG cơ bản (pgvector, chunking, retrieval) — cắt khỏi bản nháp báo cáo nếu phần nạp tài liệu chưa xong 14/11
+- ~~RAG cơ bản — cắt khỏi bản nháp nếu chưa xong 14/11~~ → **thay bởi D21**: RAG lên Must-have (xem trên)
 - Trang admin hiển thị routing (tỷ lệ model, chi phí, tiết kiệm so với "luôn `gpt-4o`", số lần fallback) — thêm theo D19 để demo thấy được đóng góp chính
 - Fallback sang Gemini (đã có trong `fallbacks` của LiteLLM, TASK-60 kiểm lại)
 - Image generation (DALL-E 3) — kiến trúc Image Adapter thiết kế song song Text Adapter nhưng triển khai sau
@@ -185,7 +192,7 @@ Ràng buộc bắt buộc: `credit_wallets.user_id` UNIQUE; `agent_purchases.tra
 - Khi đổi cấu trúc route Next.js (route group) mà dev server báo 404 sai: `rm -rf frontend/.next` rồi chạy lại.
 - Lint frontend có rule React Compiler mới (`react-hooks/set-state-in-effect`, `react-hooks/purity`) — với fetch-on-mount/nhãn theo giờ hiện tại hợp lệ, dùng `eslint-disable-next-line` kèm 1 dòng giải thích lý do.
 
-**Lộ trình còn lại:** chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D20, rủi ro). Mỗi hạng mục có 1 người viết + 1 người phản biện. **Phase A–F đã xong (F merge `main` 30/10). Đang ở Phase G, mốc thật duy nhất: nộp bản nháp báo cáo khóa luận ngày 27/11/2026** (D19); ngày bảo vệ chưa có. Báo cáo là việc chính đến 27/11; deploy và VNPay để sau.
+**Lộ trình còn lại:** chia thành 7 phase A–G, mỗi phase có tiêu chí "đạt" — xem **`docs/roadmap.md`** (phase, bảng quyết định D1–D21, rủi ro). Mỗi hạng mục có 1 người viết + 1 người phản biện. **Phase A–F đã xong (F merge `main` 30/10). Đang ở Phase G, mốc thật duy nhất: nộp bản nháp báo cáo khóa luận ngày 27/11/2026** (D19); ngày bảo vệ chưa có. Đến 27/11: viết báo cáo **và** làm RAG MVP (đóng góp 2, D21); deploy và VNPay để sau.
 
 **Quy ước làm việc theo tuần (đổi từ 2026-09-29 — thay hẳn cách làm cũ, không paste log vào chat nữa):**
 mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên repo (không phải `docs-local/`), gồm:
@@ -193,7 +200,7 @@ mỗi tuần có 1 folder **`docs/tasks/<thứ Hai của tuần>/`**, đã lên 
 - `log-hung.md` / `log-khoa.md` — nhật ký làm việc của mỗi người, tự viết dần trong tuần rồi commit kèm code (thay cho việc dán nguyên khối Markdown vào chat) — bảng "việc/kết quả/file/người kia cần làm" + mục "phát hiện quan trọng"/"cần bàn cùng nhau".
 - Review: người phản biện đọc `tasks.md` (được giao gì) + `log-*.md` của người kia (báo cáo gì) + tự chạy lại code/test thật để đối chiếu, rồi ghi kết luận thẳng vào cuối chính file `log-*.md` đó, dưới mục `## Review — <người review> (<ngày>)` — không tạo file riêng.
 
-Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-11-09/`** (Phase G, kế hoạch đến hạn nộp bản nháp 27/11; tuần `2026-11-02/` không được giao nên không có tiến triển, việc đã chuyển hết sang tuần này; Phase F đóng ở `docs/tasks/2026-10-19/`) (phần đánh giá proxy đã đóng ở `docs/tasks/2026-10-12/`; kết luận và số liệu ở `docs/experiment-results.md`) để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. **Kết luận các buổi họp GVHD nằm ở `docs/meetings/<ngày>.md`** — đọc buổi gần nhất trước khi quyết bất cứ việc gì thuộc phần đánh giá proxy. Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
+Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì vào thẳng **tuần hiện tại: `docs/tasks/2026-11-16/`** (kế hoạch 20–27/11 sau họp GVHD 20/11: RAG cấu hình được theo D21, chia việc Hùng/Khoa độc lập; việc báo cáo và TASK-72/73 trước đó vẫn ở `docs/tasks/2026-11-09/`; tuần `2026-11-02/` không được giao nên không có tiến triển, việc đã chuyển hết sang tuần này; Phase F đóng ở `docs/tasks/2026-10-19/`) (phần đánh giá proxy đã đóng ở `docs/tasks/2026-10-12/`; kết luận và số liệu ở `docs/experiment-results.md`) để biết việc, không cần đọc lại lịch sử chat cũ. Cập nhật dòng "tuần hiện tại" này mỗi thứ Hai khi tạo folder tuần mới. **Kết luận các buổi họp GVHD nằm ở `docs/meetings/<ngày>.md`** — đọc buổi gần nhất trước khi quyết bất cứ việc gì thuộc phần đánh giá proxy hoặc RAG. **Buổi gần nhất: `docs/meetings/2026-11-20.md`** (đổi định hướng sang 3 đóng góp, D21). Tuần trước (`docs-local/tasks-2026-09-21.md`) và các file làm việc riêng còn lại của Hùng (`project-status.md`, `notion-tracker.md`) vẫn ở `docs-local/` (chỉ máy Hùng, đã gitignore) — không migrate ngược, không phải nguồn tham chiếu chính nữa.
 
 **Kết quả thực nghiệm (xong 2026-10-20): chọn `litellm`**, quyết ở bước 2 của luật 4 bước trên 720 lượt (83,8% / 87,5% / 92,1%; rẻ hơn Bifrost 4,55×, Portkey 6,43×), **kèm điều kiện bật `fallbacks` khi tích hợp** (D15: LiteLLM phục hồi 0/15 khi OpenAI lỗi, Bifrost 13/15). **Kết luận đổi theo ngưỡng chất lượng** (đặt 85% thì ra Bifrost) nhưng ngưỡng 80% đã khóa từ commit đầu tiên — xem `docs/experiment-results.md` mục 7.6. D10–D15 (bộ đề, thiết kế Y, luật dự phòng, mở rộng cỡ mẫu, tiêm lỗi) ở `docs/roadmap.md` mục 4. **Đã thực hiện điều kiện:** bật `fallbacks` + `retry_policy` (D16), chạy lại phép thử 27/10 → LiteLLM phục hồi 15/15. **Bổ sung sau kết luận (không chọn lại proxy):** baseline một model D18 (mục 14: "chỉ gpt-4o-mini" ≈ LiteLLM, Portkey ngang gpt-4o với 42% chi phí, cận trên 97,5%); LiteLLM lúc bình thường chọn gpt-4o-mini 240/240, chỉ đổi model khi nhà cung cấp lỗi nhờ `fallbacks`, so sánh với phương án tự viết adapter + fallback (mục 15, còn 3 câu hỏi mở chưa chốt cách đóng khung); **bảng chỉ số chuẩn theo yêu cầu GVHD** (mục 16) là bảng kết quả chính khi trình bày.
 
@@ -209,8 +216,9 @@ Mỗi phiên Claude Code mới (của Hùng hay Khoa) đọc CLAUDE.md xong thì
 - **D16 (đã chốt 2026-10-28):** LiteLLM chính thức dùng `retry_policy` — lỗi vĩnh viễn retry 0 lần để chuyển ngay sang `fallbacks`, lỗi tạm thời 2 lần. D7 chỉ áp cho thí nghiệm.
 - **D17 (chưa chốt):** chi phí hosting khi deploy — chốt trước 28/11.
 - **D18 (đã chốt 2026-11-09, đăng ký trước khi chạy):** đo thêm 3 baseline "một model cố định" (`gpt-4o-mini`, `claude-haiku`, `gpt-4o`) × 80 item × 1 lần = 240 lượt (~$0,20), vẽ đường biên Pareto chi phí–chính xác và tính cận trên lý thuyết. **Không dùng để chọn lại proxy**, không phải hướng V2 (không train gì). Hùng xác nhận chi phí trước khi chạy. **Đã chạy 2026-11-10 (TASK-72): 241 lượt tính phí, $0,2553**; kết quả ở `docs/experiment-results.md` mục 14.
-- **D19 (đã chốt 2026-11-09):** nộp bản nháp báo cáo **27/11**; VNPay hạ xuống Could-have; thêm trang admin hiển thị routing vào Should-have; RAG cắt khỏi bản nháp nếu phần nạp tài liệu chưa xong 14/11; deploy sau 27/11.
-- **D20 (đã chốt 2026-11-09):** báo cáo trình bày đóng góp (vẫn duy nhất là phần đánh giá proxy) thành 3 phần: quy trình đánh giá tái lập được, kết quả so sánh + baseline, các phát hiện vận hành.
+- **D19 (đã chốt 2026-11-09):** nộp bản nháp báo cáo **27/11**; VNPay hạ xuống Could-have; thêm trang admin hiển thị routing vào Should-have; ~~RAG cắt khỏi bản nháp nếu phần nạp tài liệu chưa xong 14/11~~ (thay bởi D21: RAG là đóng góp chính); deploy sau 27/11.
+- **D20 (đã chốt 2026-11-09, phần "đóng góp duy nhất" bị D21 thay):** báo cáo trình bày phần đánh giá proxy thành 3 phần: quy trình đánh giá tái lập được, kết quả so sánh + baseline, các phát hiện vận hành. Cách chia 3 phần này **vẫn dùng** cho đóng góp 1.
+- **D21 (đã chốt 2026-11-20, GVHD):** đề tài có **3 đóng góp**: (1) mô hình routing và đánh giá routing ⇒ chọn model (= phần đánh giá proxy đã xong, giữ nguyên); (2) nền tảng RAG cấu hình được (vector DB hoặc graph DB → chunking hoặc index → pipeline); (3) ứng dụng demo Conduit. Thay D20 (đóng góp duy nhất) và D19 điểm RAG. Giữ hạn 27/11. Chi tiết: `docs/roadmap.md` D21, `docs/meetings/2026-11-20.md`.
 
 **Quy ước làm việc với git:** Hùng làm trên branch **`lhung`**, Khoa trên `dangkhoa`; merge vào `main` qua PR. Không commit thẳng lên `main`. Chỉ push khi Hùng xác nhận. **Không thêm dòng `Co-Authored-By: Claude` (hay bất kỳ attribution/"Generated with Claude Code" nào) vào commit message hoặc mô tả PR** — quy tắc của Hùng, ưu tiên hơn gợi ý mặc định của công cụ.
 
@@ -245,6 +253,6 @@ Bảng trên là **kế hoạch gốc**, giữ để đối chiếu. Lịch đan
 ---
 
 ## 10. Khi không chắc, hỏi lại theo thứ tự ưu tiên này
-1. Việc này có phục vụ phần đánh giá proxy hoặc vòng nghiệp vụ Must-have tối thiểu không? Nếu không → khoan làm.
+1. Việc này có phục vụ một trong 3 đóng góp (D21: đánh giá routing, RAG cấu hình được, ứng dụng demo) hoặc vòng nghiệp vụ Must-have tối thiểu không? Nếu không → khoan làm.
 2. Có ràng buộc kiến trúc nào ở mục 5 bị vi phạm không?
 3. Tên bảng/biến có theo đúng quy ước ở mục 9 không?
