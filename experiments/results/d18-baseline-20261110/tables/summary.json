@@ -1,0 +1,56 @@
+{
+  "note": "D18 - phan tich bo sung, KHONG dung de chon lai proxy",
+  "replaced_error_runs": {
+    "gpt-4o-mini": 0,
+    "claude-haiku": 1,
+    "gpt-4o": 0
+  },
+  "pareto_front": [
+    "baseline-gpt-4o-mini",
+    "bifrost",
+    "portkey"
+  ],
+  "upper_bound": {
+    "n_items": 80,
+    "n_covered": 78,
+    "accuracy": 0.975,
+    "cost_total": 0.02607515,
+    "avg_cost": 0.000325939375,
+    "cost_per_passing": 0.00033429679487179484,
+    "picks": {
+      "gpt-4o-mini": 68,
+      "claude-haiku": 9,
+      "none": 2,
+      "gpt-4o": 1
+    }
+  },
+  "mini_check": {
+    "n_items": 80,
+    "n_mismatch": 3,
+    "tolerance": 4,
+    "exceeds_tolerance": false,
+    "mismatches": [
+      {
+        "prompt_id": "gsm8k_17",
+        "litellm_passes": 0,
+        "litellm_runs": 3,
+        "litellm_majority": false,
+        "baseline_mini": true
+      },
+      {
+        "prompt_id": "ifeval_12",
+        "litellm_passes": 1,
+        "litellm_runs": 3,
+        "litellm_majority": false,
+        "baseline_mini": true
+      },
+      {
+        "prompt_id": "ifeval_19",
+        "litellm_passes": 3,
+        "litellm_runs": 3,
+        "litellm_majority": true,
+        "baseline_mini": false
+      }
+    ]
+  }
+}

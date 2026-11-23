@@ -544,3 +544,263 @@ Nếu đối chiếu chi phí với dashboard cho thấy chênh lệch, cách x�
 
 **Dữ liệu và công cụ của phần đánh giá được coi là đóng.** Thay đổi sau thời điểm này chỉ nên là
 bổ sung (ví dụ kết quả phép thử hồi quy D15), không sửa số liệu hay luật đã áp.
+
+---
+
+## 14. BỔ SUNG (10/11/2026): baseline "một model cố định" (D18, TASK-72)
+
+> **Mục bổ sung, không sửa số liệu nào ở các mục 1–13 và không chọn lại proxy.** Thiết kế đăng ký
+> trước ở `docs/roadmap.md` D18 (09/11), chạy đúng như đã ghi. Kết luận `litellm` giữ nguyên: luật 4
+> bước đã áp trên 720 lượt. Mục này chỉ trả lời câu hỏi thảo luận "định tuyến có đáng tiền hơn chọn
+> cứng một model không".
+
+**Cách chạy.** Qua app như D3, proxy `litellm`, `CHAT_DEFAULT_MODEL` lần lượt `gpt-4o-mini` →
+`claude-haiku` → `gpt-4o` (alias riêng lẻ, không qua `conduit-pool` nên không có `fallbacks`), 80 item
+của D14 × **1 lần**, `max_tokens=1024`, `temperature=0`, 0-shot. Mỗi nhánh chạy 1 lượt `mmlu_01` để
+kiểm `model_selected` rồi chạy tiếp bằng `--resume`. Cả 240 lượt đều do đúng model của nhánh trả lời
+(`baseline_report.py` từ chối phân tích nếu có lượt do model khác trả lời). Dữ liệu thô:
+`experiments/results/d18-baseline-20261110/<model>/`, bảng và biểu đồ ở `.../tables/`.
+
+**Chi phí thực: $0,2553 cho 241 lượt tính phí** (`gpt-4o-mini` $0,0098 · `claude-haiku` $0,0938 ·
+`gpt-4o` $0,1517), khớp `usage_logs`. Ước tính trước khi chạy $0,26, trần đã xác nhận $0,40.
+Lượt thứ 241 là `humaneval_12` của nhánh `claude-haiku`: model **đã trả lời và đã tính phí**
+($0,000669), nhưng runner lỗi ngay sau đó vì máy chạy hết bộ nhớ ảo (`WinError 1455`). Đây là lỗi phía
+máy chạy, không phải lỗi provider hay proxy. Lượt này đã được chạy lại (đạt). File thô giữ cả hai bản
+ghi; `baseline_report.py` giữ lượt thành công và báo số lượt bị thay (1). Nếu tính lượt lỗi đó là sai
+thì `claude-haiku` còn 72/80 = 90,0%; đường biên và cận trên bên dưới không đổi.
+
+### 14.1. Sáu điểm (D18 mục 6)
+
+| Điểm | Lượt | Đạt | Độ chính xác | Chi phí TB/lượt | Chi phí/câu đạt | Trên đường biên Pareto |
+|---|---|---|---|---|---|---|
+| `litellm` (720 lượt) | 240 | 201 | 83,8% | $0,0001233 | $0,000147 | **Không**¹ |
+| `bifrost` (720 lượt) | 240 | 210 | 87,5% | $0,0005616 | $0,000636 | Có |
+| `portkey` (720 lượt) | 240 | 221 | 92,1% | $0,0007929 | $0,000861 | Có |
+| Chỉ `gpt-4o-mini` | 80 | 68 | 85,0% | $0,0001221 | $0,000144 | Có |
+| Chỉ `claude-haiku` | 80 | 73 | 91,3% | $0,0011644 | $0,001276 | Không (bị `portkey` trội) |
+| Chỉ `gpt-4o` | 80 | 73 | 91,3% | $0,0018965 | $0,002078 | Không (bị `portkey` trội) |
+| *Cận trên lý thuyết (mục 14.2)* | *80 item* | *78* | *97,5%* | *$0,0003259/item* | *$0,000334* | *không xét* |
+
+Đường biên Pareto theo đúng định nghĩa D18: điểm không bị điểm nào khác **vừa** rẻ hơn **vừa** chính
+xác hơn. Biểu đồ: `experiments/results/d18-baseline-20261110/tables/cost_accuracy.png`.
+
+¹ **LiteLLM bị loại khỏi đường biên bởi chính model nó dùng.** Nhánh "chỉ `gpt-4o-mini`" rẻ hơn
+$0,0000012/lượt (1%) và đúng hơn 1,25 đpt. Cả hai khoảng chênh đều nằm trong sàn nhiễu (mục 7.4: 2,9
+đpt) và lệch từng item chỉ 3/80 (mục 14.3). Hai điểm này thực chất là **một điểm**: LiteLLM gửi 240/240
+lượt sang `gpt-4o-mini` (mục 3). Theo D18 mục 8 vẫn ghi đúng như luật đường biên cho ra, không làm tròn
+cho đẹp.
+
+Độ chính xác theo từng bộ (`tables/by_category.csv`):
+
+| Điểm | MMLU | GSM8K | HumanEval | IFEval |
+|---|---|---|---|---|
+| Chỉ `gpt-4o-mini` | 16/20 | 16/20 | 19/20 | 17/20 |
+| Chỉ `claude-haiku` | 18/20 | **19/20** | **20/20** | 16/20 |
+| Chỉ `gpt-4o` | 18/20 | 18/20 | 18/20 | **19/20** |
+
+### 14.2. Cận trên lý thuyết (D18 mục 7)
+
+Với mỗi item, lấy model **rẻ nhất trả lời đúng** trong 3 baseline (theo chi phí thực trên chính item
+đó); item không model nào đúng thì tính chi phí của `gpt-4o-mini`.
+
+- **78/80 = 97,5%**, chi phí **$0,0003259/item**, $0,000334/câu đạt.
+- Model được chọn: `gpt-4o-mini` 68 item, `claude-haiku` 9, `gpt-4o` 1 (`ifeval_19`, $0,0081, chiếm
+  31% tổng chi phí cận trên). Không model nào đúng: `ifeval_03`, `mmlu_01`.
+- Đây là bộ định tuyến "biết trước đáp án" (oracle), **không đạt được trong thực tế**. Nó chỉ đo khoảng
+  trống còn lại cho định tuyến trên đúng 3 model này.
+
+### 14.3. Kiểm đo đúng (D18 mục 5)
+
+Nhánh "chỉ `gpt-4o-mini`" so từng item với kết quả đa số 3 lần (đạt ≥ 2/3) của LiteLLM trong 720 lượt:
+**lệch 3/80 item, trong ngưỡng 4/80** đã đăng ký.
+
+| Item | LiteLLM (720 lượt) | Chỉ `gpt-4o-mini` (10/11) |
+|---|---|---|
+| `gsm8k_17` | 0/3 đạt | đạt |
+| `ifeval_12` | 1/3 đạt | đạt |
+| `ifeval_19` | 3/3 đạt | trượt |
+
+Hai trong ba ca là IFEval, khớp quan sát ở mục 7.4 (IFEval nhạy nhất với dao động nhỏ). Ca `gsm8k_17`
+là ca GSM8K đầu tiên đổi kết quả. Trong 720 lượt, GSM8K không có ca nào, nhưng lần này cách 3 tuần
+chứ không phải 3 lượt liên tiếp.
+
+### 14.4. Đọc kết quả
+
+1. **Ở mức chính xác cao, định tuyến có đáng tiền.** Portkey đạt 92,1%, ngang "chỉ `gpt-4o`" và "chỉ
+   `claude-haiku`" (91,3%; chênh 0,8 đpt, dưới sàn nhiễu) với chi phí bằng **42%** và **68%** hai baseline
+   đó. Portkey trội chặt cả hai baseline đắt.
+2. **Ở đầu rẻ, chọn cứng `gpt-4o-mini` là đủ.** LiteLLM và "chỉ `gpt-4o-mini`" là cùng một điểm.
+   Bifrost hơn "chỉ `gpt-4o-mini`" 2,5 đpt (**dưới** sàn nhiễu 2,9 đpt) với chi phí gấp **4,6 lần**.
+   Trên bộ đề này, chưa đo được Bifrost có lợi về độ chính xác so với chọn cứng model rẻ.
+3. **Khoảng trống đến cận trên lớn, và không proxy nào tiến gần.** Cận trên 97,5% với chi phí bằng 41%
+   của Portkey: chỉ cần chuyển đúng 10/80 item lên model đắt hơn. Portkey gửi 165/240 lượt (69%) sang
+   `claude-haiku`/`gpt-4o` mà chỉ đạt 92,1%. Các luật định tuyến tĩnh (theo độ dài câu hỏi, độ khó ước
+   lượng) chưa nhắm trúng các item mà model rẻ làm sai.
+4. **Không đổi kết luận đã khóa.** Luật 4 bước không có bước "nằm trên đường biên". LiteLLM vẫn qua cổng
+   80% và rẻ nhất ở bước 2 (mục 1). Mục này dùng cho phần thảo luận và mục 5.2.6 của báo cáo.
+
+### 14.5. Giới hạn (ghi từ trước khi chạy, D18 mục 9)
+
+- 1 lần/item nên **không đo được độ nhất quán** của baseline. Độ chính xác của baseline có nhiễu cỡ sàn
+  ở mục 7.4 (khoảng ±2,9 đpt), lớn hơn độ chính xác trung bình 3 lần của các proxy.
+- Cận trên chỉ tính trên 3 model, không phải mọi model có thể có. Nó dùng chi phí thực của một lượt nên
+  nhạy với item đắt bất thường (`ifeval_19`).
+- Baseline chạy ngày 10/11, sau 720 lượt khoảng 3 tuần. Provider có thể đã đổi model phía sau alias.
+  Mức lệch 3/80 ở mục 14.3 cho thấy độ trôi đó nhỏ, nhưng không loại trừ được.
+
+**Tái lập (offline, miễn phí):**
+
+```bash
+PYTHONIOENCODING=utf-8 python experiments/scripts/grade_results.py experiments/results/d18-baseline-20261110/*/run_*.json
+PYTHONIOENCODING=utf-8 python experiments/analysis/baseline_report.py --baseline-dir experiments/results/d18-baseline-20261110
+python -m unittest discover -s experiments/tests   # 83/83, gồm 11 test của baseline_report.py
+```
+
+---
+
+## 15. BỔ SUNG (12/11/2026): LiteLLM có thực sự định tuyến không, và vì sao không tự viết
+
+> **Mục thảo luận, không sửa số liệu và không chọn lại proxy.** Ghi lại câu hỏi phát sinh sau D18 (mục 14)
+> để làm nguồn cho mục 5.5 (Thảo luận) và phần giới hạn của báo cáo. **Chưa chốt cách trình bày**: nhóm sẽ
+> bàn lại, có thể hỏi GVHD (xem 15.5).
+
+### 15.1. LiteLLM chỉ đổi model khi nhà cung cấp lỗi
+
+Đếm `model_selected` của LiteLLM trong dữ liệu đã có (không gọi thêm API):
+
+| Tình huống | Dữ liệu | LiteLLM chọn |
+|---|---|---|
+| Chạy bình thường | `d14-full-720/merged.json` | `gpt-4o-mini` **240/240** |
+| Khóa OpenAI hỏng, **chưa** bật `fallbacks` (20/10) | `fault-injection-20261020-150950/` | **lỗi 15/15**, không sang model nào |
+| Khóa OpenAI hỏng, **đã** bật `fallbacks` + `retry_policy` (27/10) | `fault-injection-20261027-224918/` | `claude-haiku` **15/15**, thành công |
+
+- `cost-based-routing` luôn chọn bản triển khai rẻ nhất trong `conduit-pool`. `gpt-4o-mini` luôn rẻ nhất,
+  nên lúc bình thường LiteLLM **không định tuyến**: nó tương đương gọi thẳng `gpt-4o-mini`. Đây là đúng thiết
+  kế của chiến lược, không phải lỗi cấu hình.
+- Chênh lệch giữa LiteLLM (83,8%; $0,0001233) và "chỉ `gpt-4o-mini`" (85,0%; $0,0001221) ở mục 14 là nhiễu
+  đo: cùng model, hai thời điểm, lệch 3/80 item.
+- LiteLLM chỉ chuyển model khi nhà cung cấp lỗi, và chỉ nhờ `fallbacks` (danh sách tĩnh), không phải nhờ
+  chọn theo nội dung câu hỏi. Không có `fallbacks`, retry trong nhóm vẫn quay lại deployment OpenAI đang hỏng.
+
+### 15.2. Vì sao LiteLLM vẫn thắng: hệ quả của luật quyết định
+
+Luật đã khóa: qua cổng 80% thì chọn proxy **rẻ nhất**. Với luật này, một proxy luôn chọn model rẻ nhất sẽ
+thắng mỗi khi model rẻ nhất **tự** qua cổng; `gpt-4o-mini` đạt khoảng 84–85% nên qua. Kết luận "chọn
+LiteLLM" vì vậy phản ánh việc **ưu tiên chi phí**, không phải bằng chứng LiteLLM định tuyến tốt hơn hai
+proxy kia. Mục 7.6 đã ghi kết luận đổi theo ngưỡng (cổng 85% thì ra Bifrost). Luật không sửa (khóa từ commit
+`9d6dfd7`), chỉ cần nói rõ hệ quả này trong báo cáo.
+
+### 15.3. Giá trị thật của LiteLLM với Conduit
+
+So với gọi thẳng `gpt-4o-mini`, LiteLLM không thêm chất lượng và không giảm chi phí. Nó thêm hai thứ, cả
+hai đều có bằng chứng:
+
+1. **Chịu được sự cố nhà cung cấp**: 15/15 lượt phục hồi qua `claude-haiku` khi OpenAI hỏng. Gọi thẳng một
+   nhà cung cấp thì trường hợp này là lỗi 100% (tương đương phép thử 20/10: 0/15).
+2. **Một lớp chuẩn hóa nhiều nhà cung cấp**: backend chỉ dùng định dạng OpenAI; đổi model, thêm nhà cung
+   cấp hay đổi chiến lược là sửa cấu hình, không sửa code.
+
+### 15.4. Phương án thứ tư chưa được so: tự viết adapter + fallback
+
+Backend đã tách sẵn qua giao diện `ProxyChatClient`. Một bản tự viết sẽ thay `HttpProxyChatClient` bằng ba
+adapter (OpenAI, Anthropic, Gemini) và một vòng lặp fallback. Phải tự làm những việc dự án hiện đang dựa
+vào LiteLLM: dịch request (vị trí system prompt, `max_tokens` bắt buộc ở Anthropic, `contents/parts` ở
+Gemini), chuẩn hóa usage và mã lỗi, retry theo loại lỗi (D16), fallback chéo nhà cung cấp, báo model đã trả
+lời để tính tiền. Với chế độ không streaming hiện tại, ước lượng vài trăm dòng Java (**chưa viết thử**);
+streaming làm khối lượng tăng đáng kể.
+
+| | Tự viết | LiteLLM |
+|---|---|---|
+| Chất lượng, chi phí lúc bình thường | như nhau | như nhau |
+| Khi API nhà cung cấp đổi | tự sửa | đổi tên model trong config (đã gặp: `claude-3-5-haiku` bị gỡ 23/09; Sonnet 5 từ chối `temperature`, D12) |
+| Thêm nhà cung cấp, chiến lược, cân bằng tải nhiều khóa | viết thêm code | sửa config |
+| Độ minh bạch | hiểu rõ toàn bộ | có hành vi mờ đã gặp: header trả hash làm cost = 0 không báo lỗi (TASK-51); retry chạy trước fallback, mất ~46 s (D16) |
+| Rủi ro phụ thuộc | không | có thật: v1.82.7/v1.82.8 bị tấn công chuỗi cung ứng; phải ghim bản nên không dùng được Auto Router (cần ≥ v1.94) |
+| Hạ tầng | không thêm | thêm 1 container |
+
+Ở quy mô hiện tại (3 nhà cung cấp, không streaming, 1 danh sách fallback), tự viết là phương án khả thi.
+Lợi thế của proxy rõ hơn khi hệ thống lớn lên (nhiều nhà cung cấp, nhiều khóa, streaming, theo dõi chi phí
+tập trung). Đề tài vẫn dùng proxy vì đóng góp của khóa luận là **đánh giá proxy mã nguồn mở để tích hợp**
+(CLAUDE.md mục 1, hướng GVHD đã chốt); tự viết router là hướng khác, gần hướng V2 đã bị bác. Các phát hiện
+vận hành (D20 phần 3) vẫn đúng nếu sau này đổi sang bản tự viết.
+
+### 15.5. Câu hỏi còn mở (bàn sau)
+
+1. Báo cáo đóng khung kết luận thế nào: "chọn LiteLLM" như kết quả của luật ưu tiên chi phí, kèm giá trị
+   thật ở 15.3, thay vì "LiteLLM định tuyến tốt nhất"?
+2. Có đưa phương án "tự viết adapter + fallback" (15.4) vào phần thảo luận như phương án thứ tư chưa đo
+   không, và có cần hỏi GVHD trước vì nó chạm vào cách đóng khung đóng góp chính?
+3. Phần hướng phát triển: định tuyến theo nội dung (khoảng cách tới cận trên 97,5%, mục 14.2) đặt ở mức
+   nào để không quay về hướng V2?
+
+**Không đề xuất chạy thêm thí nghiệm nào** cho các câu hỏi trên: đây là phần diễn giải.
+
+---
+
+## 16. BỔ SUNG (20/11/2026): Bảng chỉ số chuẩn cho 3 proxy (theo yêu cầu GVHD)
+
+> **Cách trình bày lại số liệu 720 lượt, không có số mới, không chọn lại proxy.** Lý do: GVHD góp ý
+> con số "accuracy > 80%" khó hiểu, vì nó gộp 4 bộ đề chấm theo 4 kiểu khác nhau. Thầy yêu cầu lập
+> bảng 3 proxy × các chỉ số có **tên chuẩn** trong đánh giá LLM, và **làm rõ từng chỉ số**. Thầy gửi
+> kèm một đoạn chat phân loại các nhóm metric đánh giá LLM thường dùng; đối chiếu ở 16.3.
+> **Từ nay báo cáo và slide dùng bảng 16.1 làm bảng kết quả chính**; con số gộp chỉ dùng khi nói về
+> bước 1 của luật quyết định, và luôn đặt cạnh bảng này.
+
+### 16.1. Bảng chính
+
+Mỗi ô chất lượng tính trên 60 lượt (20 item × 3 lần) của đúng bộ đề đó; lượt lỗi tính là sai (D7).
+
+| Nhóm | Chỉ số (tên chuẩn) | Bộ đề | LiteLLM | Bifrost | Portkey | Tốt khi |
+|---|---|---|---|---|---|---|
+| Chất lượng | **Accuracy** | MMLU (kiến thức) | 80,0% | 90,0% | **95,0%** | cao |
+| | **Exact Match** | GSM8K (toán đố) | 75,0% | 85,0% | **90,0%** | cao |
+| | **Pass@1** | HumanEval (code) | **95,0%** | **95,0%** | 93,3% | cao |
+| | **Instruction-following accuracy, prompt-level strict** | IFEval | 85,0% | 80,0% | **90,0%** | cao |
+| | **Instruction-following accuracy, instruction-level strict** | IFEval | **90,6%** (87/96) | 87,5% (84/96) | **90,6%** (87/96) | cao |
+| Vận hành | **Latency trung bình** | cả 80 item | 2.469 ms | 2.941 ms | **2.278 ms** | thấp |
+| | **Latency p95** | cả 80 item | **6.348 ms** | 7.166 ms | 6.887 ms | thấp |
+| | **Cost per query** | cả 80 item | **$0,000123** | $0,000562 | $0,000793 | thấp |
+| | **Error rate** | cả 80 item | **0%** | 0,8% (2/240) | **0%** | thấp |
+| | **Routing consistency** (nhóm tự định nghĩa) | cả 80 item | **1,00** | 0,975 | **1,00** | cao |
+| | TTFT, Throughput | — | chưa đo | chưa đo | chưa đo | |
+
+Ghi chú tính toán:
+- Latency trung bình và p95 tính trên **mọi** lượt có số đo, kể cả 2 lượt lỗi của Bifrost, để khớp mục 2.
+  Chỉ tính lượt thành công thì Bifrost là 2.905 ms và 7.042 ms; thứ tự giữa 3 proxy không đổi.
+- Instruction-level: 2 lượt lỗi của Bifrost tính mọi ràng buộc của item đó là không đạt (84/96).
+- Nguồn: `d14-full-720/merged.json`; theo bộ đề cũng có ở `d18-baseline-20261110/tables/by_category.csv`.
+
+### 16.2. Làm rõ từng chỉ số
+
+| Chỉ số | Đo cái gì | Tính thế nào | Nguồn định nghĩa |
+|---|---|---|---|
+| Accuracy (MMLU) | Trả lời đúng câu trắc nghiệm kiến thức | Lấy chữ cái A–D model chốt, so với đáp án; không có đáp án rõ thì tính sai. Tỷ lệ = khớp / 60 | Hendrycks và cộng sự, 2021 |
+| Exact Match (GSM8K) | Giải toán đố nhiều bước ra đúng số | Lấy số cuối trong câu trả lời, so với đáp án. Tỷ lệ = khớp / 60 | Cobbe và cộng sự, 2021 (trích số cuối là quy ước 0-shot của nhóm) |
+| Pass@1 (HumanEval) | Code viết ra chạy đúng | Ghép code với bộ test gốc, chạy thật; test qua là đạt. 1 mẫu/lượt, temperature 0 | Chen và cộng sự, 2021 |
+| Instruction-following, prompt-level strict | Làm đúng **mọi** yêu cầu định dạng của câu hỏi | Verifier chính thức của Google; đạt chỉ khi mọi ràng buộc đều đúng | Zhou và cộng sự, 2023 |
+| Instruction-following, instruction-level strict | Tỷ lệ yêu cầu làm đúng | Số ràng buộc đúng / tổng số ràng buộc | Zhou và cộng sự, 2023 |
+| Latency trung bình, p95 | Người dùng chờ bao lâu; p95 là mức chờ của 5% lượt chậm nhất | Backend đo từ lúc gửi tới proxy đến lúc nhận đủ câu trả lời (`messages.latency_ms`) | Thực hành vận hành (độ trễ đuôi) |
+| Cost per query | Tiền thượng nguồn mỗi câu hỏi | Token vào × đơn giá vào + token ra × đơn giá ra (`model_pricing`), trung bình trên lượt thành công | Nhóm tính theo usage nhà cung cấp |
+| Error rate | Tỷ lệ người dùng nhận lỗi thay vì câu trả lời | Lượt lỗi / 240 | Thực hành vận hành |
+| Routing consistency | Cùng câu hỏi, proxy có chọn cùng model qua 3 lần không | Số item chọn cùng model cả 3 lần / 80 | **Nhóm tự định nghĩa** |
+
+### 16.3. Đối chiếu với các nhóm metric đánh giá LLM thường dùng
+
+| Nhóm metric | Đề tài | Lý do |
+|---|---|---|
+| Truyền thống có đáp án chuẩn (Accuracy, EM, F1, Pass@k) | **Dùng**: Accuracy, Exact Match, Pass@1 | Các bộ đề có đáp án hoặc test chuẩn |
+| BLEU, ROUGE, METEOR, BERTScore | Không dùng | Không có bài nào cần so độ giống chữ với câu tham chiếu |
+| RAG (Context Precision/Recall, Faithfulness, Answer Relevance) | Không dùng cho phần proxy | Thí nghiệm proxy không có bước truy xuất; nhóm này dành cho phần RAG (mục 5.4.2 báo cáo) nếu có |
+| LLM-as-a-Judge, đánh giá bởi con người, Elo | Không dùng, **có chủ đích** | Tránh thiên vị của giám khảo, giữ chấm 100% tự động và tái lập được (D10, đã loại MT-Bench) |
+| Tuân thủ chỉ dẫn | **Dùng**: IFEval, chấm bằng code thay cho giám khảo | |
+| An toàn (toxicity, jailbreak, hallucination) | Không dùng | Không phải trục đánh giá proxy |
+| Hiệu năng hệ thống (TTFT, latency, throughput, cost) | **Dùng một phần**: latency, cost, error rate | TTFT chưa đo được vì backend chưa truyền token theo luồng; throughput chưa đo (ứng viên mở rộng đo hiệu năng proxy) |
+
+### 16.4. Điểm phải nói thẳng khi đưa bảng này
+
+**Nếu áp ngưỡng 80% cho từng chỉ số chất lượng thay vì cho con số gộp, LiteLLM trượt Exact Match của
+GSM8K (75%), Bifrost vừa chạm ngưỡng ở IFEval prompt-level (80%).** Luật đã khóa áp 80% cho tỷ lệ đạt
+gộp của 240 lượt (bước 1), nên kết luận chọn LiteLLM **không đổi**. Nhưng bảng tách theo chỉ số làm lộ
+điểm này, nên phải nêu chủ động khi trình bày, cùng với mục 7.6 (kết luận đổi theo ngưỡng) và 15.2
+(LiteLLM thắng nhờ ưu tiên chi phí). Diễn đạt lại bước 1 cho người đọc: *proxy phải đạt ít nhất 80% số
+bài kiểm tra chuẩn, gộp 4 loại năng lực, mỗi loại 60 lượt*.
