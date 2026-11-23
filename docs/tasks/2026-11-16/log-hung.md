@@ -75,4 +75,12 @@ Hùng cho phép đo RQ3 (chi phí dưới $0,01).
 - Chưa đo: TTFT, độ trễ so với gọi trực tiếp khi có RAG, hành vi khi nhà cung cấp trả 5xx.
 - Cần Hùng xem: ghi chú 5.3.3 ghi DB cục bộ không có dòng `invalid_signature`; API key (kịch bản 1 ở Bảng 5.3) chưa kiểm vì DB cục bộ chưa có khóa nào.
 
+## 23/11/2026 (tiếp 3): đợt 4 và phần còn lại
+
+Đã viết: 3.1.4 (lý thuyết RAG, dẫn [5], [9], [11], [18], [25]), 4.4.4 (thiết kế RAG, ghi rõ trạng thái), 5.4.2 (kế hoạch đánh giá RAG, không có số), 5.5 Thảo luận, dẫn nhập Chương 3, tiểu kết Chương 3 và 5, Phụ lục E (40 endpoint, cột 14 bảng), Phụ lục F (đĩa nộp, cài đặt). Không còn placeholder văn bản trong Doc; còn 27 khung hình để Hùng chèn.
+
+- RAG chưa có kết quả: 4.4.4, 5.4.2 và Chương 6 ghi là thiết kế và hiện thực ban đầu. Khi Khoa có số chunking và vector so với đồ thị thì thay 5.4.2 và cập nhật 6.1 đến 6.3.
+- 3.1.4 không dẫn tài liệu về graph RAG vì danh mục tham khảo chưa có; nếu cần thì thêm.
+- README.md ghi "7 container" nhưng docker-compose.yml có 6 service; Doc ghi 6.
+
 ## Review - Khoa (chưa)
