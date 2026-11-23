@@ -83,4 +83,11 @@ Hùng cho phép đo RQ3 (chi phí dưới $0,01).
 - 3.1.4 không dẫn tài liệu về graph RAG vì danh mục tham khảo chưa có; nếu cần thì thêm.
 - README.md ghi "7 container" nhưng docker-compose.yml có 6 service; Doc ghi 6.
 
+## 23/11/2026 (tiếp 4): kiểm đồng nhất lần cuối
+
+- Đã sửa: mô tả RAG cũ ở 1.2.2 và 1.4.2 (RAG là Must-have, đóng góp thứ hai); "item" đổi thành "câu"; "bộ prompt/rubric" đổi thành "bộ đề" ở phần phân công; thêm dẫn chiếu cho Hình 3.2, 3.3, 4.2 đến 4.6, 4.8 đến 4.11, 5.1, 5.9 đến 5.12 và Bảng 4.4, 4.5, 5.2; Danh mục viết tắt thêm CEL, HMAC, HNSW, HTTP, IVFFlat, JPA, MoSCoW, MRR, RBAC và bỏ CRUD, USP (không dùng); căn giữa các hình 5.2 đến 5.8.
+- Hình 5.9 đến 5.12 trong Doc có tiêu đề cũ nằm trong ảnh ("Hình 5.6 đến 5.9") và Hình 5.11 ghi Portkey 791 µUSD, Bifrost 568 µUSD, lệch bảng (793 và 562). Đã vẽ lại không tiêu đề trong ảnh, số khớp bảng: `docs/figures/`, mã `experiments/analysis/make_report_figures.py`. Chưa thay vào Doc (connector không chèn được ảnh từ máy).
+- Hình 4.1 (use case) có chức năng "Theo dõi doanh thu" chưa hiện thực; các hình 3.2, 4.1, 4.2, 4.4, 4.13 là dải rất rộng nên chữ nhỏ khi co về 380 pt.
+- Còn lại ngoài phạm vi: Chương 2 vẫn có liệt kê "(1) ... (2)" trong một đoạn (2.1.2); các trang hướng dẫn bố cục đầu tài liệu còn dấu "—" và "–".
+
 ## Review - Khoa (chưa)
