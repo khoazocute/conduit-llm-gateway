@@ -54,4 +54,25 @@ Góp ý của Hùng: liệt kê (1)(2)(3) phải là bullet; không trích chi t
 - Ngày ký ở Lời cảm ơn, và tên Khoa trong lời cảm ơn (tôi chỉ ghi "quý thầy cô trong Khoa và Trường").
 - 1.1.3 vẫn có câu "trọng tâm khoa học của khóa luận" (D20 cũ) và 1.2.1 "trọng tâm khoa học là đánh giá routing proxy": chưa sửa vì ngoài phạm vi đợt 2.
 
+## 23/11/2026 (tiếp 2): đo RQ3, RQ4 và đợt 3
+
+Hùng cho phép đo RQ3 (chi phí dưới $0,01).
+
+| Việc | Kết quả |
+|---|---|
+| RQ3 (độ trễ Gateway) | `experiments/scripts/rq3_latency.py`, dữ liệu `experiments/results/rq3-latency-20261123T135351.json`. 88 lượt gọi thật (44 gpt-4o-mini, 44 claude-haiku) + 60 lượt mô hình giả. Proxy thêm +62,7 ms (OpenAI) và +102,9 ms (Anthropic); tầng ứng dụng +11,5 ms. Tổng khoảng 74 và 114 ms, dưới ngưỡng 300-500 ms. Mỗi đường chỉ 20 lượt, độ lệch chuẩn đường OpenAI trực tiếp 176 ms nên con số OpenAI chỉ cho thấy độ lớn |
+| RQ4 (sai số credit) | Tính offline từ DB: 912/912 lượt thành công khớp ceil(token × hệ số), ở cả `messages.credit_charged` và `credit_transactions`; sai số 0%. 22 đơn paid khớp 22 giao dịch cộng credit; số dư nhỏ nhất 0. 5 lượt đầu (19/09, 29/09) có cost_upstream = 0 vì chưa tra được đơn giá. Đây là kiểm nhất quán, chưa đối chiếu độc lập với bảng điều khiển nhà cung cấp |
+| Chương 2 | Sửa 2.5 và 2.6 theo 3 đóng góp (Hùng cho phép) |
+| Chương 4 | Dẫn nhập, 4.1.1-4.1.3, 4.2.1-4.2.5, 4.3, 4.4.1-4.4.3, 4.4.5-4.4.8, 4.5; điền Bảng 4.2 (13 yêu cầu), 4.3, 4.4, 4.5. Bỏ 4.4.4 (RAG, đợt 4) |
+| Chương 5 | Dẫn nhập, 5.1.1-5.1.8, 5.3.1-5.3.4, 5.4.1; điền Bảng 5.2 và 5.3, Bảng 6.1 |
+
+### Sự cố đã xử lý
+- Lần ghi Bảng 6.1 trước đó đã điền nhầm vào Bảng 5.2 (script chọn nhầm bảng theo thứ tự). Đã hoàn nguyên: Bảng 5.2 giờ đúng nội dung RQ3, Bảng 6.1 có 6 hàng.
+- Một lệnh thay thế sai chuỗi đã đổi một cụm thành "x" trong 1.2.1; đã viết lại đoạn đó.
+
+### Còn lại, chưa làm
+- 3.1.4, 4.4.4, 5.4.2 (RAG, đợt 4); 5.5 Thảo luận; tiểu kết Chương 3 và 5; Phụ lục E, F; dẫn nhập Chương 3.
+- Chưa đo: TTFT, độ trễ so với gọi trực tiếp khi có RAG, hành vi khi nhà cung cấp trả 5xx.
+- Cần Hùng xem: ghi chú 5.3.3 ghi DB cục bộ không có dòng `invalid_signature`; API key (kịch bản 1 ở Bảng 5.3) chưa kiểm vì DB cục bộ chưa có khóa nào.
+
 ## Review - Khoa (chưa)
