@@ -32,4 +32,26 @@ Quét từ khóa (benchmark, MMLU, chỉ số, độ chính xác, rubric, chấm
 ### Việc người kia cần làm
 - Khoa: đọc lại mục 3.3-3.6 và 5.2 (đã sửa thẳng phần của Khoa theo cho phép), kiểm cột thứ 4 mới của Bảng 3.5.
 
+## 23/11/2026 (tiếp): sửa theo góp ý và đợt 2
+
+Góp ý của Hùng: liệt kê (1)(2)(3) phải là bullet; không trích chi tiết commit.
+
+| Việc | Kết quả |
+|---|---|
+| Bullet thật | 85 đoạn trong Doc: 1.1.2, 1.1.3, 1.2.2, 1.3, 1.4.3, 1.5, Tóm tắt, 3.1.5, 3.3.1, 3.3.2, 3.4.4, 3.6, 5.2.6, 6.2-6.4, Phụ lục A, C, D. Đã bỏ dấu "–" gõ tay ở các mục nội dung của 1.2.2 và 1.4.3 (khung hướng dẫn giữ nguyên) |
+| Bỏ chi tiết commit | 3.3.1, 3.3.2, 3.5.2, 3.6, 3.4.4: chỉ còn ngày và nội dung |
+| Lời cảm ơn | Viết xong, còn để trống ngày ký |
+| Tóm tắt | Viết xong: 3 đóng góp (bullet), kết quả đóng góp 1 theo số, ứng dụng demo, RAG ghi rõ chưa có kết quả; thêm từ khóa |
+| 1.5 | Viết lại theo 3 đóng góp (D21), có đoạn trạng thái thật; 1.7 sửa câu "trọng tâm khoa học" |
+| Chương 6 | Dẫn nhập, 6.1 (Bảng 6.1 có 6 hàng, mức độ Đạt / Đạt một phần / Đang thực hiện), 6.2, 6.3, 6.4 |
+
+### Sự cố khi ghi, đã xử lý
+- Hai lệnh thay thế trúng cả đoạn khác có cùng cụm chữ: một đoạn Chương 2 (định nghĩa agent) và một khung hướng dẫn của 1.3. Đã hoàn nguyên đúng nguyên văn; Chương 2 không còn thay đổi nào.
+- Một lỗi gõ ở đầu 6.3 ("Khoáng") đã sửa thành "Các".
+
+### Cần Hùng quyết
+- Chương 6: RQ3 (độ trễ so với gọi trực tiếp), RQ4 (sai số credit trên tập lượt chat) chưa có số, nên ghi "Đạt một phần". Muốn có số thì cần đo thêm (RQ4 đo offline được từ DB, không tốn phí).
+- Ngày ký ở Lời cảm ơn, và tên Khoa trong lời cảm ơn (tôi chỉ ghi "quý thầy cô trong Khoa và Trường").
+- 1.1.3 vẫn có câu "trọng tâm khoa học của khóa luận" (D20 cũ) và 1.2.1 "trọng tâm khoa học là đánh giá routing proxy": chưa sửa vì ngoài phạm vi đợt 2.
+
 ## Review - Khoa (chưa)
