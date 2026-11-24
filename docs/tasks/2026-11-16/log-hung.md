@@ -90,4 +90,13 @@ Hùng cho phép đo RQ3 (chi phí dưới $0,01).
 - Hình 4.1 (use case) có chức năng "Theo dõi doanh thu" chưa hiện thực; các hình 3.2, 4.1, 4.2, 4.4, 4.13 là dải rất rộng nên chữ nhỏ khi co về 380 pt.
 - Còn lại ngoài phạm vi: Chương 2 vẫn có liệt kê "(1) ... (2)" trong một đoạn (2.1.2); các trang hướng dẫn bố cục đầu tài liệu còn dấu "—" và "–".
 
+## 24/11/2026: rà toàn bộ hình theo góp ý của thầy
+
+Yêu cầu của thầy: mọi hình phải được dẫn chiếu và diễn giải trong nội dung.
+
+- Đã xem lại cả 29 hình trong Doc. Mỗi hình nay có một đoạn diễn giải đặt ngay trước ảnh (Hình 2.1, 3.1 đến 3.3, 4.1 đến 4.13, 5.1 đến 5.12), kiểm lại bằng script: 29/29 có đoạn bắt đầu bằng "Hình x.y", canh đều, không thành bullet. Với hình thể hiện thiết kế chưa hiện thực xong (4.1 đến 4.4, 4.11) đoạn diễn giải ghi rõ phần nào đã làm, phần nào chưa.
+- Hình lệch nội dung với văn bản và code, đã vẽ lại vào `docs/figures/` (mã `experiments/analysis/make_diagrams.py`, `make_report_figures.py`): 3.2 (ghi sai ngày khóa luật là 14/10, đúng là 11/09/2026), 3.3 (còn "closed-QA"), 4.5 (RAG ghi Should-have), 4.7 và 4.8 (có bước kiểm credit trước khi gọi, code không làm), 4.10 (sai đường dẫn webhook và tên kết quả log), 4.11 (thiếu nhánh đồ thị), 4.13 (sai đường dẫn trang), 5.9 đến 5.12 (tiêu đề trong ảnh còn số cũ, Hình 5.11 lệch số với bảng). Chưa thay vào Doc vì connector không chèn được ảnh từ máy.
+- Ảnh chụp giao diện Hình 5.2, 5.3, 5.6 hiện email cá nhân của Khoa; nên che hoặc chụp lại bằng tài khoản demo.
+- Hình 4.12 (ERD) là bản gốc, chưa có cột version (credit_wallets) và instructions (agents); đoạn diễn giải đã ghi rõ.
+
 ## Review - Khoa (chưa)
