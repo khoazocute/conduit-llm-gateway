@@ -1,0 +1,6 @@
+# Thu vien cho thi nghiem RAG (TASK-75/76).
+#   python -m venv experiments/rag/.venv
+#   experiments/rag/.venv/Scripts/python -m pip install -r experiments/rag/requirements.txt
+numpy
+psycopg[binary]
+pgvector

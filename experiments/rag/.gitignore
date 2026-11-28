@@ -1,0 +1,3 @@
+.venv/
+# Vector/embedding cache: lon, tai tao duoc, khong commit.
+cache/

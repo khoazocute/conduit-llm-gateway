@@ -1,0 +1,4 @@
+index,ddl,build_seconds,size_mb
+none,,0,0
+ivfflat,CREATE INDEX eval_vectors_ann ON eval_vectors USING ivfflat (embedding vector_cosine_ops) WITH (lists = 50),2.97,391.02
+hnsw,"CREATE INDEX eval_vectors_ann ON eval_vectors USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)",28.73,390.63

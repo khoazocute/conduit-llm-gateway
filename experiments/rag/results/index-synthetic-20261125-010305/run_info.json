@@ -1,0 +1,39 @@
+{
+  "timestamp": "20261125-010305",
+  "args": {
+    "dsn": "postgresql://conduit:conduit@localhost:5432/conduit_eval",
+    "admin_dsn": "postgresql://conduit:conduit@localhost:5432/conduit",
+    "source": "synthetic",
+    "vectors": null,
+    "queries": null,
+    "n": 50000,
+    "clusters": 200,
+    "noise": 0.6,
+    "agents": 50,
+    "zipf": 1.1,
+    "num_queries": 200,
+    "k": 10,
+    "seed": 42,
+    "ivf_lists": 0,
+    "ivf_probes": "1,2,4,8,16",
+    "hnsw_m": 16,
+    "hnsw_ef_construction": 64,
+    "hnsw_ef_search": "10,20,40,80,160",
+    "maintenance_work_mem": "1GB",
+    "parallel_workers": 0,
+    "out": null,
+    "keep_table": false
+  },
+  "versions": {
+    "pgvector": "0.8.6",
+    "postgres": "16.15 (Debian 16.15-1.pgdg12+2)"
+  },
+  "dim": 1536,
+  "num_vectors": 50000,
+  "num_queries": 200,
+  "ivf_lists": 50,
+  "agent_size_min": 173,
+  "agent_size_median": 362,
+  "agent_size_max": 13121,
+  "note": "synthetic = chỉ chạy thử script, không phải kết quả báo cáo"
+}
