@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ChatMarkdown } from "@/components/chat-markdown";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL, ApiClientError, apiFetch } from "@/lib/api/client";
 import type { ChatMessage, Conversation, ConversationListResponse, MessageListResponse } from "@/lib/api/types";
@@ -183,7 +184,13 @@ export default function AgentChatPage({ params }: ChatPageProps) {
                 padding: "8px 12px",
               }}
             >
-              {m.content ?? <span className="faint">(no response — provider error)</span>}
+              {m.content == null ? (
+                <span className="faint">(no response — provider error)</span>
+              ) : m.role === "assistant" ? (
+                <ChatMarkdown text={m.content} />
+              ) : (
+                <span style={{ whiteSpace: "pre-wrap" }}>{m.content}</span>
+              )}
               {m.credit_charged != null && (
                 <div className="faint" style={{ fontSize: "var(--t-1)", marginTop: 4 }}>
                   -{m.credit_charged} credit
